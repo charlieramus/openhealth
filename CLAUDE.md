@@ -31,6 +31,23 @@ Key routing rules:
 - Code review → invoke /review
 - Ship / publish → invoke /ship
 
+## Commit & push communication rule
+
+This is a co-shared repo. Every commit and push must include a brief plain-English message explaining:
+- What changed and why
+- Any context a collaborator needs to not be surprised
+
+Put it in the commit message body (after the subject line), not just the subject. Example format:
+```
+feat: add bloodwork results screen
+
+Built out Screen 2 with the four biomarker bars (Iron, Hemoglobin, SpO2, LDL).
+Colors match the palette from the hand-drawn mockups. Navigation back to Screen 1
+and forward to Screen 3 both working. Fake data only.
+```
+
+This applies to every commit — no silent one-liner pushes.
+
 ## Efficiency notes
 
 - The design doc at `~/.gstack/projects/openhealth/` is discoverable by all plan-review skills automatically
