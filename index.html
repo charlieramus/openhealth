@@ -3,89 +3,98 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
 
 <style>
 /* ============================================================
    OpenHealth — interactive prototype
-   Layout: a single phone device on a soft cool-neutral canvas;
-   three internally-scrolling screens on a sliding track, with a
-   persistent bottom tab bar. Deliberate single light theme
-   (the source sketches are vibrant marker on white paper).
+   One phone, three screens on a sliding track, persistent tabs.
+
+   Visual language: a green gradient hero owns the brand and the
+   one number that matters; everything else is white cards on a
+   soft light canvas. The four-colour biomarker spectrum survives
+   only where colour carries meaning — lab bars and eligibility.
    ============================================================ */
 :root{
   color-scheme: light;
 
-  /* Color — cool neutrals + a four-color biomarker spectrum */
-  --canvas:#E7EAEF;          /* page behind the phone            */
-  --screen:#F6F7F9;          /* app background                   */
-  --surface:#FFFFFF;         /* cards                            */
-  --surface-2:#F1F3F6;       /* insets / tracks                  */
-  --ink:#141821;             /* primary text, primary buttons    */
-  --ink-2:#5A6472;           /* secondary text                   */
-  --ink-3:#97A0AE;           /* tertiary / captions              */
-  --line:#E7EAEE;            /* hairlines                        */
-  --line-2:#DCE0E6;          /* stronger hairlines               */
+  /* Neutrals — very slightly warm-green so white cards sit calm */
+  --canvas:#E6EAE5;
+  --screen:#F3F5F1;
+  --surface:#FFFFFF;
+  --surface-2:#F0F3EC;
+  --ink:#131A16;
+  --ink-2:#59645C;
+  --ink-3:#95A099;
+  --line:#E9ECE6;
+  --line-2:#DCE1D7;
 
-  --iron:#E11D74;            /* magenta — Iron / Ferritin        */
-  --hgb:#7C4DFF;             /* purple  — Hemoglobin             */
-  --o2:#12B3A6;              /* teal    — Oxygen saturation      */
-  --ldl:#2F80ED;             /* blue    — LDL cholesterol        */
-  --good:#12B76A;            /* emerald — match / success        */
-  --warn:#F5A524;            /* amber   — attention              */
+  /* Brand — the green that runs the hero, the CTAs, the tabs */
+  --brand:#46BC5C;
+  --brand-d:#2C9F45;
+  --lime:#B6E354;
+  --soft:#E9F6D5;
 
-  /* Type */
+  /* Biomarker spectrum — each colour always means the same marker */
+  --iron:#E11D74;
+  --hgb:#7C4DFF;
+  --o2:#12B3A6;
+  --ldl:#2F80ED;
+
+  --good:#12B76A;
+  --warn:#F5A524;
+
   --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
   --body:'Inter',system-ui,-apple-system,sans-serif;
-  --num:'Fraunces',Georgia,serif;
 
-  --r:20px;   /* card radius     */
-  --r-sm:13px;/* control radius  */
-  --pad:20px; /* screen gutter   */
-  --shadow:0 1px 2px rgba(20,24,33,.04),0 8px 24px -12px rgba(20,24,33,.12);
+  --r:22px;
+  --r-sm:14px;
+  --pad:18px;
+  --shadow:0 1px 2px rgba(19,26,22,.04),0 10px 26px -14px rgba(19,26,22,.18);
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
 html,body{height:100%}
 body{
   font-family:var(--body);
   color:var(--ink);
-  background:
-    radial-gradient(120% 60% at 50% -10%, #EEF1F5 0%, var(--canvas) 60%);
+  background:radial-gradient(120% 60% at 50% -10%,#EDF0EA 0%,var(--canvas) 60%);
   -webkit-font-smoothing:antialiased;
-  display:grid;
-  grid-template-rows:1fr;
-  place-items:center;
-  padding:0;
+  display:grid;grid-template-rows:minmax(0,1fr);place-items:center;
 }
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
-/* ---- desktop framing: float the device on the canvas ---- */
+/* ============================ device shell ============================ */
 .stage{
-  width:100%;
-  height:100%;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:18px;
-  padding:0;
+  width:100%;height:100%;min-height:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
 }
 .stage-caption{display:none}
 
 .phone{
   position:relative;
-  width:100%;
-  max-width:404px;
-  height:100%;
+  width:100%;max-width:404px;
+  flex:1 1 auto;min-height:0;
   background:var(--screen);
-  display:flex;
-  flex-direction:column;
+  display:flex;flex-direction:column;
   overflow:hidden;
 }
+/* the gradient lives on the shell, so the white sheet scrolls over it */
+.phone::before{
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(174deg,
+    #2FCB6E 0%,
+    #63D562 17%,
+    #A8DF6E 31%,
+    #D9EBA6 42%,
+    #EDF2D8 50%,
+    var(--screen) 60%);
+  opacity:0;transition:opacity .5s ease;
+}
+.phone.hero::before{opacity:1}
 
 @media (min-width:520px) and (min-height:720px){
-  .stage{padding:28px 20px}
+  .stage{padding:26px 20px}
   .stage-caption{
     display:flex;align-items:center;gap:10px;
     font-family:var(--display);font-weight:700;font-size:.9rem;
@@ -97,555 +106,818 @@ body{
   }
   .stage-caption small{font-family:var(--body);font-weight:500;color:var(--ink-3)}
   .phone{
-    height:min(872px,100%);
-    border-radius:44px;
-    border:1px solid var(--line-2);
-    box-shadow:
-      0 0 0 11px #0B0E14,
-      0 0 0 12px #23282F,
-      0 40px 80px -28px rgba(20,24,33,.5);
+    max-height:872px;
+    border-radius:46px;
+    box-shadow:0 0 0 11px #0B0E0C,0 0 0 12px #262C27,0 40px 80px -28px rgba(19,26,22,.5);
   }
 }
 
 /* ============================ status bar ============================ */
 .statusbar{
-  flex:0 0 auto;
+  position:relative;z-index:20;flex:0 0 auto;
   display:flex;align-items:center;justify-content:space-between;
-  padding:calc(env(safe-area-inset-top,0px) + 12px) 26px 6px;
-  background:var(--screen);
+  padding:calc(env(safe-area-inset-top,0px) + 12px) 26px 4px;
   font-family:var(--display);font-weight:700;font-size:.82rem;
-  letter-spacing:.01em;
-  z-index:20;
 }
 .statusbar .icons{display:flex;align-items:center;gap:6px}
+.statusbar svg{display:block}
 
 /* ============================ screen track ============================ */
-.viewport{flex:1 1 auto;overflow:hidden;position:relative}
-.track{
-  display:flex;height:100%;width:300%;
-  transition:transform .45s cubic-bezier(.4,0,.2,1);
-}
-@media (prefers-reduced-motion:reduce){.track{transition:none}}
-
+.viewport{position:relative;z-index:1;flex:1 1 auto;min-height:0;overflow:hidden}
+.track{display:flex;width:300%;height:100%;transition:transform .48s cubic-bezier(.4,.9,.25,1)}
 .screen{
-  width:calc(100%/3);height:100%;flex-shrink:0;
+  width:33.3333%;height:100%;
   overflow-y:auto;overflow-x:hidden;
-  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
 }
 .screen::-webkit-scrollbar{display:none}
-.screen-inner{padding:6px var(--pad) 28px;display:flex;flex-direction:column;gap:22px}
+#s1,#s2{background:var(--screen)}
+.screen-inner{display:flex;flex-direction:column;padding:0 0 26px}
+#s1 .screen-inner,#s2 .screen-inner{gap:18px;padding:6px var(--pad) 26px}
 
-/* entrance animation — content rises in when a screen becomes active */
+/* staggered entrance — replayed each time a screen becomes active */
 .reveal{opacity:0;transform:translateY(14px)}
-.screen.in .reveal{
-  opacity:1;transform:none;
-  transition:opacity .5s ease,transform .55s cubic-bezier(.2,.7,.2,1);
-}
-.screen.in .reveal:nth-child(2){transition-delay:.04s}
-.screen.in .reveal:nth-child(3){transition-delay:.08s}
-.screen.in .reveal:nth-child(4){transition-delay:.12s}
-.screen.in .reveal:nth-child(5){transition-delay:.16s}
-.screen.in .reveal:nth-child(6){transition-delay:.2s}
-.screen.in .reveal:nth-child(7){transition-delay:.24s}
-@media (prefers-reduced-motion:reduce){
-  .reveal{opacity:1;transform:none}
-  .screen.in .reveal{transition:none}
-}
+.screen.in .reveal{animation:rise .55s cubic-bezier(.2,.8,.3,1) forwards}
+.screen.in .reveal:nth-child(1){animation-delay:.02s}
+.screen.in .reveal:nth-child(2){animation-delay:.07s}
+.screen.in .reveal:nth-child(3){animation-delay:.12s}
+.screen.in .reveal:nth-child(4){animation-delay:.17s}
+.screen.in .reveal:nth-child(5){animation-delay:.22s}
+.screen.in .reveal:nth-child(6){animation-delay:.27s}
+.screen.in .reveal:nth-child(7){animation-delay:.32s}
+.screen.in .reveal:nth-child(8){animation-delay:.37s}
+@keyframes rise{to{opacity:1;transform:none}}
 
 /* ============================ shared bits ============================ */
 .eyebrow{
-  font-family:var(--display);font-weight:700;font-size:.72rem;
-  text-transform:uppercase;letter-spacing:.11em;color:var(--ink-3);
-  margin-bottom:11px;
+  font-family:var(--display);font-weight:700;font-size:.82rem;
+  letter-spacing:.01em;color:var(--ink-2);margin-bottom:9px;
 }
-.card{
-  background:var(--surface);border:1px solid var(--line);
-  border-radius:var(--r);box-shadow:var(--shadow);
-}
-h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;text-wrap:balance}
-
-.topbar{display:flex;align-items:center;gap:12px;padding-top:8px}
-.back{
-  width:40px;height:40px;border-radius:50%;flex-shrink:0;
-  background:var(--surface);border:1px solid var(--line-2);
-  display:grid;place-items:center;color:var(--ink);cursor:pointer;
-  transition:transform .12s,background .15s;
-}
-.back:hover{background:var(--surface-2)}
-.back:active{transform:scale(.92)}
-.back:focus-visible{outline:2px solid var(--ldl);outline-offset:2px}
-.topbar h1{font-size:1.15rem;font-weight:700}
-.topbar .sub{font-size:.8rem;color:var(--ink-2);margin-top:1px;font-family:var(--body)}
-
-.btn{
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  width:100%;padding:15px;border:none;border-radius:var(--r-sm);
-  font-family:var(--display);font-weight:700;font-size:.95rem;
-  background:var(--ink);color:#fff;cursor:pointer;
-  transition:transform .12s,opacity .15s;
-}
-.btn:hover{opacity:.9}
-.btn:active{transform:scale(.985)}
-.btn:focus-visible{outline:2px solid var(--ldl);outline-offset:3px}
-
-.chip{
-  font-family:var(--display);font-weight:700;font-size:.7rem;
-  padding:4px 10px;border-radius:20px;letter-spacing:.02em;white-space:nowrap;
-}
-
-/* ============================ SCREEN 1 · Home ============================ */
-.greeting{display:flex;align-items:center;justify-content:space-between;padding-top:10px}
-.greeting .hello{font-size:.82rem;color:var(--ink-2);font-weight:500}
-.greeting h1{font-size:1.55rem;font-weight:800;margin-top:2px}
-.brandmark{display:flex;align-items:center;gap:8px;margin-bottom:2px}
-.brandmark .dot{
-  width:22px;height:22px;border-radius:7px;
-  background:conic-gradient(from 210deg,var(--iron),var(--hgb),var(--o2),var(--ldl),var(--iron));
-}
-.brandmark span{font-family:var(--display);font-weight:800;font-size:.95rem;letter-spacing:-.02em}
-.brandmark b{color:var(--ldl)}
-.me{
-  width:44px;height:44px;border-radius:50%;flex-shrink:0;
-  display:grid;place-items:center;color:#fff;font-family:var(--display);
-  font-weight:700;font-size:.85rem;
-  background:linear-gradient(135deg,#2B3444,#141821);
-  border:2px solid #fff;box-shadow:var(--shadow);
-}
-
-.updates{
-  display:flex;align-items:center;gap:14px;padding:16px;
-  background:linear-gradient(135deg,#151A24 0%,#222C3D 100%);
-  border-radius:var(--r);color:#fff;position:relative;overflow:hidden;
-}
-.updates::after{
-  content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;
-  background:radial-gradient(circle,rgba(124,77,255,.5),transparent 70%);
-}
-.updates .ic{
-  width:44px;height:44px;border-radius:13px;flex-shrink:0;display:grid;place-items:center;
-  background:rgba(255,255,255,.1);position:relative;z-index:1;
-}
-.updates .tx{flex:1;position:relative;z-index:1}
-.updates .tx b{font-family:var(--display);font-weight:700;font-size:1.02rem;display:block}
-.updates .tx small{font-size:.78rem;color:#AFBBCC}
-.updates .go{position:relative;z-index:1;opacity:.8}
-
-.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px}
 .section-head .eyebrow{margin:0}
-.section-head .link{font-family:var(--display);font-weight:700;font-size:.75rem;color:var(--ldl);cursor:pointer;background:none;border:none}
-
-/* trial cards */
-.trials{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin:0 calc(var(--pad)*-1);padding:2px var(--pad) 4px}
-.trials::-webkit-scrollbar{display:none}
-.trial{
-  flex:0 0 auto;width:172px;padding:16px;border-radius:var(--r);
-  background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);
-  cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;position:relative;
+.link{font-family:var(--display);font-weight:700;font-size:.78rem;color:var(--brand-d)}
+.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 9px;border-radius:999px;
+  font-size:.7rem;font-weight:700;letter-spacing:.01em;white-space:nowrap;
 }
-.trial.hot{border-color:rgba(18,183,106,.35)}
-.trial.hot:hover{transform:translateY(-3px);box-shadow:0 12px 28px -14px rgba(18,183,106,.4)}
-.trial.hot:active{transform:translateY(-1px) scale(.99)}
-.trial:focus-visible{outline:2px solid var(--good);outline-offset:2px}
-.trial .code{font-family:var(--display);font-weight:800;font-size:1.05rem;letter-spacing:-.02em}
-.trial .field{font-size:.72rem;color:var(--ink-2);margin-top:2px}
-.trial .match{display:flex;align-items:baseline;gap:5px;margin:14px 0 12px}
-.trial .match b{font-family:var(--num);font-weight:600;font-size:1.9rem;line-height:1;color:var(--good)}
-.trial .match small{font-size:.72rem;color:var(--ink-2)}
-.trial .spectrum{display:flex;gap:4px;height:6px}
-.trial .spectrum i{flex:1;border-radius:3px}
-.trial.soon{opacity:.55;cursor:default}
-.trial.soon .code,.trial.soon .field{color:var(--ink-3)}
-.soon-tag{
-  position:absolute;top:14px;right:14px;font-family:var(--display);font-weight:700;
-  font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);
-  background:var(--surface-2);padding:3px 8px;border-radius:20px;
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  width:100%;padding:16px;border-radius:18px;
+  background:var(--brand);color:#fff;
+  font-family:var(--display);font-weight:700;font-size:.98rem;
+  box-shadow:0 10px 22px -12px rgba(44,159,69,.9);
+  transition:transform .15s ease;
 }
-.trial .arrow{position:absolute;top:16px;right:16px;color:var(--good)}
+.btn:active{transform:scale(.98)}
+.btn:disabled{background:var(--soft);color:var(--brand-d);box-shadow:none;cursor:default}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:0 0 auto}
 
-/* bloodwork mini */
-.bw{padding:6px 18px 16px}
-.bw-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
-.bw-row:first-child{border-top:none}
-.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.bw-row .name{flex:1;font-weight:600;font-size:.9rem}
-.mini{width:74px;height:6px;border-radius:4px;background:var(--surface-2);overflow:hidden}
-.mini i{display:block;height:100%;border-radius:4px;width:0;transition:width .9s cubic-bezier(.2,.7,.2,1) .2s}
-.screen.in .mini i{width:var(--w)}
-@media (prefers-reduced-motion:reduce){.screen.in .mini i{transition:none}}
+/* ============================ screen 1 · hero ============================ */
+.hero-top{padding:8px var(--pad) 0;display:flex;align-items:center;justify-content:space-between}
+.wordmark{
+  font-family:var(--display);font-weight:800;font-size:1.46rem;letter-spacing:-.035em;
+  color:#0E2A17;display:flex;align-items:center;gap:7px;
+}
+.wordmark i{
+  width:9px;height:9px;border-radius:50%;background:#0E2A17;
+  box-shadow:0 0 0 4px rgba(255,255,255,.45);
+}
+.hero-top .right{display:flex;align-items:center;gap:9px}
+.pill-profile{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 14px 5px 5px;border-radius:999px;
+  background:rgba(255,255,255,.62);
+  font-family:var(--display);font-weight:700;font-size:.82rem;color:#12301C;
+}
+.pill-profile .av{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,#0E2A17,#3E7A4C);color:#fff;
+  display:grid;place-items:center;font-size:.66rem;letter-spacing:.02em;
+}
+.bell{
+  position:relative;width:38px;height:38px;border-radius:50%;
+  background:rgba(255,255,255,.62);display:grid;place-items:center;
+}
+.bell::after{
+  content:'';position:absolute;top:8px;right:9px;
+  width:8px;height:8px;border-radius:50%;background:var(--iron);
+  box-shadow:0 0 0 2px rgba(255,255,255,.85);
+}
 
-/* two small info tiles */
+.score{display:flex;flex-direction:column;align-items:center;padding:6px var(--pad) 0}
+.ring-wrap{position:relative;width:216px;height:216px;display:grid;place-items:center}
+.ring-wrap svg{position:absolute;inset:0}
+.ring-prog{stroke-dasharray:534;stroke-dashoffset:534}
+.screen.in .ring-prog{animation:draw 1.5s cubic-bezier(.2,.8,.3,1) .25s forwards}
+@keyframes draw{to{stroke-dashoffset:var(--off)}}
+.ring-center{display:flex;flex-direction:column;align-items:center;line-height:1}
+.ring-center .n{
+  font-family:var(--display);font-weight:800;font-size:4rem;
+  letter-spacing:-.05em;color:#0E2A17;
+}
+.ring-center .d{
+  font-family:var(--display);font-weight:700;font-size:1rem;
+  color:#164326;opacity:.78;margin-top:7px;
+}
+.delta{
+  display:inline-flex;align-items:center;gap:6px;margin-top:12px;
+  padding:6px 13px;border-radius:999px;background:rgba(255,255,255,.55);
+  font-size:.74rem;font-weight:600;color:#12401F;
+}
+
+/* the three biomarker bars that stand in for the macro bars */
+.macros{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:14px var(--pad) 0;width:100%}
+.macro{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
+.macro .lab{font-family:var(--display);font-weight:700;font-size:.79rem;color:#12301C}
+.macro .track{width:100%;height:7px;border-radius:999px;background:rgba(255,255,255,.6);overflow:hidden}
+.macro .track i{display:block;height:100%;border-radius:999px;width:0;transition:width 1.1s cubic-bezier(.2,.8,.3,1) .4s}
+.screen.in .macro .track i{width:var(--w)}
+.macro .v{font-size:.72rem;font-weight:600;color:#16351F;opacity:.72;white-space:nowrap}
+.macro .v b{font-weight:700;opacity:1}
+
+.see{
+  align-self:center;margin:18px auto 22px;
+  display:flex;align-items:center;gap:8px;
+  padding:12px 20px;border-radius:999px;
+  background:rgba(255,255,255,.85);
+  font-family:var(--display);font-weight:700;font-size:.87rem;color:#12301C;
+  box-shadow:0 6px 18px -10px rgba(19,26,22,.45);
+  transition:transform .15s ease;
+}
+.see:active{transform:scale(.97)}
+
+/* ---- the white sheet that slides up over the gradient ---- */
+.sheet{
+  background:var(--surface);
+  border-radius:30px 30px 0 0;
+  box-shadow:0 -10px 34px -18px rgba(19,26,22,.35);
+  padding:6px var(--pad) 22px;
+  display:flex;flex-direction:column;gap:16px;
+  min-height:340px;
+}
+.sheet-head{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 2px 2px;
+}
+.sheet-head .cal{
+  width:34px;height:34px;border-radius:11px;background:var(--soft);
+  display:grid;grid-template-rows:minmax(0,1fr);place-items:center;
+}
+.sheet-head h2{font-family:var(--display);font-weight:800;font-size:1.12rem;letter-spacing:-.025em}
+.sheet-head .go{margin-left:auto;color:var(--ink-3)}
+
+/* a list row — the food row from the reference, carrying a trial instead */
+.row-item{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  grid-template-areas:'ic tx add' 'ic meta meta';
+  align-items:center;column-gap:12px;row-gap:9px;
+  padding:14px;border-radius:20px;background:var(--surface);
+  border:1px solid var(--line);
+  transition:transform .15s ease,box-shadow .2s ease;
+}
+.row-item.tappable{cursor:pointer}
+.row-item.tappable:active{transform:scale(.985)}
+.row-item.live{border-color:transparent;box-shadow:var(--shadow)}
+.row-item .ic{
+  grid-area:ic;width:50px;height:50px;border-radius:16px;
+  display:grid;place-items:center;font-family:var(--display);font-weight:800;
+  font-size:.84rem;letter-spacing:-.02em;
+}
+.row-item .tx{grid-area:tx;min-width:0}
+.row-item .tx b{
+  display:block;font-family:var(--display);font-weight:700;font-size:1rem;
+  letter-spacing:-.02em;margin-bottom:2px;
+}
+.row-item .tx small{
+  display:block;font-size:.8rem;color:var(--ink-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.row-item .add{
+  grid-area:add;width:38px;height:38px;border-radius:50%;
+  background:var(--brand);color:#fff;display:grid;place-items:center;
+  box-shadow:0 8px 16px -8px rgba(44,159,69,.9);
+}
+.row-item .add.ghost{background:var(--surface-2);color:var(--ink-3);box-shadow:none}
+.row-item .meta{
+  grid-area:meta;display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.row-item .score-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--ink);color:#fff;border-radius:999px;
+  padding:6px 11px;font-size:.73rem;font-weight:700;
+}
+.row-item .score-chip .spark{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--lime);box-shadow:0 0 0 3px rgba(182,227,84,.25);
+}
+.row-item .hint{
+  display:flex;align-items:center;gap:5px;
+  font-size:.74rem;font-weight:600;color:var(--ink-3);
+}
+.row-item.soon{background:var(--surface-2);border-color:transparent}
+.row-item.soon .tx b,.row-item.soon .tx small{color:var(--ink-3)}
+.row-item.soon .ic{background:#E4E8E0;color:var(--ink-3)}
+
+/* 2-up stat tiles (the "step to walk / drink water" pattern) */
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.tile{padding:15px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
-.tile .k{font-size:.72rem;color:var(--ink-2);font-weight:600;display:flex;align-items:center;gap:6px}
-.tile .v{font-family:var(--display);font-weight:800;font-size:1.1rem;margin-top:8px}
-.tile .v.ok{color:var(--good)}
+.tile{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:20px;padding:14px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.tile .top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.tile .k{font-family:var(--display);font-weight:700;font-size:.82rem;color:var(--ink-2);line-height:1.25}
+.tile .ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto}
+.tile .v{font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.04em}
+.tile .v .u{font-family:var(--body);font-size:.78rem;font-weight:600;color:var(--ink-3);margin-left:4px}
+.tile .v.ok{color:var(--brand-d)}
 
-/* doctors */
-.docs{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none}
+/* doctor avatar row */
+.docs{display:flex;gap:11px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
 .docs::-webkit-scrollbar{display:none}
-.doc{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0}
+.doc{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;width:54px}
 .doc .av{
-  width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
-  color:#fff;font-family:var(--display);font-weight:700;font-size:.85rem;
-  box-shadow:0 4px 10px -4px rgba(20,24,33,.35);
+  width:48px;height:48px;border-radius:50%;
+  display:grid;place-items:center;color:#fff;
+  font-family:var(--display);font-weight:700;font-size:.82rem;letter-spacing:.01em;
+  box-shadow:0 6px 14px -8px rgba(19,26,22,.5);
 }
-.doc small{font-size:.68rem;color:var(--ink-2);font-weight:500}
+.doc small{font-size:.68rem;color:var(--ink-2);font-weight:600;text-align:center}
 
-/* ============================ SCREEN 2 · Labs ============================ */
-.gauge-wrap{display:flex;flex-direction:column;align-items:center;padding:6px 0 4px}
-.gauge-status{font-family:var(--num);font-weight:600;font-size:1.5rem;margin-top:-14px}
-.gauge-note{font-size:.8rem;color:var(--ink-2);margin-top:2px}
-.needle{transform-box:fill-box;transform-origin:bottom center;transform:rotate(-46deg);transition:transform 1.1s cubic-bezier(.34,1.4,.5,1) .1s}
-.screen.in .needle{transform:rotate(2deg)}
-@media (prefers-reduced-motion:reduce){.needle,.screen.in .needle{transition:none;transform:rotate(2deg)}}
-
-.marker{border-radius:var(--r);padding:16px 18px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
-.marker+.marker{margin-top:12px}
-.marker .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.marker .name{display:flex;align-items:center;gap:9px;font-weight:600;font-size:.95rem}
-.marker .val{font-family:var(--num);font-weight:600;font-size:1.15rem}
-.marker .unit{font-family:var(--body);font-size:.7rem;color:var(--ink-3);font-weight:500;margin-left:2px}
-
-/* range-aware scale: full track, tinted normal band, value marker */
-.scale{position:relative;height:12px;border-radius:6px;background:var(--surface-2);overflow:hidden}
-.scale .band{position:absolute;top:0;bottom:0;opacity:.22;border-radius:6px}
-.scale .val{
-  position:absolute;top:50%;width:4px;height:20px;border-radius:3px;
-  transform:translate(-50%,-50%) scaleY(0);transform-origin:center;
-  box-shadow:0 0 0 3px var(--screen);
-  transition:transform .6s cubic-bezier(.34,1.4,.5,1) .25s;
+/* ============================ screen 2 · labs ============================ */
+.topbar{display:flex;align-items:center;gap:12px;padding:6px 0 2px}
+.topbar .back,.topbar .more{
+  width:38px;height:38px;border-radius:50%;background:var(--surface);
+  display:grid;place-items:center;color:var(--ink);box-shadow:var(--shadow);flex:0 0 auto;
 }
-.screen.in .scale .val{transform:translate(-50%,-50%) scaleY(1)}
-@media (prefers-reduced-motion:reduce){.scale .val,.screen.in .scale .val{transition:none;transform:translate(-50%,-50%) scaleY(1)}}
-.scale-legend{display:flex;justify-content:space-between;margin-top:8px;font-size:.68rem;color:var(--ink-3)}
+.topbar h1{font-family:var(--display);font-weight:800;font-size:1.06rem;letter-spacing:-.025em}
+.topbar .sub{font-size:.76rem;color:var(--ink-3);margin-top:1px}
+.topbar .mid{flex:1;min-width:0}
 
-.recs{padding:4px 18px}
-.rec{display:flex;gap:13px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}
-.rec:last-child{border-bottom:none}
-.rec .ic{width:32px;height:32px;border-radius:10px;flex-shrink:0;display:grid;place-items:center}
-.rec .tx b{font-family:var(--display);font-weight:700;font-size:.86rem;display:block}
-.rec .tx small{font-size:.8rem;color:var(--ink-2);line-height:1.45;display:block;margin-top:2px}
-
-/* ============================ SCREEN 3 · Trials ============================ */
-.hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px;padding-top:2px}
-.ring-wrap{position:relative;width:168px;height:168px;margin-bottom:6px}
-.ring-prog{
-  stroke-dasharray:339.29;stroke-dashoffset:339.29;
-  transition:stroke-dashoffset 1.2s cubic-bezier(.3,.7,.3,1) .15s;
+/* marker switcher */
+.switch{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.switch::-webkit-scrollbar{display:none}
+.switch button{
+  display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;
+  padding:9px 14px;border-radius:999px;background:var(--surface);
+  border:1px solid var(--line);
+  font-family:var(--display);font-weight:700;font-size:.8rem;color:var(--ink-2);
+  transition:background .2s ease,color .2s ease,border-color .2s ease;
 }
-.screen.in .ring-prog{stroke-dashoffset:44.1}
-@media (prefers-reduced-motion:reduce){.ring-prog,.screen.in .ring-prog{transition:none;stroke-dashoffset:44.1}}
-.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.ring-center .n{font-family:var(--num);font-weight:600;font-size:3.4rem;line-height:1;color:var(--good);font-variant-numeric:tabular-nums}
-.ring-center .d{font-size:.72rem;color:var(--ink-3);margin-top:4px;letter-spacing:.02em}
-.hero h1{font-size:1.35rem;font-weight:800;margin-top:4px}
-.hero .tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.switch button .dot{width:8px;height:8px}
+.switch button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 
-.elig .row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
-.elig .row:last-child{border-bottom:none}
-.elig .lab{width:118px;flex-shrink:0;font-size:.85rem;font-weight:500}
-.elig .track{flex:1;height:8px;border-radius:5px;background:var(--surface-2);overflow:hidden}
-.elig .track i{display:block;height:100%;border-radius:5px;width:0;transition:width 1s cubic-bezier(.2,.7,.2,1) .3s}
+/* big number + chart card */
+.chart-card{display:flex;flex-direction:column;gap:2px;padding:18px 16px 12px}
+.chart-card .name{font-family:var(--display);font-weight:700;font-size:.92rem;color:var(--ink-2)}
+.chart-card .big{display:flex;align-items:baseline;gap:8px;margin-top:2px}
+.chart-card .big .n{
+  font-family:var(--display);font-weight:800;font-size:2.7rem;letter-spacing:-.045em;
+  line-height:1.05;transition:color .3s ease;
+}
+.chart-card .big .unit{font-family:var(--body);font-size:.95rem;font-weight:700;color:var(--ink-3)}
+.chart-card .big .target{margin-left:auto;font-size:.78rem;color:var(--ink-3);font-weight:600;text-align:right}
+.chart-card .big .target b{color:var(--ink);font-weight:700}
+
+.chart{position:relative;z-index:0;height:168px;margin-top:18px;display:flex;align-items:flex-end;gap:0}
+.chart .limit{
+  position:absolute;left:0;right:0;height:0;
+  border-top:1.5px dashed var(--line-2);
+  transition:bottom .5s cubic-bezier(.2,.8,.3,1);
+}
+.chart .limit span{
+  position:absolute;left:0;top:-9px;background:var(--surface);
+  padding:0 6px 0 0;font-size:.64rem;font-weight:700;color:var(--ink-3);
+}
+.bar-col{
+  flex:1;height:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-end;gap:7px;position:relative;
+}
+.bar-col .cap{
+  font-size:.63rem;font-weight:700;color:var(--ink-3);
+  opacity:0;transition:opacity .35s ease .45s;
+}
+.bar-col.now .cap{opacity:1;color:var(--ink)}
+.bar-col .bar{
+  width:15px;border-radius:999px;height:0;
+  transition:height .7s cubic-bezier(.2,.8,.3,1),background .3s ease;
+}
+.bar-col .x{font-size:.66rem;line-height:14px;height:14px;font-weight:600;color:var(--ink-3);margin-top:2px}
+.bar-col.now .x{color:var(--ink);font-weight:700}
+.bar-col.now::before{
+  content:'';position:absolute;inset:0;
+  border-radius:12px;background:var(--surface-2);z-index:-1;
+}
+
+.verdict{
+  display:flex;align-items:center;gap:9px;margin-top:14px;
+  padding:11px 12px;border-radius:14px;background:var(--surface-2);
+}
+.verdict .tx{font-size:.78rem;color:var(--ink-2);line-height:1.4}
+.verdict .tx b{color:var(--ink);font-weight:700}
+
+/* vitals tiles with mini-graphics */
+.vitals{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vital{
+  background:var(--surface);border-radius:20px;box-shadow:var(--shadow);
+  padding:14px;display:flex;flex-direction:column;gap:8px;
+}
+.vital .k{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:.82rem;color:var(--ink-2)}
+.vital .k .ic{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto}
+.vital .g{height:34px;display:flex;align-items:flex-end;justify-content:space-between;gap:5px}
+.vital .g i{flex:1;max-width:12px;border-radius:3px;background:var(--surface-2)}
+.vital .v{font-family:var(--display);font-weight:800;font-size:1.44rem;letter-spacing:-.04em}
+.vital .v .u{font-family:var(--body);font-size:.74rem;font-weight:600;color:var(--ink-3);margin-left:4px}
+
+/* overall gauge */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
+.gauge-wrap svg{display:block}
+.needle{transform-origin:115px 118px;transform:rotate(-78deg)}
+.screen.in .needle{animation:swing 1.5s cubic-bezier(.3,1.4,.4,1) .35s forwards}
+@keyframes swing{0%{transform:rotate(-78deg)}60%{transform:rotate(10deg)}100%{transform:rotate(0deg)}}
+.gauge-status{font-family:var(--display);font-weight:800;font-size:1.22rem;letter-spacing:-.03em;margin-top:6px}
+.gauge-note{font-size:.76rem;color:var(--ink-3);text-align:center}
+
+/* the four range rows straight out of the sketches */
+.markers{display:flex;flex-direction:column;gap:0}
+.marker{padding:15px 0;border-bottom:1px solid var(--line)}
+.marker:last-child{border-bottom:0;padding-bottom:2px}
+.marker .head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px}
+.marker .nm{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:.9rem}
+.marker .val{font-family:var(--display);font-weight:800;font-size:1.02rem;letter-spacing:-.03em}
+.marker .val .u{font-family:var(--body);font-size:.7rem;font-weight:600;color:var(--ink-3);margin-left:4px}
+.scale{position:relative;height:9px;border-radius:999px;background:var(--surface-2)}
+.scale .band{position:absolute;top:0;bottom:0;border-radius:999px;opacity:.2}
+.scale .pin{
+  position:absolute;top:50%;width:15px;height:15px;border-radius:50%;
+  border:3px solid var(--surface);transform:translate(-50%,-50%) scale(0);
+  box-shadow:0 2px 6px rgba(19,26,22,.28);
+}
+.screen.in .scale .pin{animation:pop .5s cubic-bezier(.3,1.5,.5,1) .5s forwards}
+@keyframes pop{to{transform:translate(-50%,-50%) scale(1)}}
+.scale-legend{display:flex;justify-content:space-between;margin-top:8px;font-size:.71rem;color:var(--ink-3);font-weight:600}
+.scale-legend b{font-weight:700}
+
+/* recommendations */
+.recs{display:flex;flex-direction:column;gap:2px;padding:4px 16px}
+.rec{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}
+.rec:last-child{border-bottom:0}
+.rec .ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:0 0 auto}
+.rec .tx b{display:block;font-family:var(--display);font-weight:700;font-size:.9rem;margin-bottom:2px}
+.rec .tx small{display:block;font-size:.78rem;color:var(--ink-2);line-height:1.45}
+
+/* ============================ screen 3 · trials ============================ */
+.match-hero{
+  border-radius:26px;padding:22px 18px 20px;
+  background:linear-gradient(160deg,#34CC71 0%,#7BDA62 44%,#C3E585 100%);
+  display:flex;flex-direction:column;align-items:center;
+  box-shadow:0 18px 34px -22px rgba(44,159,69,.9);
+}
+.match-hero .ring-wrap{width:186px;height:186px}
+.match-hero .ring-center .n{font-size:3.5rem}
+.match-hero h2{
+  font-family:var(--display);font-weight:800;font-size:1.32rem;letter-spacing:-.03em;
+  color:#0E2A17;margin-top:10px;
+}
+.match-hero .tags{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap;justify-content:center}
+.match-hero .tags .chip{background:rgba(255,255,255,.72);color:#12301C}
+
+.elig{padding:4px 16px}
+.elig .row{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line)}
+.elig .row:last-child{border-bottom:0}
+.elig .lab{font-size:.84rem;font-weight:600;width:104px;flex:0 0 auto}
+.elig .track{flex:1;height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.elig .track i{display:block;height:100%;border-radius:999px;width:0;transition:width .9s cubic-bezier(.2,.8,.3,1) .35s}
 .screen.in .elig .track i{width:var(--w)}
-@media (prefers-reduced-motion:reduce){.screen.in .elig .track i{transition:none}}
-.elig .pct{width:40px;text-align:right;font-family:var(--display);font-weight:700;font-size:.82rem;font-variant-numeric:tabular-nums}
+.elig .pct{font-family:var(--display);font-weight:800;font-size:.84rem;width:26px;text-align:right}
 
-.summary{padding:16px 18px}
-.summary .line{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:.85rem}
-.summary .line:last-child{border-bottom:none}
+.summary{padding:4px 16px}
+.summary .line{display:flex;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);font-size:.84rem}
+.summary .line:last-child{border-bottom:0}
 .summary .line span:first-child{color:var(--ink-2)}
 .summary .line span:last-child{font-weight:600;text-align:right}
 
-/* send card */
-.send{padding:18px}
-.send .who{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-.send .who .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;font-family:var(--display);font-weight:700;background:linear-gradient(135deg,var(--iron),#B01560)}
-.send .who .meta b{font-family:var(--display);font-weight:700;font-size:.95rem;display:block}
-.send .who .meta small{font-size:.78rem;color:var(--ink-2)}
-.send .who .auto{margin-left:auto;background:rgba(18,183,106,.12);color:var(--good)}
-.btn-send{background:var(--good)}
-.btn-send:disabled{background:rgba(18,183,106,.14);color:var(--good);cursor:default;opacity:1}
-.plane{position:absolute;left:50%;bottom:64px;color:var(--good);opacity:0;pointer-events:none}
-.plane.fly{animation:fly 1s cubic-bezier(.4,0,.5,1) forwards}
-@keyframes fly{
-  0%{opacity:0;transform:translate(-50%,10px) rotate(0) scale(.8)}
-  18%{opacity:1;transform:translate(-50%,-4px) rotate(-6deg) scale(1)}
-  100%{opacity:0;transform:translate(60px,-150px) rotate(18deg) scale(.7)}
+.send{display:flex;flex-direction:column;gap:14px}
+.send .who{display:flex;align-items:center;gap:11px}
+.send .who .av{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,var(--iron),#b01560);color:#fff;
+  display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:.86rem;
 }
-@media (prefers-reduced-motion:reduce){.plane.fly{animation:none}}
+.send .who b{display:block;font-family:var(--display);font-weight:700;font-size:.94rem}
+.send .who small{display:block;font-size:.75rem;color:var(--ink-3)}
+.send .who .chip{margin-left:auto;background:var(--soft);color:var(--brand-d)}
 
-/* related trials */
-.related .row{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);opacity:.6}
-.related .row:last-child{border-bottom:none}
-.related .row .name{flex:1;font-weight:600;font-size:.9rem}
-.related .row .field{font-size:.72rem;color:var(--ink-3)}
+.related{padding:4px 16px}
+.related .row{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line)}
+.related .row:last-child{border-bottom:0}
+.related .nm{font-family:var(--display);font-weight:700;font-size:.88rem;color:var(--ink-2)}
+.related .field{font-size:.74rem;color:var(--ink-3)}
+
+.plane{
+  position:absolute;left:50%;bottom:150px;z-index:40;
+  color:var(--brand);opacity:0;pointer-events:none;
+}
+.plane.fly{animation:fly .9s cubic-bezier(.4,0,.5,1) forwards}
+@keyframes fly{
+  0%{opacity:0;transform:translate(-50%,0) scale(.6) rotate(0)}
+  20%{opacity:1;transform:translate(-50%,-30px) scale(1) rotate(-8deg)}
+  100%{opacity:0;transform:translate(60px,-330px) scale(.7) rotate(18deg)}
+}
 
 /* ============================ tab bar ============================ */
 .tabbar{
-  flex:0 0 auto;display:flex;
-  background:rgba(246,247,249,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  position:relative;z-index:20;flex:0 0 auto;
+  display:grid;grid-template-columns:repeat(3,1fr);
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(14px);
   border-top:1px solid var(--line);
-  padding:8px 8px calc(env(safe-area-inset-bottom,0px) + 8px);
+  padding:9px 8px calc(env(safe-area-inset-bottom,0px) + 11px);
 }
 .tab{
-  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
-  padding:6px 0;background:none;border:none;cursor:pointer;color:var(--ink-3);
-  font-family:var(--display);font-weight:700;font-size:.66rem;letter-spacing:.01em;
-  transition:color .18s;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  font-family:var(--display);font-weight:700;font-size:.69rem;
+  color:var(--ink-3);transition:color .22s ease;
 }
-.tab.active{color:var(--ink)}
-.tab:focus-visible{outline:2px solid var(--ldl);outline-offset:-2px;border-radius:10px}
-.tab .badge{position:relative}
-.tab .badge::after{
-  content:"";position:absolute;top:-2px;right:-4px;width:7px;height:7px;border-radius:50%;
-  background:var(--iron);border:1.5px solid var(--screen);opacity:0;transition:opacity .2s;
+.tab .badge{
+  position:relative;
+  width:50px;height:31px;border-radius:999px;
+  display:grid;place-items:center;
+  transition:background .25s ease;
 }
-.tab.has-badge .badge::after{opacity:1}
+.tab.active{color:var(--brand-d)}
+.tab.active .badge{background:var(--soft)}
+.tab.has-badge .badge::after{
+  content:'';position:absolute;top:2px;right:11px;
+  width:7px;height:7px;border-radius:50%;background:var(--iron);
+  box-shadow:0 0 0 2px #fff;
+}
 
-/* ============================ modal ============================ */
+/* ============================ send confirmation ============================ */
 .overlay{
-  position:absolute;inset:0;z-index:60;display:grid;place-items:center;padding:30px;
-  background:rgba(20,24,33,.4);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
-  opacity:0;pointer-events:none;transition:opacity .25s;
+  position:absolute;inset:0;z-index:60;
+  display:grid;place-items:center;padding:30px;
+  background:rgba(12,20,15,.42);backdrop-filter:blur(3px);
+  opacity:0;pointer-events:none;transition:opacity .3s ease;
 }
 .overlay.on{opacity:1;pointer-events:auto}
 .modal{
-  background:var(--surface);border-radius:24px;padding:30px 26px;text-align:center;
-  width:100%;max-width:280px;box-shadow:0 30px 60px -20px rgba(20,24,33,.5);
-  transform:scale(.9);transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  background:var(--surface);border-radius:26px;padding:28px 24px;
+  text-align:center;max-width:300px;
+  transform:translateY(14px) scale(.96);transition:transform .35s cubic-bezier(.3,1.4,.5,1);
+  box-shadow:0 30px 60px -24px rgba(19,26,22,.6);
 }
-.overlay.on .modal{transform:scale(1)}
+.overlay.on .modal{transform:none}
 .modal .check{
-  width:66px;height:66px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;
-  background:rgba(18,183,106,.12);
+  width:62px;height:62px;border-radius:50%;background:var(--soft);
+  display:grid;place-items:center;margin:0 auto 14px;
 }
-.modal .check svg{stroke-dasharray:32;stroke-dashoffset:32}
-.overlay.on .modal .check svg{transition:stroke-dashoffset .5s ease .15s;stroke-dashoffset:0}
-.modal h3{font-size:1.15rem;font-weight:800;margin-bottom:8px}
-.modal p{font-size:.85rem;color:var(--ink-2);line-height:1.5}
+.modal h3{font-family:var(--display);font-weight:800;font-size:1.2rem;letter-spacing:-.03em;margin-bottom:7px}
+.modal p{font-size:.84rem;color:var(--ink-2);line-height:1.5}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+  .reveal{opacity:1;transform:none}
+}
 </style>
 
 <div class="stage">
-  <div class="stage-caption" aria-hidden="true">
-    <span class="spectrum"></span>OpenHealth&nbsp;<small>interactive prototype</small>
+  <div class="stage-caption">
+    <span class="spectrum"></span>
+    OpenHealth <small>· interactive prototype · fake data</small>
   </div>
 
-  <div class="phone">
+  <div class="phone hero" id="phone">
 
-    <!-- status bar -->
     <div class="statusbar">
       <span>9:41</span>
       <span class="icons">
-        <svg width="17" height="11" viewBox="0 0 17 11" fill="none"><rect x="0" y="7" width="3" height="4" rx="1" fill="#141821"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="#141821"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="#141821"/><rect x="13.5" y="0" width="3" height="11" rx="1" fill="#141821"/></svg>
-        <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><path d="M8 10.5 1 4a10 10 0 0 1 14 0L8 10.5Z" fill="#141821" opacity=".35"/><path d="M8 10.5 4 6.6a6 6 0 0 1 8 0L8 10.5Z" fill="#141821"/></svg>
-        <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3" stroke="#141821" opacity=".4"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="#141821"/><rect x="23" y="4" width="1.6" height="4" rx=".8" fill="#141821" opacity=".4"/></svg>
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="none"><rect x="0" y="7" width="3" height="4" rx="1" fill="currentColor"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="currentColor"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="currentColor"/><rect x="13.5" y="0" width="3" height="11" rx="1" fill="currentColor"/></svg>
+        <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><path d="M8 10.5 1 4a10 10 0 0 1 14 0L8 10.5Z" fill="currentColor" opacity=".35"/><path d="M8 10.5 4 6.6a6 6 0 0 1 8 0L8 10.5Z" fill="currentColor"/></svg>
+        <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".4"/></svg>
       </span>
     </div>
 
     <div class="viewport">
       <div class="track" id="track">
 
-        <!-- ================= SCREEN 1 · HOME ================= -->
+        <!-- ===================== SCREEN 1 · HOME ===================== -->
         <section class="screen in" id="s0" aria-label="Home">
           <div class="screen-inner">
 
             <div class="reveal">
-              <div class="brandmark"><span class="dot"></span><span>Open<b>Health</b></span></div>
-              <div class="greeting">
-                <div>
-                  <div class="hello">Good morning</div>
-                  <h1>Jordan Reyes</h1>
-                </div>
-                <div class="me">JR</div>
-              </div>
-            </div>
-
-            <div class="updates reveal" role="button" tabindex="0" onclick="go(1)" onkeydown="key(event,1)">
-              <div class="ic">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-              </div>
-              <div class="tx"><b>18 new updates</b><small>Records synced from 5 providers today</small></div>
-              <span class="go"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
-            </div>
-
-            <div class="reveal">
-              <div class="section-head">
-                <div class="eyebrow">New trials for you</div>
-                <button class="link" onclick="go(2)">See all</button>
-              </div>
-              <div class="trials">
-                <div class="trial hot" role="button" tabindex="0" onclick="go(2)" onkeydown="key(event,2)">
-                  <span class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
-                  <div class="code">CGX #4</div>
-                  <div class="field">Hematology · Phase II</div>
-                  <div class="match"><b>87</b><small>/100 match</small></div>
-                  <div class="spectrum"><i style="background:var(--iron)"></i><i style="background:var(--hgb)"></i><i style="background:var(--o2)"></i><i style="background:var(--ldl)"></i></div>
-                </div>
-                <div class="trial soon">
-                  <span class="soon-tag">Soon</span>
-                  <div class="code">LMI</div>
-                  <div class="field">Metabolic · Phase I</div>
-                  <div class="match"><b style="color:var(--ink-3)">—</b><small>screening</small></div>
-                  <div class="spectrum"><i style="background:var(--line-2)"></i><i style="background:var(--line-2)"></i><i style="background:var(--line-2)"></i></div>
-                </div>
-                <div class="trial soon">
-                  <span class="soon-tag">Soon</span>
-                  <div class="code">PPF</div>
-                  <div class="field">Pulmonary · Phase II</div>
-                  <div class="match"><b style="color:var(--ink-3)">—</b><small>screening</small></div>
-                  <div class="spectrum"><i style="background:var(--line-2)"></i><i style="background:var(--line-2)"></i><i style="background:var(--line-2)"></i></div>
+              <div class="hero-top">
+                <div class="wordmark"><i></i>OpenHealth</div>
+                <div class="right">
+                  <div class="pill-profile"><span class="av">JR</span>Profile</div>
+                  <button class="bell" aria-label="18 new updates" onclick="go(1)">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#12301C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                  </button>
                 </div>
               </div>
             </div>
 
             <div class="reveal">
-              <div class="section-head">
-                <div class="eyebrow">Your bloodwork</div>
-                <button class="link" onclick="go(1)">View labs</button>
-              </div>
-              <div class="card bw">
-                <div class="bw-row">
-                  <span class="dot" style="background:var(--iron)"></span>
-                  <span class="name">Iron (Ferritin)</span>
-                  <span class="chip" style="background:rgba(225,29,116,.12);color:var(--iron)">Below avg</span>
-                  <span class="mini"><i style="background:var(--iron);--w:16%"></i></span>
+              <div class="score">
+                <div class="ring-wrap">
+                  <svg width="216" height="216" viewBox="0 0 216 216" aria-hidden="true">
+                    <circle cx="108" cy="108" r="85" fill="none" stroke="rgba(255,255,255,.42)" stroke-width="17"/>
+                    <circle class="ring-prog" cx="108" cy="108" r="85" fill="none" stroke="#fff" stroke-width="17"
+                            stroke-linecap="round" transform="rotate(-90 108 108)" style="--off:69.4"/>
+                  </svg>
+                  <div class="ring-center">
+                    <span class="n" id="hs">87</span>
+                    <span class="d">Health Score</span>
+                  </div>
                 </div>
-                <div class="bw-row">
-                  <span class="dot" style="background:var(--hgb)"></span>
-                  <span class="name">Hemoglobin</span>
-                  <span class="chip" style="background:rgba(124,77,255,.12);color:var(--hgb)">Steady</span>
-                  <span class="mini"><i style="background:var(--hgb);--w:58%"></i></span>
+                <div class="delta">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 15 7-7 7 7"/></svg>
+                  4 points since your June panel
+                </div>
+
+                <div class="macros">
+                  <div class="macro">
+                    <span class="lab">Iron</span>
+                    <span class="track"><i style="--w:16%;background:var(--iron)"></i></span>
+                    <span class="v"><b>8</b> / 12–150</span>
+                  </div>
+                  <div class="macro">
+                    <span class="lab">Hemoglobin</span>
+                    <span class="track"><i style="--w:66%;background:var(--hgb)"></i></span>
+                    <span class="v"><b>13.1</b> / 12–16</span>
+                  </div>
+                  <div class="macro">
+                    <span class="lab">SpO₂</span>
+                    <span class="track"><i style="--w:92%;background:var(--o2)"></i></span>
+                    <span class="v"><b>97</b> / 95–100</span>
+                  </div>
+                </div>
+
+                <button class="see" onclick="go(1)">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#12301C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  See details
+                </button>
+              </div>
+            </div>
+
+            <div class="sheet reveal">
+              <div class="sheet-head">
+                <span class="cal">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--brand-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="3"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/></svg>
+                </span>
+                <h2>Today, Sep 28</h2>
+                <span class="go"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
+              </div>
+
+              <div class="tiles">
+                <div class="tile">
+                  <div class="top">
+                    <span class="k">Records<br>synced</span>
+                    <span class="ic" style="background:rgba(70,188,92,.13)">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-d)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></svg>
+                    </span>
+                  </div>
+                  <div class="v">18<span class="u">new</span></div>
+                </div>
+                <div class="tile">
+                  <div class="top">
+                    <span class="k">Providers<br>connected</span>
+                    <span class="ic" style="background:rgba(47,128,237,.13)">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ldl)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.6-7-10a7 7 0 0 1 14 0c0 5.4-7 10-7 10Z"/><path d="M12 8v6M9 11h6"/></svg>
+                    </span>
+                  </div>
+                  <div class="v">5<span class="u">of 5</span></div>
                 </div>
               </div>
-            </div>
 
-            <div class="tiles reveal">
-              <div class="tile">
-                <div class="k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Insurance</div>
-                <div class="v ok">Full coverage</div>
-              </div>
-              <div class="tile">
-                <div class="k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Balance due</div>
-                <div class="v">$0.00</div>
-              </div>
-            </div>
+              <div>
+                <div class="section-head">
+                  <div class="eyebrow">New trials for you</div>
+                  <button class="link" onclick="go(2)">See all</button>
+                </div>
 
-            <div class="reveal">
-              <div class="eyebrow">Your recent doctors</div>
-              <div class="docs">
-                <div class="doc"><div class="av" style="background:linear-gradient(135deg,var(--iron),#b01560)">DC</div><small>Dr. Chen</small></div>
-                <div class="doc"><div class="av" style="background:linear-gradient(135deg,#F5A524,#E1741D)">RM</div><small>Dr. Miller</small></div>
-                <div class="doc"><div class="av" style="background:linear-gradient(135deg,var(--hgb),#5a2ed6)">SL</div><small>Dr. Lim</small></div>
-                <div class="doc"><div class="av" style="background:linear-gradient(135deg,var(--o2),#0a8378)">PK</div><small>Dr. Kwan</small></div>
-                <div class="doc"><div class="av" style="background:linear-gradient(135deg,var(--ldl),#1b5fc0)">NP</div><small>Dr. Park</small></div>
-              </div>
-            </div>
+                <div style="display:flex;flex-direction:column;gap:11px">
+                  <div class="row-item live tappable" role="button" tabindex="0" onclick="go(2)" onkeydown="key(event,2)">
+                    <span class="ic" style="background:rgba(225,29,116,.12);color:var(--iron)">CGX</span>
+                    <span class="tx"><b>CGX Clinical Trial #4</b><small>Hematology · Phase II · 3 sites near you</small></span>
+                    <span class="add"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+                    <span class="meta">
+                      <span class="score-chip"><i class="spark"></i>87 / 100 match</span>
+                      <span class="hint">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Tap to view
+                      </span>
+                    </span>
+                  </div>
 
+                  <div class="row-item soon">
+                    <span class="ic">LMI</span>
+                    <span class="tx"><b>LMI Clinical Trial</b><small>Metabolic · Phase I</small></span>
+                    <span class="add ghost"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                    <span class="meta">
+                      <span class="chip" style="background:#E4E8E0;color:var(--ink-3)">Screening opens Oct 14</span>
+                    </span>
+                  </div>
+
+                  <div class="row-item soon">
+                    <span class="ic">PPF</span>
+                    <span class="tx"><b>PPF Clinical Trial</b><small>Pulmonary · Phase II</small></span>
+                    <span class="add ghost"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                    <span class="meta">
+                      <span class="chip" style="background:#E4E8E0;color:var(--ink-3)">Screening opens Nov 2</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tiles">
+                <div class="tile">
+                  <div class="top">
+                    <span class="k">Insurance</span>
+                    <span class="ic" style="background:rgba(70,188,92,.13)">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-d)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    </span>
+                  </div>
+                  <div class="v ok" style="font-size:1.1rem">Full coverage</div>
+                </div>
+                <div class="tile">
+                  <div class="top">
+                    <span class="k">Balance due</span>
+                    <span class="ic" style="background:var(--surface-2)">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/></svg>
+                    </span>
+                  </div>
+                  <div class="v">$0<span class="u">.00</span></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="eyebrow">Your recent doctors</div>
+                <div class="docs">
+                  <div class="doc"><div class="av" style="background:linear-gradient(135deg,var(--iron),#b01560)">DC</div><small>Dr. Chen</small></div>
+                  <div class="doc"><div class="av" style="background:linear-gradient(135deg,#F5A524,#E1741D)">RM</div><small>Dr. Miller</small></div>
+                  <div class="doc"><div class="av" style="background:linear-gradient(135deg,var(--hgb),#5a2ed6)">SL</div><small>Dr. Lim</small></div>
+                  <div class="doc"><div class="av" style="background:linear-gradient(135deg,var(--o2),#0a8378)">PK</div><small>Dr. Kwan</small></div>
+                  <div class="doc"><div class="av" style="background:linear-gradient(135deg,var(--ldl),#1b5fc0)">NP</div><small>Dr. Park</small></div>
+                </div>
+              </div>
+
+            </div>
           </div>
         </section>
 
-        <!-- ================= SCREEN 2 · LABS ================= -->
+        <!-- ===================== SCREEN 2 · LABS ===================== -->
         <section class="screen" id="s1" aria-label="Lab results">
           <div class="screen-inner">
 
             <div class="topbar reveal">
               <button class="back" onclick="go(0)" aria-label="Back to home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-              <div><h1>Your lab results</h1><div class="sub">Complete blood panel · Sept 24</div></div>
+              <div class="mid"><h1>Your lab results</h1><div class="sub">Complete blood panel · Sept 24</div></div>
+              <span class="more"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg></span>
             </div>
 
-            <div class="card reveal" style="padding:20px 18px 18px">
+            <div class="switch reveal" id="switch" role="tablist" aria-label="Choose a biomarker">
+              <button class="on" role="tab" onclick="pick(0)"><span class="dot" style="background:var(--iron)"></span>Iron</button>
+              <button role="tab" onclick="pick(1)"><span class="dot" style="background:var(--hgb)"></span>Hemoglobin</button>
+              <button role="tab" onclick="pick(2)"><span class="dot" style="background:var(--o2)"></span>SpO₂</button>
+              <button role="tab" onclick="pick(3)"><span class="dot" style="background:var(--ldl)"></span>LDL</button>
+            </div>
+
+            <div class="card chart-card reveal">
+              <div class="name" id="cName">Iron (Ferritin)</div>
+              <div class="big">
+                <div class="n" id="cVal">8</div>
+                <div class="unit" id="cUnit">ng/mL</div>
+                <div class="target">Normal range<br><b id="cRange">12–150 ng/mL</b></div>
+              </div>
+
+              <div class="chart" id="chart" aria-hidden="true">
+                <div class="limit" id="limit"><span id="limitLab">12</span></div>
+              </div>
+
+              <div class="verdict">
+                <span class="dot" id="vDot" style="background:var(--iron)"></span>
+                <span class="tx" id="vTx"><b>Trending down.</b> Seven draws since March, each one lower. You have been under the normal floor since August.</span>
+              </div>
+            </div>
+
+            <div class="vitals reveal">
+              <div class="vital">
+                <div class="k"><span class="ic" style="background:rgba(225,29,116,.12)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--iron)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.5-1.6 2.5-3.3 2.5-5.3A5.2 5.2 0 0 0 12 6a5.2 5.2 0 0 0-9.5 2.7C2.5 13 12 20 12 20s3.8-2.8 7-6Z"/></svg></span>Resting HR</div>
+                <div class="g">
+                  <svg width="100%" height="34" viewBox="0 0 120 34" preserveAspectRatio="none"><path d="M0 22h14l4-9 5 17 5-12 4 4h16l4-9 5 17 5-12 4 4h16l4-9 5 17 5-12 4 4h20" fill="none" stroke="var(--iron)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/></svg>
+                </div>
+                <div class="v">62<span class="u">bpm</span></div>
+              </div>
+              <div class="vital">
+                <div class="k"><span class="ic" style="background:rgba(18,179,166,.12)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o2)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg></span>Oxygen</div>
+                <div class="g">
+                  <i style="height:62%;background:rgba(18,179,166,.3)"></i><i style="height:74%;background:rgba(18,179,166,.3)"></i><i style="height:68%;background:rgba(18,179,166,.3)"></i><i style="height:86%;background:rgba(18,179,166,.3)"></i><i style="height:78%;background:rgba(18,179,166,.3)"></i><i style="height:92%;background:var(--o2)"></i>
+                </div>
+                <div class="v">97<span class="u">%</span></div>
+              </div>
+              <div class="vital">
+                <div class="k"><span class="ic" style="background:rgba(124,77,255,.12)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--hgb)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 12 8.5 8.5"/></svg></span>Weight</div>
+                <div class="g">
+                  <svg width="100%" height="34" viewBox="0 0 120 34" preserveAspectRatio="none"><path d="M0 12 20 15 40 11 60 18 80 15 100 21 120 19" fill="none" stroke="var(--hgb)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 12 20 15 40 11 60 18 80 15 100 21 120 19V34H0Z" fill="rgba(124,77,255,.1)"/></svg>
+                </div>
+                <div class="v">154<span class="u">lb</span></div>
+              </div>
+              <div class="vital">
+                <div class="k"><span class="ic" style="background:rgba(47,128,237,.12)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ldl)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3Z"/></svg></span>Hydration</div>
+                <div class="g" style="align-items:center;gap:5px">
+                  <svg width="16" height="20" viewBox="0 0 24 24" fill="var(--ldl)" opacity=".85"><path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3Z"/></svg>
+                  <svg width="16" height="20" viewBox="0 0 24 24" fill="var(--ldl)" opacity=".85"><path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3Z"/></svg>
+                  <svg width="16" height="20" viewBox="0 0 24 24" fill="var(--ldl)" opacity=".85"><path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3Z"/></svg>
+                  <svg width="16" height="20" viewBox="0 0 24 24" fill="var(--ldl)" opacity=".85"><path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3Z"/></svg>
+                  <svg width="16" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--line-2)" stroke-width="2"><path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3Z"/></svg>
+                </div>
+                <div class="v">6<span class="u">glasses</span></div>
+              </div>
+            </div>
+
+            <div class="card reveal" style="padding:18px 16px 14px">
               <div class="gauge-wrap">
-                <svg width="230" height="128" viewBox="0 0 230 128" aria-label="Overall health gauge: balanced">
-                  <path d="M20 118 A95 95 0 0 1 210 118" fill="none" stroke="#EDEFF3" stroke-width="15" stroke-linecap="round"/>
+                <svg width="230" height="128" viewBox="0 0 230 128" aria-label="Overall panel: balanced">
+                  <path d="M20 118 A95 95 0 0 1 210 118" fill="none" stroke="#EDEFEA" stroke-width="15" stroke-linecap="round"/>
                   <path d="M20 118 A95 95 0 0 1 63 42" fill="none" stroke="var(--iron)" stroke-width="15" stroke-linecap="round" opacity=".85"/>
-                  <path d="M70 35 A95 95 0 0 1 160 35" fill="none" stroke="var(--good)" stroke-width="15" stroke-linecap="round" opacity=".9"/>
+                  <path d="M70 35 A95 95 0 0 1 160 35" fill="none" stroke="var(--brand)" stroke-width="15" stroke-linecap="round"/>
                   <path d="M167 42 A95 95 0 0 1 210 118" fill="none" stroke="var(--warn)" stroke-width="15" stroke-linecap="round" opacity=".85"/>
-                  <text x="20" y="127" font-size="10" fill="#97A0AE" font-family="Inter">Low</text>
-                  <text x="106" y="20" font-size="10" fill="#12B76A" font-family="Inter" font-weight="700">OK</text>
-                  <text x="196" y="127" font-size="10" fill="#97A0AE" font-family="Inter">High</text>
-                  <g class="needle">
-                    <line x1="115" y1="118" x2="115" y2="46" stroke="#141821" stroke-width="3.5" stroke-linecap="round"/>
-                  </g>
-                  <circle cx="115" cy="118" r="7" fill="#141821"/><circle cx="115" cy="118" r="3" fill="#F6F7F9"/>
+                  <g class="needle"><line x1="115" y1="118" x2="115" y2="46" stroke="#131A16" stroke-width="3.5" stroke-linecap="round"/></g>
+                  <circle cx="115" cy="118" r="7" fill="#131A16"/><circle cx="115" cy="118" r="3" fill="#fff"/>
                 </svg>
                 <div class="gauge-status">Balanced</div>
                 <div class="gauge-note">3 of 4 markers in range · 1 needs attention</div>
               </div>
             </div>
 
-            <!-- Iron -->
             <div class="reveal">
-              <div class="marker">
-                <div class="head">
-                  <span class="name"><span class="dot" style="background:var(--iron)"></span>Iron (Ferritin)</span>
-                  <span class="val" style="color:var(--iron)">8<span class="unit">ng/mL</span></span>
+              <div class="eyebrow">Every marker, against its range</div>
+              <div class="card markers" style="padding:2px 16px 14px">
+                <div class="marker">
+                  <div class="head">
+                    <span class="nm"><span class="dot" style="background:var(--iron)"></span>Iron (Ferritin)</span>
+                    <span class="val" style="color:var(--iron)">8<span class="u">ng/mL</span></span>
+                  </div>
+                  <div class="scale">
+                    <span class="band" style="left:7.5%;right:6.25%;background:var(--iron)"></span>
+                    <span class="pin" style="left:5%;background:var(--iron)"></span>
+                  </div>
+                  <div class="scale-legend"><span style="color:var(--iron)"><b>Too low</b></span><span>Normal 12–150</span></div>
                 </div>
-                <div class="scale">
-                  <span class="band" style="left:7.5%;right:6.25%;background:var(--iron)"></span>
-                  <span class="val" style="left:5%;background:var(--iron)"></span>
+                <div class="marker">
+                  <div class="head">
+                    <span class="nm"><span class="dot" style="background:var(--hgb)"></span>Hemoglobin</span>
+                    <span class="val" style="color:var(--hgb)">13.1<span class="u">g/dL</span></span>
+                  </div>
+                  <div class="scale">
+                    <span class="band" style="left:33%;right:33%;background:var(--hgb)"></span>
+                    <span class="pin" style="left:42.5%;background:var(--hgb)"></span>
+                  </div>
+                  <div class="scale-legend"><span><b>Average</b></span><span>Normal 12–16</span></div>
                 </div>
-                <div class="scale-legend"><span>Too low</span><span>Normal 12–150</span></div>
-              </div>
-            </div>
-
-            <!-- Hemoglobin -->
-            <div class="reveal">
-              <div class="marker">
-                <div class="head">
-                  <span class="name"><span class="dot" style="background:var(--hgb)"></span>Hemoglobin</span>
-                  <span class="val" style="color:var(--hgb)">13.1<span class="unit">g/dL</span></span>
+                <div class="marker">
+                  <div class="head">
+                    <span class="nm"><span class="dot" style="background:var(--o2)"></span>Oxygen saturation</span>
+                    <span class="val" style="color:var(--o2)">97<span class="u">%</span></span>
+                  </div>
+                  <div class="scale">
+                    <span class="band" style="left:50%;right:0;background:var(--o2)"></span>
+                    <span class="pin" style="left:70%;background:var(--o2)"></span>
+                  </div>
+                  <div class="scale-legend"><span><b>Steady</b></span><span>Normal 95–100</span></div>
                 </div>
-                <div class="scale">
-                  <span class="band" style="left:33%;right:33%;background:var(--hgb)"></span>
-                  <span class="val" style="left:42.5%;background:var(--hgb)"></span>
+                <div class="marker">
+                  <div class="head">
+                    <span class="nm"><span class="dot" style="background:var(--ldl)"></span>LDL cholesterol</span>
+                    <span class="val" style="color:var(--ldl)">95<span class="u">mg/dL</span></span>
+                  </div>
+                  <div class="scale">
+                    <span class="band" style="left:0;right:37.5%;background:var(--ldl)"></span>
+                    <span class="pin" style="left:59%;background:var(--ldl)"></span>
+                  </div>
+                  <div class="scale-legend"><span><b>Optimal</b></span><span>Target under 100</span></div>
                 </div>
-                <div class="scale-legend"><span>Average</span><span>Normal 12–16</span></div>
-              </div>
-            </div>
-
-            <!-- Oxygen -->
-            <div class="reveal">
-              <div class="marker">
-                <div class="head">
-                  <span class="name"><span class="dot" style="background:var(--o2)"></span>Oxygen saturation</span>
-                  <span class="val" style="color:var(--o2)">97<span class="unit">%</span></span>
-                </div>
-                <div class="scale">
-                  <span class="band" style="left:50%;right:0;background:var(--o2)"></span>
-                  <span class="val" style="left:70%;background:var(--o2)"></span>
-                </div>
-                <div class="scale-legend"><span>Steady</span><span>Normal 95–100</span></div>
-              </div>
-            </div>
-
-            <!-- LDL -->
-            <div class="reveal">
-              <div class="marker">
-                <div class="head">
-                  <span class="name"><span class="dot" style="background:var(--ldl)"></span>LDL cholesterol</span>
-                  <span class="val" style="color:var(--ldl)">95<span class="unit">mg/dL</span></span>
-                </div>
-                <div class="scale">
-                  <span class="band" style="left:0;right:37.5%;background:var(--ldl)"></span>
-                  <span class="val" style="left:59%;background:var(--ldl)"></span>
-                </div>
-                <div class="scale-legend"><span>Optimal</span><span>Target under 100</span></div>
               </div>
             </div>
 
             <div class="reveal">
-              <div class="eyebrow">Recommendations</div>
+              <div class="eyebrow">What to do about it</div>
               <div class="card recs">
                 <div class="rec">
                   <span class="ic" style="background:rgba(225,29,116,.12)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--iron)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 2 8h10c0-3 2-5 2-8a7 7 0 0 0-7-7Z"/><path d="M9 21h6"/></svg></span>
                   <div class="tx"><b>Raise your iron</b><small>Add iron-rich foods or a supplement, then recheck ferritin in 8 weeks.</small></div>
                 </div>
                 <div class="rec">
-                  <span class="ic" style="background:rgba(124,77,255,.12)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--hgb)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+                  <span class="ic" style="background:rgba(124,77,255,.12)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--hgb)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="3"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/></svg></span>
                   <div class="tx"><b>Book a follow-up</b><small>Schedule a hemoglobin recheck with Dr. Chen to confirm the trend holds.</small></div>
                 </div>
                 <div class="rec">
-                  <span class="ic" style="background:rgba(18,179,166,.12)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--o2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                  <span class="ic" style="background:rgba(70,188,92,.13)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--brand-d)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
                   <div class="tx"><b>Keep it up</b><small>Oxygen and cholesterol look great — no change needed.</small></div>
                 </div>
               </div>
@@ -659,37 +931,43 @@ h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;text-wrap:balance}
           </div>
         </section>
 
-        <!-- ================= SCREEN 3 · TRIALS ================= -->
+        <!-- ===================== SCREEN 3 · TRIALS ===================== -->
         <section class="screen" id="s2" aria-label="Trial match">
           <div class="screen-inner">
 
             <div class="topbar reveal">
               <button class="back" onclick="go(1)" aria-label="Back to lab results"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-              <div><h1>CGX Clinical Trial #4</h1><div class="sub">Matched to your health profile</div></div>
+              <div class="mid"><h1>CGX Clinical Trial #4</h1><div class="sub">Matched to your health profile</div></div>
+              <span class="more"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg></span>
             </div>
 
-            <div class="hero reveal">
+            <div class="match-hero reveal">
               <div class="ring-wrap">
-                <svg width="168" height="168" viewBox="0 0 168 168">
-                  <circle cx="84" cy="84" r="54" fill="none" stroke="#EDEFF3" stroke-width="12"/>
-                  <circle class="ring-prog" cx="84" cy="84" r="54" fill="none" stroke="var(--good)" stroke-width="12" stroke-linecap="round" transform="rotate(-90 84 84)"/>
+                <svg width="186" height="186" viewBox="0 0 186 186" aria-hidden="true">
+                  <circle cx="93" cy="93" r="72" fill="none" stroke="rgba(255,255,255,.42)" stroke-width="15"/>
+                  <circle class="ring-prog" cx="93" cy="93" r="72" fill="none" stroke="#fff" stroke-width="15"
+                          stroke-linecap="round" transform="rotate(-90 93 93)"
+                          style="stroke-dasharray:452;stroke-dashoffset:452;--off:58.8"/>
                 </svg>
-                <div class="ring-center"><span class="n" id="scoreNum">0</span><span class="d">/ 100 match</span></div>
+                <div class="ring-center">
+                  <span class="n" id="scoreNum">0</span>
+                  <span class="d">/ 100 match</span>
+                </div>
               </div>
-              <h1>Strong match</h1>
+              <h2>Strong match</h2>
               <div class="tags">
-                <span class="chip" style="background:rgba(18,183,106,.12);color:var(--good)">Recruiting now</span>
-                <span class="chip" style="background:var(--surface-2);color:var(--ink-2)">Phase II · Hematology</span>
+                <span class="chip">Recruiting now</span>
+                <span class="chip">Phase II · Hematology</span>
               </div>
             </div>
 
             <div class="reveal">
               <div class="eyebrow">Why you qualify</div>
-              <div class="card elig" style="padding:4px 18px">
-                <div class="row"><span class="lab">Iron levels</span><span class="track"><i style="background:var(--iron);--w:53%"></i></span><span class="pct" style="color:var(--iron)">53</span></div>
-                <div class="row"><span class="lab">Hemoglobin</span><span class="track"><i style="background:var(--hgb);--w:82%"></i></span><span class="pct" style="color:var(--hgb)">82</span></div>
-                <div class="row"><span class="lab">O₂ saturation</span><span class="track"><i style="background:var(--o2);--w:97%"></i></span><span class="pct" style="color:var(--o2)">97</span></div>
-                <div class="row"><span class="lab">LDL cholesterol</span><span class="track"><i style="background:var(--ldl);--w:95%"></i></span><span class="pct" style="color:var(--ldl)">95</span></div>
+              <div class="card elig">
+                <div class="row"><span class="lab">Iron levels</span><span class="track"><i style="--w:53%;background:var(--iron)"></i></span><span class="pct" style="color:var(--iron)">53</span></div>
+                <div class="row"><span class="lab">Hemoglobin</span><span class="track"><i style="--w:82%;background:var(--hgb)"></i></span><span class="pct" style="color:var(--hgb)">82</span></div>
+                <div class="row"><span class="lab">O₂ saturation</span><span class="track"><i style="--w:97%;background:var(--o2)"></i></span><span class="pct" style="color:var(--o2)">97</span></div>
+                <div class="row"><span class="lab">LDL cholesterol</span><span class="track"><i style="--w:95%;background:var(--ldl)"></i></span><span class="pct" style="color:var(--ldl)">95</span></div>
               </div>
             </div>
 
@@ -708,11 +986,14 @@ h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;text-wrap:balance}
               <div class="card send">
                 <div class="who">
                   <div class="av">DC</div>
-                  <div class="meta"><b>Dr. Chen</b><small>Primary care · reviews within 24h</small></div>
-                  <span class="chip auto">Auto</span>
+                  <div>
+                    <b>Dr. Chen</b>
+                    <small>Primary care · reviews within 24h</small>
+                  </div>
+                  <span class="chip">Auto</span>
                 </div>
-                <button class="btn btn-send" id="sendBtn" onclick="send()">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                <button class="btn" id="sendBtn" onclick="send()">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
                   Send my records to Dr. Chen
                 </button>
               </div>
@@ -736,40 +1017,37 @@ h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;text-wrap:balance}
             <div class="reveal">
               <div class="eyebrow">Related trials</div>
               <div class="card related">
-                <div class="row"><span class="dot" style="background:var(--ink-3)"></span><div><div class="name">LMI Clinical Trial</div><div class="field">Metabolic · Phase I</div></div><span class="chip" style="margin-left:auto;background:var(--surface-2);color:var(--ink-3)">Soon</span></div>
-                <div class="row"><span class="dot" style="background:var(--ink-3)"></span><div><div class="name">PPF Clinical Trial</div><div class="field">Pulmonary · Phase II</div></div><span class="chip" style="margin-left:auto;background:var(--surface-2);color:var(--ink-3)">Soon</span></div>
+                <div class="row"><span class="dot" style="background:var(--ink-3)"></span><div><div class="nm">LMI Clinical Trial</div><div class="field">Metabolic · Phase I</div></div><span class="chip" style="margin-left:auto;background:var(--surface-2);color:var(--ink-3)">Soon</span></div>
+                <div class="row"><span class="dot" style="background:var(--ink-3)"></span><div><div class="nm">PPF Clinical Trial</div><div class="field">Pulmonary · Phase II</div></div><span class="chip" style="margin-left:auto;background:var(--surface-2);color:var(--ink-3)">Soon</span></div>
               </div>
             </div>
 
           </div>
 
-          <!-- paper plane flies from the send button -->
           <span class="plane" id="plane"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></span>
         </section>
 
       </div>
     </div>
 
-    <!-- tab bar -->
     <nav class="tabbar" aria-label="Primary">
-      <button class="tab active" id="t0" onclick="go(0)" aria-label="Home">
+      <button class="tab active" id="t0" onclick="go(0)">
         <span class="badge"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></span>
         Home
       </button>
-      <button class="tab" id="t1" onclick="go(1)" aria-label="Labs">
+      <button class="tab" id="t1" onclick="go(1)">
         <span class="badge"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6l-5 8a2 2 0 0 0 1.7 3h12.6a2 2 0 0 0 1.7-3l-5-8V3"/><path d="M8 3h8M7.5 14h9"/></svg></span>
         Labs
       </button>
-      <button class="tab" id="t2" onclick="go(2)" aria-label="Trials">
+      <button class="tab" id="t2" onclick="go(2)">
         <span class="badge"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
         Trials
       </button>
     </nav>
 
-    <!-- send confirmation -->
     <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Records sent">
       <div class="modal">
-        <div class="check"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+        <div class="check"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--brand-d)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
         <h3>Sent to Dr. Chen</h3>
         <p>Your CGX Trial&nbsp;#4 records are on the way. Dr. Chen reviews new records within 24&nbsp;hours.</p>
       </div>
@@ -780,59 +1058,125 @@ h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;text-wrap:balance}
 
 <script>
 (function(){
-  var track = document.getElementById('track');
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------------- biomarker history (fake data, seven lab draws) ---------------- */
+  var MONTHS = ['Mar','Apr','May','Jun','Jul','Aug','Sep'];
+  var MARKERS = [
+    { name:'Iron (Ferritin)', unit:'ng/mL', color:'var(--iron)', rgba:'rgba(225,29,116,.22)',
+      range:'12–150 ng/mL', values:[26,23,19,16,13,10,8], max:30, limit:12, limitLabel:'12 floor',
+      verdict:'<b>Trending down.</b> Seven draws since March, each one lower. You dropped under the normal floor in August.' },
+    { name:'Hemoglobin', unit:'g/dL', color:'var(--hgb)', rgba:'rgba(124,77,255,.22)',
+      range:'12–16 g/dL', values:[14.2,14.0,13.8,13.6,13.4,13.2,13.1], max:17, limit:12, limitLabel:'12 floor',
+      verdict:'<b>Holding, but sliding.</b> Still inside the range — it has drifted a full point since March, which usually follows iron.' },
+    { name:'Oxygen saturation', unit:'%', color:'var(--o2)', rgba:'rgba(18,179,166,.22)',
+      range:'95–100 %', values:[96,97,97,96,98,97,97], max:100, limit:95, limitLabel:'95 floor',
+      verdict:'<b>Rock steady.</b> Every draw this year sat inside the normal band. Nothing to act on here.' },
+    { name:'LDL cholesterol', unit:'mg/dL', color:'var(--ldl)', rgba:'rgba(47,128,237,.22)',
+      range:'under 100 mg/dL', values:[128,122,116,110,104,99,95], max:140, limit:100, limitLabel:'100 ceiling',
+      verdict:'<b>Real progress.</b> Down 33 points since March and under the target ceiling for two draws running.' }
+  ];
+
+  var chart = document.getElementById('chart');
+  var limit = document.getElementById('limit');
+  var active = -1;
+
+  function renderChart(i){
+    var m = MARKERS[i];
+    // rebuild the columns, keeping the dashed limit line node
+    Array.prototype.slice.call(chart.querySelectorAll('.bar-col')).forEach(function(n){ n.remove(); });
+
+    m.values.forEach(function(v, idx){
+      var last = idx === m.values.length - 1;
+      var col = document.createElement('div');
+      col.className = 'bar-col' + (last ? ' now' : '');
+      col.innerHTML =
+        '<span class="cap">' + v + '</span>' +
+        '<span class="bar"></span>' +
+        '<span class="x">' + MONTHS[idx] + '</span>';
+      chart.appendChild(col);
+
+      var bar = col.querySelector('.bar');
+      bar.style.background = last ? m.color : m.rgba;
+      var h = Math.max(4, (v / m.max) * 118);
+      if(reduce){ bar.style.height = h + 'px'; }
+      else { requestAnimationFrame(function(){ setTimeout(function(){ bar.style.height = h + 'px'; }, 40 + idx * 55); }); }
+    });
+
+    limit.style.bottom = (23 + (m.limit / m.max) * 118) + 'px';
+    document.getElementById('limitLab').textContent = m.limitLabel;
+
+    document.getElementById('cName').textContent = m.name;
+    var val = m.values[m.values.length - 1];
+    document.getElementById('cVal').textContent = val;
+    document.getElementById('cVal').style.color = m.color;
+    document.getElementById('cUnit').textContent = m.unit;
+    document.getElementById('cRange').textContent = m.range;
+    document.getElementById('vDot').style.background = m.color;
+    document.getElementById('vTx').innerHTML = m.verdict;
+  }
+
+  window.pick = function(i){
+    if(i === active) return;
+    active = i;
+    var btns = document.getElementById('switch').children;
+    for(var b = 0; b < btns.length; b++) btns[b].classList.toggle('on', b === i);
+    renderChart(i);
+  };
+
+  /* ---------------- screen navigation ---------------- */
+  var track  = document.getElementById('track');
+  var phone  = document.getElementById('phone');
   var screens = [document.getElementById('s0'), document.getElementById('s1'), document.getElementById('s2')];
-  var tabs = [document.getElementById('t0'), document.getElementById('t1'), document.getElementById('t2')];
+  var tabs    = [document.getElementById('t0'), document.getElementById('t1'), document.getElementById('t2')];
+  var seen = [false,false,false];
   var current = -1;
 
   window.go = function(i){
     if(i === current) return;
     current = i;
     track.style.transform = 'translateX(' + (-i * (100/3)) + '%)';
-    tabs.forEach(function(t,idx){ t.classList.toggle('active', idx===i); });
-    // clear the "new updates" dot once Home is left / labs seen
-    tabs[0].classList.toggle('has-badge', i!==0 && !seen[0]);
+    phone.classList.toggle('hero', i === 0);           // gradient only behind Home
+    seen[i] = true;
+    tabs.forEach(function(t,idx){ t.classList.toggle('active', idx === i); });
+    tabs[1].classList.toggle('has-badge', !seen[1]);   // "new results" dot on Labs
+
     screens.forEach(function(s,idx){
-      if(idx===i){
+      if(idx === i){
         s.scrollTop = 0;
-        // replay the entrance + data animations
         s.classList.remove('in');
-        void s.offsetWidth;      // force reflow
+        void s.offsetWidth;                            // force reflow so animations replay
         s.classList.add('in');
-        if(idx===2) countScore();
+        if(idx === 1) { active = -1; pick(0); }        // redraw the chart on every entry
+        if(idx === 0) countUp(document.getElementById('hs'), 87);
+        if(idx === 2) countScore();
       }
     });
-    seen[i] = true;
   };
 
-  var seen = [false,false,false];
+  window.key = function(e,i){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(i); } };
 
-  window.key = function(e,i){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(i); } };
-
-  // animated count-up for the match score
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var scoreEl = document.getElementById('scoreNum');
-  function countScore(){
-    if(reduce){ scoreEl.textContent = '87'; return; }
-    var start = null, dur = 1100, from = 0, to = 87;
+  /* ---------------- match score count-up ---------------- */
+  function countUp(el, to){
+    if(reduce){ el.textContent = to; return; }
+    var start = null, dur = 1200;
     function step(ts){
       if(!start) start = ts;
-      var p = Math.min((ts-start)/dur, 1);
-      var eased = 1 - Math.pow(1-p, 3);
-      scoreEl.textContent = Math.round(from + (to-from)*eased);
-      if(p<1) requestAnimationFrame(step);
+      var p = Math.min((ts - start) / dur, 1);
+      el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3)));
+      if(p < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
   }
+  function countScore(){ countUp(document.getElementById('scoreNum'), 87); }
 
-  // send flow: paper plane -> confirmation -> sent state
+  /* ---------------- send-to-doctor flow ---------------- */
   window.send = function(){
     var btn = document.getElementById('sendBtn');
     var plane = document.getElementById('plane');
     var overlay = document.getElementById('overlay');
     if(btn.disabled) return;
     plane.classList.remove('fly'); void plane.offsetWidth; plane.classList.add('fly');
-    var delay = reduce ? 0 : 700;
     setTimeout(function(){
       overlay.classList.add('on');
       setTimeout(function(){
@@ -840,12 +1184,12 @@ h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;text-wrap:balance}
         btn.disabled = true;
         btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Sent to Dr. Chen';
       }, 1600);
-    }, delay);
+    }, reduce ? 0 : 700);
   };
 
   document.getElementById('overlay').addEventListener('click', function(){ this.classList.remove('on'); });
 
-  // start on Home with its entrance animation
+  pick(0);
   go(0);
 })();
 </script>
