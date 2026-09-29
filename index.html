@@ -196,6 +196,13 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   width:28px;height:28px;border-radius:50%;
   display:grid;place-items:center;font-size:.66rem;letter-spacing:.02em;
 }
+/* 28px is too small for the full feather - it would fade away most of the
+   face - so this one zooms out less and holds the image further out. */
+.pill-profile .av::before{
+  background-size:94% auto;
+  -webkit-mask-image:radial-gradient(circle closest-side,#000 68%,rgba(0,0,0,0) 94%);
+  mask-image:radial-gradient(circle closest-side,#000 68%,rgba(0,0,0,0) 94%);
+}
 .bell{
   position:relative;width:38px;height:38px;border-radius:50%;
   background:rgba(255,255,255,.62);display:grid;place-items:center;
@@ -587,23 +594,34 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
    Embedded as data URIs because the artifact sandbox blocks external images. */
 .av{
   position:relative;
-  background-size:cover;background-position:center 45%;background-repeat:no-repeat;
+  /* White disc underneath every portrait. The photo is zoomed out to ~86% and
+     feathered into this white, so the circle reads as a soft vignette instead
+     of a hard crop — and a source image too small to fill the circle just
+     lands on white space rather than getting upscaled into mush.
+     background-size:0 0 stops .av painting the photo itself; the image is only
+     here so ::before can pick it up with background-image:inherit. */
+  background-color:#fff;
+  background-size:0 0;background-repeat:no-repeat;
   overflow:hidden;text-indent:-9999px;
 }
-/* The photo is painted by ::before so the softening blur lands on the image
-   only — blurring .av itself would smear the white ring and the drop shadow
-   too. inset:-3px pushes the blur's feathered edge outside the circular clip,
-   so the rim stays crisp instead of going translucent. */
+/* The photo layer. Separate from .av so the blur and the vignette mask land on
+   the image only — masking .av itself would eat the white disc and its shadow.
+   The mask is the "negative vignette": opaque through the middle, fading to
+   nothing by 86% of the radius (opaque core at 62%). 86% is also the photo's own half-width, so the
+   square image's corners are always already transparent and never show. */
 .av::before{
-  content:'';position:absolute;inset:-3px;border-radius:50%;
-  background-image:inherit;background-size:cover;
-  background-position:center 45%;background-repeat:no-repeat;
+  content:'';position:absolute;inset:0;border-radius:50%;
+  background-image:inherit;background-size:86% auto;
+  background-position:center 46%;background-repeat:no-repeat;
   filter:blur(.6px);
+  -webkit-mask-image:radial-gradient(circle closest-side,#000 62%,rgba(0,0,0,0) 86%);
+  mask-image:radial-gradient(circle closest-side,#000 62%,rgba(0,0,0,0) 86%);
 }
-/* ring sits above the photo, so it has to be its own layer */
+/* Barely-there rim so the white disc still has an edge where it sits on a
+   light background (the profile pill has no drop shadow to define it). */
 .av::after{
   content:'';position:absolute;inset:0;border-radius:50%;
-  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.92);
+  box-shadow:inset 0 0 0 1px rgba(19,26,22,.07);
 }
 .doc .av{box-shadow:0 6px 16px -9px rgba(19,26,22,.55)}
 .send .who .av{box-shadow:0 5px 12px -7px rgba(19,26,22,.45)}
