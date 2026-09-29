@@ -46,6 +46,7 @@ docs/
   ROADMAP.md            ← prototype → pilot → scale, what each phase proves, kill criteria
   DESIGN.md             ← design system: color, type, components, motion
   BUILDSPEC.md          ← the three-screen spec the prototype was built from
+  STACK.md              ← why it's one static HTML file and not Next.js; when to revisit
 assets/
   README.md             ← what counts as intake vs. processed, and why
   intake/               ← raw source material. Never edited in place.
@@ -73,6 +74,7 @@ The prototype is the picture. These docs are the thinking.
 | Hasn't someone already built this? | [**MARKET.md**](docs/MARKET.md) |
 | What could go wrong? | [**RISKS.md**](docs/RISKS.md) |
 | So what now? | [**ROADMAP.md**](docs/ROADMAP.md) |
+| Shouldn't this be Next.js? | [**STACK.md**](docs/STACK.md) |
 
 Cost and market figures are tagged `[sourced]`, `[modeled]`, or `[assumed]` so you can tell
 a real vendor price from our arithmetic from a guess. Sources are linked in each doc.

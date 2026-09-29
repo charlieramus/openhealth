@@ -1,6 +1,6 @@
 # OpenHealth — Documentation
 
-Nine docs, four groups. Start wherever your question is.
+Ten docs, four groups. Start wherever your question is.
 
 ---
 
@@ -18,6 +18,7 @@ Nine docs, four groups. Start wherever your question is.
 | [**ARCHITECTURE.md**](ARCHITECTURE.md) | How data is collected from APIs, normalized, matched, and distributed — with flowcharts | You want to see the wires. **This is the API flow doc** |
 | [**BUILDSPEC.md**](BUILDSPEC.md) | The three-screen spec the prototype was built from | You're changing the prototype |
 | [**DESIGN.md**](DESIGN.md) | Color, type, layout, motion, voice | You're touching anything visual |
+| [**STACK.md**](STACK.md) | Why the prototype is one static HTML file and not Next.js, what a port would cost, and what would change the answer | You're asking "shouldn't this be a framework?" or planning Figma handoff |
 
 ## Is it a business
 
@@ -48,7 +49,7 @@ things that have to be true"
 
 **For an engineer picking this up**
 → [`ARCHITECTURE.md`](ARCHITECTURE.md) → [`BUILDSPEC.md`](BUILDSPEC.md) →
-[`DESIGN.md`](DESIGN.md) → `../index.html`
+[`DESIGN.md`](DESIGN.md) → [`STACK.md`](STACK.md) → `../index.html`
 
 **For a security or privacy reviewer**
 → [`RISKS.md`](RISKS.md) → [`ARCHITECTURE.md`](ARCHITECTURE.md) §6 (trust boundary) and §5
@@ -59,7 +60,7 @@ things that have to be true"
 ## Conventions
 
 **Prototype vs. real deployment.** The prototype (`../index.html`) is fake data, no APIs, no
-persistence. `BRIEF.md`, `BUILDSPEC.md`, and `DESIGN.md` describe **what exists**.
+persistence. `BRIEF.md`, `BUILDSPEC.md`, `DESIGN.md`, and `STACK.md` describe **what exists**.
 `ARCHITECTURE.md`, `COSTS.md`, `MARKET.md`, `RISKS.md`, and `ROADMAP.md` describe **what a
 real deployment would be**. Every doc in the second group says so at the top.
 
