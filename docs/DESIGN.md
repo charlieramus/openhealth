@@ -47,7 +47,7 @@ The home hero is a single `linear-gradient(174deg, …)` on the phone shell, not
 child — so the white sheet scrolls *over* it. It falls green → lime → cream → app
 background by 60% of the phone height, which puts the cream right behind "See details".
 
-**The biomarker spectrum** (the identity of the app — used for bars, dots, avatars, the logo):
+**The biomarker spectrum** (the identity of the app — used for bars, dots, the logo):
 
 | Token | Hex | Meaning |
 |-------|-----|---------|
@@ -59,6 +59,21 @@ background by 60% of the phone height, which puts the cream right behind "See de
 **Semantic** (separate from the spectrum): `--good #12B76A` (match / success),
 `--warn #F5A524` (attention). Each biomarker keeps the *same* color everywhere it appears,
 so a color always means the same marker.
+
+**Portraits.** The patient and the care team use photographic avatars, not initials on a
+colored disc — initials read as a placeholder, and this app is meant to look shipped. The
+faces are **synthetic (StyleGAN-generated): none of these people exist**, which is the only
+honest option for a fictional care team. They are embedded as base64 data URIs (~46KB for
+ten) because the artifact sandbox blocks external images; each is a `.av.f-<name>` class so
+one face is defined once and reused wherever that person appears.
+
+Two details keep ten unrelated photos reading as one set: a 1.5px inset white ring, and a
+**0.6px blur** on the photo. The blur is deliberately below the threshold you'd notice as
+blur — it just takes the stock-photo edge off and stops the mismatched backgrounds from
+competing. Both live on pseudo-elements: `::before` carries the image and the blur,
+`::after` carries the ring. Blurring `.av` itself would smear the ring and the drop shadow
+too, and the image layer is inset `-3px` so the blur's feathered edge falls outside the
+circular clip instead of leaving a translucent rim.
 
 ## Type
 
