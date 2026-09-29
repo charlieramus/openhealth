@@ -36,7 +36,14 @@ using the bottom tab bar, the in-screen buttons, or the CGX trial card.
 ```
 index.html              ← the entire prototype (one file, no build step)
 docs/
+  README.md             ← doc index + reading paths. Start here if you're browsing
   BRIEF.md              ← the idea + all 6 required deliverable answers (source of truth)
+  MISSION.md            ← mission, values, positioning, the pitch at three lengths
+  ARCHITECTURE.md       ← how data is collected from APIs, matched, and distributed (flowcharts)
+  COSTS.md              ← run cost at 1k/50k/500k users, unit economics, real vendor prices
+  MARKET.md             ← competitive landscape, why every rival is B2B, market size
+  RISKS.md              ← full risk register, HIPAA/FDA surface, ethical commitments
+  ROADMAP.md            ← prototype → pilot → scale, what each phase proves, kill criteria
   DESIGN.md             ← design system: color, type, components, motion
   BUILDSPEC.md          ← the three-screen spec the prototype was built from
 assets/
@@ -49,7 +56,26 @@ CLAUDE.md               ← instructions for AI collaborators (Claude Code)
 ```
 
 New here? Read **[docs/BRIEF.md](docs/BRIEF.md)** first — it explains the whole idea in
-two minutes.
+two minutes. Then **[docs/README.md](docs/README.md)** for reading paths through the rest
+(there's a 15-minute path for a presentation and a 45-minute one for "is this real?").
+
+---
+
+## The analysis behind the prototype
+
+The prototype is the picture. These docs are the thinking.
+
+| Question | Doc |
+|----------|-----|
+| Why does this exist, and what won't we do? | [**MISSION.md**](docs/MISSION.md) |
+| How would it actually collect and distribute data? | [**ARCHITECTURE.md**](docs/ARCHITECTURE.md) |
+| What would it cost to run, and is it a business? | [**COSTS.md**](docs/COSTS.md) |
+| Hasn't someone already built this? | [**MARKET.md**](docs/MARKET.md) |
+| What could go wrong? | [**RISKS.md**](docs/RISKS.md) |
+| So what now? | [**ROADMAP.md**](docs/ROADMAP.md) |
+
+Cost and market figures are tagged `[sourced]`, `[modeled]`, or `[assumed]` so you can tell
+a real vendor price from our arithmetic from a guess. Sources are linked in each doc.
 
 ---
 

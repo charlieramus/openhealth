@@ -39,7 +39,7 @@ These map directly to the class rubric (and cover the CAC video talking points).
 their full health picture and miss clinical trials they'd qualify for.
 
 ### 2. Three-screen prototype
-**Home → Labs → Trials.** (See `DESIGN.md` / `BUILD.md`, live at the URL in the README.)
+**Home → Labs → Trials.** (See `DESIGN.md` / `BUILDSPEC.md`, live at the URL in the README.)
 
 ### 3. Input → Processing → Output
 - **Input** — The patient's bloodwork, diagnoses, insurance, and health profile. *(In a
