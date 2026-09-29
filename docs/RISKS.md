@@ -154,7 +154,10 @@ revenue option we've declined — the fuller list is in [`COSTS.md`](COSTS.md) �
 3. **No payer or employer channel.** Ever. The discrimination risk is not ours to gamble
    with on a patient's behalf.
 4. **No advertising.** Targeting by health condition is the worst available version of this
-   product.
+   product. The one adjacent option we've left open — sponsored *nutrition* on the
+   iron-rich-foods recommendation — is fenced by seven conditions in
+   [`COSTS.md`](COSTS.md) §5, the first three of which exist precisely to keep it from
+   becoming this. It is unvalidated, not in the pilot, and dropped if the fence can't hold.
 5. **Uncertainty is displayed, even when it lowers the score.** A matcher that is never
    uncertain is lying, and a number that looks better than the evidence is a false promise
    to someone who is sick.

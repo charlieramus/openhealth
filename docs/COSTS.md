@@ -289,6 +289,37 @@ single most important goal of the pilot ([`ROADMAP.md`](ROADMAP.md)).
 Each of these would be *more* profitable than the referral model in year one. Listing them
 is the point: the constraint is real, and it's chosen.
 
+### The one adjacent door: sponsored nutrition `[unvalidated]`
+
+The Labs screen's **"Raise your iron"** recommendation now expands into a list of iron-rich
+foods (lentils, spinach, chickpeas, tofu, dark chocolate, pumpkin seeds). That surface is
+the single place in the product where a food brand would plausibly pay to appear, and it is
+worth naming as a **future** option rather than pretending it isn't there.
+
+It is not the "Advertising" line above, and the distinction is the whole argument: **the
+recommendation exists whether or not anyone sponsors it.** It is generated from a lab value
+that is genuinely out of range. A sponsor could at most occupy a slot that our own clinical
+logic already decided to show.
+
+That only stays true under hard constraints. Any such deal would have to clear **all** of:
+
+| # | Requirement | Why it's non-negotiable |
+|---|-------------|------------------------|
+| 1 | **Recommendation first, sponsor second.** The nutrient advice is generated from the lab result alone. No sponsor may create, reorder, re-word, or suppress a recommendation | The moment money moves the clinical content, the feature becomes advertising and we've broken §5's own rule |
+| 2 | **An external nutrition standard, not ours.** Products must independently qualify (e.g. a recognized whole-food or nutrient-density standard) — we do not get to define "healthy" for a company paying us | A self-authored standard is a standard the highest bidder writes |
+| 3 | **Buy a nutrient, never a diagnosis.** A sponsor buys the *iron* slot. They never buy "users with anemia," a condition, a cohort, or any user segment | This is the condition-targeting line. Crossing it is the refused advertising model wearing a different label |
+| 4 | **Disclosed inline.** Labeled as sponsored, in the row itself, at the same weight as the content — not in a footer or a settings page | Undisclosed sponsorship in a health context is deceptive, regardless of how good the food is |
+| 5 | **No data reaches the sponsor.** Not lab values, not impressions tied to a user, not a segment. Aggregate counts at most | Same commitment as the rest of the product; a revenue line doesn't get an exemption |
+| 6 | **Editorially droppable, instantly.** If a product stops meeting the standard, it comes out — and the contract must say so | Otherwise the standard is decorative |
+| 7 | **Never on the trial path.** No sponsorship touches matching, scoring, eligibility, or the send-to-doctor flow | Trial matching is the thing a patient is trusting us with. It stays uncontaminated |
+
+**The honest read:** this is a *later* conversation, not a pilot one. It is not in the base
+case above, it is not in any scenario in this doc, and nothing in
+[`ROADMAP.md`](ROADMAP.md) depends on it. It is recorded here because the food-suggestion
+feature genuinely opens the door, and the right time to write the fence is *before* someone
+offers money — not after. If constraint 1, 2, or 3 can't be held contractually, the answer
+is no, and the referral model stands on its own.
+
 ---
 
 ## 6 · How the app would run — the operating cadence

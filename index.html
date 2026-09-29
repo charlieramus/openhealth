@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>OpenHealth</title>
 <meta name="description" content="OpenHealth — interactive three-screen prototype: your whole health picture in one app, with clinical-trial matching.">
 
@@ -106,7 +107,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   }
   .stage-caption small{font-family:var(--body);font-weight:500;color:var(--ink-3)}
   .phone{
-    max-height:872px;
+    /* iPhone 17 proportions — 402×874pt ≈ 2.174:1, a touch longer than before */
+    max-height:878px;
     border-radius:46px;
     box-shadow:0 0 0 11px #0B0E0C,0 0 0 12px #262C27,0 40px 80px -28px rgba(19,26,22,.5);
   }
@@ -475,6 +477,37 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .rec .ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:0 0 auto}
 .rec .tx b{display:block;font-family:var(--display);font-weight:700;font-size:.9rem;margin-bottom:2px}
 .rec .tx small{display:block;font-size:.78rem;color:var(--ink-2);line-height:1.45}
+
+/* the "Raise your iron" row expands into a list of iron-rich foods */
+.rec-group{display:flex;flex-direction:column;border-bottom:1px solid var(--line)}
+.rec-group:last-child{border-bottom:0}
+.rec-group .rec{border-bottom:0}
+.rec-toggle{width:100%;text-align:left;align-items:center;transition:opacity .15s ease}
+.rec-toggle:active{opacity:.6}
+.rec-toggle .tx{flex:1;min-width:0}
+.rec-toggle .chev{
+  flex:0 0 auto;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;background:var(--surface-2);color:var(--ink-2);
+  transition:transform .3s cubic-bezier(.2,.8,.3,1),background .2s ease,color .2s ease;
+}
+.rec-group.open .rec-toggle .chev{transform:rotate(180deg);background:var(--soft);color:var(--brand-d)}
+.foods{
+  overflow:hidden;max-height:0;opacity:0;
+  transition:max-height .4s cubic-bezier(.2,.8,.3,1),opacity .3s ease;
+}
+.rec-group.open .foods{max-height:360px;opacity:1}
+.foods-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:2px 0 10px}
+.food{
+  display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  padding:10px 12px;border-radius:13px;background:var(--surface-2);
+}
+.food b{font-family:var(--display);font-weight:700;font-size:.82rem;color:var(--ink)}
+.food small{font-family:var(--display);font-weight:700;font-size:.76rem;color:var(--iron);white-space:nowrap}
+.foods-note{
+  display:flex;align-items:center;gap:7px;
+  font-size:.74rem;color:var(--ink-3);line-height:1.4;padding:0 2px 8px;
+}
+.foods-note svg{flex:0 0 auto;color:var(--brand-d)}
 
 /* ============================ screen 3 · trials ============================ */
 .match-hero{
@@ -960,9 +993,23 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
             <div class="reveal">
               <div class="eyebrow">What to do about it</div>
               <div class="card recs">
-                <div class="rec">
-                  <span class="ic" style="background:rgba(225,29,116,.12)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--iron)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 2 8h10c0-3 2-5 2-8a7 7 0 0 0-7-7Z"/><path d="M9 21h6"/></svg></span>
-                  <div class="tx"><b>Raise your iron</b><small>Add iron-rich foods or a supplement, then recheck ferritin in 8 weeks.</small></div>
+                <div class="rec-group">
+                  <button type="button" class="rec rec-toggle" aria-expanded="false" aria-controls="ironFoods" onclick="toggleFoods(this)">
+                    <span class="ic" style="background:rgba(225,29,116,.12)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--iron)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 2 8h10c0-3 2-5 2-8a7 7 0 0 0-7-7Z"/><path d="M9 21h6"/></svg></span>
+                    <div class="tx"><b>Raise your iron</b><small>Tap to see foods high in iron — then recheck ferritin in 8 weeks.</small></div>
+                    <span class="chev" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+                  </button>
+                  <div class="foods" id="ironFoods" role="region" aria-label="Foods high in iron">
+                    <div class="foods-grid">
+                      <span class="food"><b>Lentils</b><small>6.6 mg</small></span>
+                      <span class="food"><b>Spinach</b><small>6.4 mg</small></span>
+                      <span class="food"><b>Chickpeas</b><small>4.7 mg</small></span>
+                      <span class="food"><b>Tofu</b><small>3.4 mg</small></span>
+                      <span class="food"><b>Dark chocolate</b><small>3.3 mg</small></span>
+                      <span class="food"><b>Pumpkin seeds</b><small>2.5 mg</small></span>
+                    </div>
+                    <p class="foods-note"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 2 8h10c0-3 2-5 2-8a7 7 0 0 0-7-7Z"/><path d="M9 21h6"/></svg>Iron per typical serving. Pair with vitamin&nbsp;C to absorb more.</p>
+                  </div>
                 </div>
                 <div class="rec">
                   <span class="ic" style="background:rgba(124,77,255,.12)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--hgb)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="3"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/></svg></span>
@@ -1176,6 +1223,20 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     renderChart(i);
   };
 
+  /* ---------------- iron-rich foods drawer ---------------- */
+  window.toggleFoods = function(btn){
+    var group = btn.parentNode;
+    var open = group.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+
+  function closeFoods(){
+    var group = document.querySelector('.rec-group');
+    if(!group) return;
+    group.classList.remove('open');
+    group.querySelector('.rec-toggle').setAttribute('aria-expanded','false');
+  }
+
   /* ---------------- screen navigation ---------------- */
   var track  = document.getElementById('track');
   var phone  = document.getElementById('phone');
@@ -1199,7 +1260,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
         s.classList.remove('in');
         void s.offsetWidth;                            // force reflow so animations replay
         s.classList.add('in');
-        if(idx === 1) { active = -1; pick(0); }        // redraw the chart on every entry
+        if(idx === 1) { active = -1; pick(0); closeFoods(); }  // redraw the chart, collapse the drawer
         if(idx === 0) countUp(document.getElementById('hs'), 87);
         if(idx === 2) countScore();
       }
