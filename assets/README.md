@@ -1,11 +1,12 @@
 # assets/
 
-Everything visual that isn't the prototype itself.
+Source material and generated output — everything that isn't the prototype or the docs.
 
 ```
 intake/       ← raw source material dropped in by a human. Never edited in place.
   sketches/     the original hand-drawn mockups (IMG_0631–0634)
   references/   look-and-feel references we borrowed the visual language from
+  cac/          Congressional App Challenge official rules + judging rubric (PDFs)
 processed/    ← anything we produce FROM intake: screenshots, poster art, QR codes,
                 exported mockups. Safe to regenerate/delete.
 ```
@@ -22,3 +23,13 @@ recreate this from the repo?" Yes → `processed/`. No → `intake/`.
 | `ref-stats-dashboard.webp` | A fitness dashboard + statistics screen | The pale-green hero card, 2-up stat tiles with colored icon chips, and the big-number + weekly bar-chart pattern. We point that chart at biomarker history instead of calories. |
 
 These are inspiration, not assets — nothing from them is copied into `index.html`.
+
+## intake/cac
+
+The official Congressional App Challenge rulebook and judging rubric, downloaded
+2026-09-29. Not visual reference — primary sources. Every rule, date, and scoring claim in
+[`docs/ROADMAP.md`](../docs/ROADMAP.md) is quoted from these rather than from a summary of
+them, which matters because the summaries circulating online get at least two things wrong
+(the video must be **public**, not unlisted; the rubric is six sub-criteria, not three).
+
+See [`intake/cac/README.md`](intake/cac/README.md) for the extracted facts.

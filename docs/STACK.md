@@ -75,16 +75,16 @@ collaborator. Split across 8–12 component files and every change begins with a
 Components pay off when there's repetition to dedupe or people editing in parallel. There
 are three screens, each used exactly once.
 
-**③ It's Phase-0 rework.**
-[`ROADMAP.md`](ROADMAP.md) puts us at Phase 0 complete and Phase 1 explicitly **no code**,
-with **A2** — will a trial site pay for a referral — as the first assumption to test. A
-port moves nothing on that list. It's motion, not progress, and the Congressional App
-Challenge submission is live against the current URL.
+**③ It scores zero points.**
+[`ROADMAP.md`](ROADMAP.md) has 27 days on the clock and one named gap — the match score is a
+hardcoded literal, so the app computes nothing. Framework choice is not on the judging
+rubric; a working matching engine is. A port moves nothing that's scored. It's motion, not
+progress, and the Congressional App Challenge submission is live against the current URL.
 
 **④ It costs the "$0, one static HTML file" line.**
-[`ROADMAP.md`](ROADMAP.md) claims **current cost to run: $0**, and that claim is load-bearing
-in the doc set. Vercel's free tier keeps it $0 in dollars, but it stops being *trivially*
-true, and it adds an account and a deploy to a school project.
+The prototype costs nothing to run and needs no account, and that's load-bearing in the doc
+set. Vercel's free tier keeps it $0 in dollars, but it stops being *trivially* true, and it
+adds an account and a deploy to a school project.
 
 ---
 
@@ -133,7 +133,7 @@ Port when **any one** of these is true. Not before, and not on general principle
 
 | Trigger | Why it changes the answer |
 |---------|---------------------------|
-| **Real data, auth, or an API arrives** (Phase 2 in [`ROADMAP.md`](ROADMAP.md)) | Server-side rendering, routing, and secret handling become real requirements. Port against those, not against a guess |
+| **Real data, auth, or an API arrives** — explicitly on the cut list in [`ROADMAP.md`](ROADMAP.md), so: not before submission | Server-side rendering, routing, and secret handling become real requirements. Port against those, not against a guess |
 | **Screens grow past ~6, with genuinely shared components** | Repetition to dedupe is the actual thing components solve |
 | **A second person needs to edit in parallel** | File-level separation starts preventing conflicts rather than creating searches |
 | **Code Connect round-tripping becomes the design workflow** | Per §4, this is the one place React is the better-supported target |

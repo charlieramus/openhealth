@@ -446,4 +446,4 @@ Acquisition cost
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — the funnel design §3 depends on
 - [`MARKET.md`](MARKET.md) — who we're priced against
 - [`RISKS.md`](RISKS.md) — the costs that don't show up on an invoice
-- [`ROADMAP.md`](ROADMAP.md) — what the pilot has to prove
+- [`ROADMAP.md`](ROADMAP.md) — Appendix A, on why none of this is scheduled work

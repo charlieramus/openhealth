@@ -43,7 +43,7 @@ docs/
   COSTS.md              ← run cost at 1k/50k/500k users, unit economics, real vendor prices
   MARKET.md             ← competitive landscape, why every rival is B2B, market size
   RISKS.md              ← full risk register, HIPAA/FDA surface, ethical commitments
-  ROADMAP.md            ← prototype → pilot → scale, what each phase proves, kill criteria
+  ROADMAP.md            ← the 4-week dev plan to the Oct 26 CAC deadline, and the cut list
   DESIGN.md             ← design system: color, type, components, motion
   BUILDSPEC.md          ← the three-screen spec the prototype was built from
   STACK.md              ← why it's one static HTML file and not Next.js; when to revisit
@@ -73,7 +73,7 @@ The prototype is the picture. These docs are the thinking.
 | What would it cost to run, and is it a business? | [**COSTS.md**](docs/COSTS.md) |
 | Hasn't someone already built this? | [**MARKET.md**](docs/MARKET.md) |
 | What could go wrong? | [**RISKS.md**](docs/RISKS.md) |
-| So what now? | [**ROADMAP.md**](docs/ROADMAP.md) |
+| What's left to build before the deadline? | [**ROADMAP.md**](docs/ROADMAP.md) |
 | Shouldn't this be Next.js? | [**STACK.md**](docs/STACK.md) |
 
 Cost and market figures are tagged `[sourced]`, `[modeled]`, or `[assumed]` so you can tell

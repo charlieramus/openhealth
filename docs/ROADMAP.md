@@ -1,231 +1,388 @@
-# OpenHealth — Roadmap & What It Would Take
+# OpenHealth — Development Roadmap to Submission
 
-> From a three-screen prototype to something a patient could actually use. Phased by **what
-> each phase proves**, not by feature count — because the risk in this product is never
-> "can we build it," it's "does anyone want it and will anyone pay."
+> **This is a build plan, not a business plan.** OpenHealth is a Congressional App Challenge
+> entry and a class project. There are no users, no revenue, no pilot, no compliance budget.
+> The only deadline that exists is the submission deadline, and everything below is ordered
+> by what moves the judging score before it.
 >
-> Figures labeled as in [`COSTS.md`](COSTS.md): `[sourced]`, `[modeled]`, `[assumed]`.
+> The long-horizon "what if this were a real company" material still lives in
+> [`COSTS.md`](COSTS.md), [`MARKET.md`](MARKET.md) and [`RISKS.md`](RISKS.md). It's good
+> supporting evidence for the *Concept* score. It is not work to be done. See
+> [Appendix A](#appendix-a--the-hypothetical-company-roadmap).
 
 ---
 
-## Where we actually are
+## The deadline
 
-| | Status |
-|---|--------|
-| Three-screen interactive prototype | **Done.** Live at the URL in [`README.md`](../README.md) |
-| Design system | **Done.** [`DESIGN.md`](DESIGN.md) |
-| Concept, problem, I→P→O, deliverable answers | **Done.** [`BRIEF.md`](BRIEF.md) |
-| Architecture, cost model, market analysis, risk register | **Done.** This doc set |
-| Any real data, any real API, any real patient | **None.** Deliberately |
-| Validation that patients want this | **None.** This is the honest gap |
+| | |
+|---|---|
+| **Submission closes** | **12:00 pm EDT, Monday, October 26th, 2026** |
+| Today | September 29, 2026 |
+| Runway | **27 days / ~4 working weeks** |
+| Practical internal deadline | **Sunday, October 25** — never submit into a noon cutoff |
+| After the deadline | **"the Submission cannot be modified in any way"** |
 
-**Current cost to run: $0.** One static HTML file.
+It closes at **noon Eastern, not midnight.** This catches people every year. Treat Oct 25
+as the real date and the morning of Oct 26 as pure buffer.
 
----
-
-## The five things that have to be true
-
-Everything below is ordered by which of these it tests. Phase 1 is deliberately the
-cheapest way to kill the idea.
-
-| # | Assumption | Currently | Where it's tested |
-|---|-----------|-----------|-------------------|
-| **A1** | Patients want to know about trials they might qualify for | **Unvalidated** | Phase 1 |
-| **A2** | Sites and sponsors will pay for a consumer-sourced referral | **Unvalidated** | Phase 1 |
-| **A3** | Eligibility criteria can be matched from patient-access API data accurately enough to be safe | **Unvalidated** | Phase 2 |
-| **A4** | ~1% of monthly actives will produce a billable referral `[assumed]` | **Unvalidated** | Phase 3 |
-| **A5** | Blended CAC can be held near $11–$15 `[modeled]` via partner distribution | **Unvalidated** | Phase 4 |
-
-**A2 is the one to test first** and it needs no code. If no site will sign a letter of
-intent, the product has no business model and everything after this is wasted effort.
+**Primary sources are archived in the repo** — [`assets/intake/cac/`](../assets/intake/cac/).
+Every rule quoted in this document is from the official 2026 rulebook PDF, not from a
+summary. See [that folder's README](../assets/intake/cac/README.md) for what each file is
+and what we took from it.
 
 ---
 
-## Phase 0 — Prototype ✅ *complete*
+## What is actually being scored
 
-**Proves:** the idea is legible and the experience is desirable.
+Not three criteria — **six sub-criteria, 5 points each, 30 total**, per the official rubric
+([archived locally](../assets/intake/cac/CAC-Judging-Rubric.pdf)). This is the single most
+useful document in the whole submission process and it changes where the work should go.
 
-Three screens, realistic fake data, live URL, design system, full doc set. Enough for the
-class deliverable and the Congressional App Challenge submission.
+### CONCEPT — 15 points
 
-**Cost: $0.**
+| Sub-criterion | 5 points looks like | Where we are |
+|---|---|---|
+| **Ideology** | "Issue or need is extremely relevant" | **4–5.** Fragmented US health records and trial access is a real, specific, current need |
+| **Impact** | "Immense usage of creativity is featured as impact is explained" | **4.** The idea is strong; the *explanation* of impact has to land in the video |
+| **Structure** | "Video is innovative and engaging" | **Unscored — the video doesn't exist yet** |
 
----
+### TECHNOLOGY — 15 points
 
-## Phase 1 — Validation *(no code)*
+| Sub-criterion | 5 points looks like | Where we are |
+|---|---|---|
+| **Function** | "App is functional with **complex features**" | **2–3.** The scale reads: 1 lacks functionality · 2 "contains snippets of code/action" · 3 works with errors · 4 fully functional · 5 complex features. A UI mockup with hardcoded values sits near 2 |
+| **Code** | "**Explanation of code** indicates immense understanding" | **1.** The bottom of this scale is literally *"Video does not explain code"* |
+| **UI** | "App is highly innovative in design and interface" | **5.** This is our strongest box and it's already earned |
 
-**Proves: A1 and A2 — that anyone wants this and anyone will pay.**
+### Three things that fall out of this
 
-| Work | Output |
-|------|--------|
-| Interview 20–30 patients with ongoing conditions, recruited through advocacy organizations | Would they use it? What would they need to trust it? Have they ever been offered a trial? |
-| Talk to 5–10 trial sites and study coordinators | Would they accept a consumer-sourced referral? At what price? What makes a referral worth screening? |
-| Get **3 signed letters of intent** from sites at a stated referral price | **The go/no-go.** Zero LOIs means stop |
-| Healthcare attorney: 2-hour scoping call | Is the FDA CDS posture in [`RISKS.md`](RISKS.md) §3 defensible? |
-| Hand-build 10 match runs manually against real ClinicalTrials.gov criteria and synthetic profiles | Is the score meaningful, or does it fall apart on real prose? |
+1. **The video is worth up to 10 of the 30 points.** *Structure* is scored on the video
+   outright, and *Code* is scored on **how well the video explains the code** — not on
+   reading the source. The video is not documentation of the work. It **is** a third of
+   the work.
+2. **"Code" is currently our floor, and it's the cheapest point to move.** Going from
+   "video does not explain code" (1) to "code is effectively explained" (4) costs one
+   well-scripted 45-second segment.
+3. **"Function" is where the engineering has to go.** The gap between *fully functional* (4)
+   and *functional with complex features* (5) is exactly the difference between a mockup
+   and something with a real algorithm in it.
 
-**Cost: $0–$2,000** `[assumed]` (attorney scoping call). **Duration: 4–8 weeks.**
+### The one structural problem
 
-**Kill criteria — stated in advance, honored when they hit:**
-- Zero site LOIs → no business model → stop
-- Patients consistently say they'd be alarmed rather than helped → the product is wrong
-- Attorney says the CDS posture requires FDA clearance → the scope changes fundamentally
+`index.html:1303` reads `score:93`. `index.html:1325` reads `score:45`. The eligibility bars
+are hardcoded pixel widths. **Nothing in the app computes anything.**
 
----
+That is fine for a UI mockup and it caps the *Function* score near 2 — "app contains snippets
+of code/action." The fix is not to fake more. It's to make the numbers on screen be
+*produced* by code from data, so the app genuinely has a matching engine — one a judge can
+read, one the video can explain, and one the student can defend out loud.
 
-## Phase 2 — Technical spike *(engineering, still no real patients)*
+> **And judges can ask to see it.** Rules §7.3: judges "have the right to request access to
+> the App and source code in person or via any reasonable manner to verify that the App
+> functions and operates as stated." **Failure to honor such a request is immediate
+> disqualification.** The source has to match the claims in the video.
 
-**Proves: A3 — that the matching actually works.**
-
-| Work | Detail |
-|------|--------|
-| Mirror the ClinicalTrials.gov registry | Nightly sync + hourly delta, per [`ARCHITECTURE.md`](ARCHITECTURE.md) §2. Free API `[sourced]` |
-| Build the criteria parser | Split inclusion/exclusion, extract structured facets |
-| Build the Stage 1 structured prefilter | **The highest-leverage component in the product.** Every candidate it eliminates is linear cost savings — see [`COSTS.md`](COSTS.md) §3 |
-| Build Stage 2 criteria reasoning | Per-criterion verdicts with evidence pointers |
-| **Build a labeled eval set** | 100+ synthetic profiles against real trials, graded by a clinical advisor |
-| **Measure false negatives on exclusion criteria specifically** | The dangerous error direction. A missed exclusion is a safety issue; a missed inclusion is only a lost opportunity |
-| Connect **one** aggregator sandbox | Prove the FHIR path end to end with synthetic data |
-
-**Cost: $200–$800/month** `[assumed]` (dev infra, aggregator sandbox, model spend on eval
-runs). **Duration: 2–3 months.**
-
-**Gate:** exclusion-criteria false-negative rate low enough that a clinical advisor signs
-off. **No real patient data until this gate is passed.** No exceptions, no pilot users, no
-"just one friendly tester."
-
----
-
-## Phase 3 — Closed pilot *(first real patients)*
-
-**Proves: A4 — the referral funnel.**
-
-1,000 users, recruited through one advocacy partner in one condition area — hematology is
-the natural choice given the prototype's biomarkers.
-
-| Requirement | Reference |
-|-------------|-----------|
-| Every box in the pre-launch checklist | [`RISKS.md`](RISKS.md) §6 — all of it, not most of it |
-| Signed BAAs across the PHI path | Aggregator, cloud host, model provider, error tracking |
-| Documented HIPAA risk assessment and written policies | $10k–$30k one-time `[sourced]` |
-| Third-party penetration test, findings remediated | |
-| Native app or installable PWA | HealthKit / Health Connect access needs native |
-| Consent and revocation flows, verified end to end | Including backups |
-| Clinical advisor review of every patient-facing string | The copy *is* the safety layer |
-
-**Cost: ≈ $1,700/month** `[modeled]` — the Tier 1 model in [`COSTS.md`](COSTS.md) §4 —
-**plus $10k–$30k one-time compliance** `[sourced]`.
-
-**The metrics that decide everything:**
-
-| Metric | Base target `[assumed]` | What a miss means |
-|--------|------------------------|-------------------|
-| Users who see a match ≥70/100 | 12% | Prefilter or criteria coverage is too narrow |
-| Matched users who send to a doctor or site | 33% | The score isn't trusted, or the send flow is scary |
-| Sends accepted by a site as qualified | 25% | Our matching is wrong, or sites don't trust us |
-| **Billable referrals per MAU per month** | **1.0%** | **Below ~0.3% there is no business** — see [`COSTS.md`](COSTS.md) §5 |
-| Authorization revocations per 1,000 accounts | Trending down | We broke faith somewhere |
-| Equity: who signed up vs. who the condition affects | Measured, reported | A1 is being served for the wrong patients |
-
-**Kill criteria:** referral rate under 0.3% after 6 months with a working product, or any
-confirmed harm to a patient from a match we showed.
+**Weeks 1–2 exist to move *Function* from 2 to 4–5. Week 4 exists to move *Code* from 1 to
+4–5.** That's up to 7 points of the 30, and it's where every remaining hour should go.
 
 ---
 
-## Phase 4 — Growth
+## Week 1 — Sep 29 → Oct 4: make the score real
 
-**Proves: A5 — that we can acquire users at a price that works.**
+**Goal: no number displayed in the app is a literal. All of them are computed.**
 
-Target 50,000 users. **This phase is a distribution problem, not an engineering one.**
+| # | Work | Why it scores |
+|---|------|---------------|
+| 1.1 | **Blocker first: confirm the district is participating** and register — see the registration prerequisites below. If the Member isn't hosting, everything below is moot | Eligibility gate |
+| 1.2 | Extract a **structured patient profile** — each lab as `{ analyte, value, unit, refLow, refHigh, drawnOn }` instead of strings baked into markup | Separates data from presentation. First thing a judge looks for |
+| 1.3 | Extract **structured trial criteria** — each criterion as `{ analyte, op, threshold, required }` instead of a prose label and a bar width | Makes eligibility machine-evaluable |
+| 1.4 | Write `evaluateCriterion(profile, criterion)` → `{ pass, margin, evidence }` | The actual algorithm |
+| 1.5 | Write `matchScore(profile, trial)` that weights per-criterion results into 0–100 | **93 and 45 must fall out of this function**, not be typed |
+| 1.6 | Derive the eligibility bar widths from `margin` | The chart becomes a visualization of real output |
+| 1.7 | Seed trials from **real ClinicalTrials.gov records** — real NCT IDs, real inclusion/exclusion text, real sponsors. Patient stays fake | Huge credibility jump for $0. "The trials are real, the patient is not" is a great line in the video |
 
-| Work | Why |
-|------|-----|
-| Expand to 3–4 condition areas | Diversify the funnel; the referral rate varies enormously by therapeutic area `[sourced]` |
-| Partnerships with 5–10 advocacy organizations | **The core GTM.** Antidote reaches ~15M patients/month through 250+ community portals `[sourced]` — that's the model |
-| SOC 2 Type II | $25k–$60k/yr `[assumed]`. Required before most sponsors will contract |
-| Direct Epic integration for the top systems | Eliminates aggregator margin where volume justifies the engineering. Epic side costs ~$2,400/yr `[sourced]` |
-| Prefilter optimization: 40 → 20 candidates | Halves the dominant variable cost `[modeled]` |
-| First security hire | |
+**Definition of done:** change a lab value in the profile object, and the score, the verdict
+string, the bar widths, and the qualify/fall-short copy all change correctly without touching
+anything else.
 
-**Cost: ≈ $27,150/month** `[modeled]` — Tier 2 — **plus $40k–$100k/yr** in audit and
-testing `[assumed]`.
+### Registration prerequisites — gather before sitting down to register
 
-**The gate is CAC, and it's tight.** [`COSTS.md`](COSTS.md) §7 puts the ceiling near **$11
-blended** for a 3:1 lifetime-contribution ratio, against a **~$560 healthcare category
-benchmark** `[sourced]`. Paid acquisition cannot close a 50x gap. If partner distribution
-doesn't deliver, the answer is to improve retention or the referral rate — not to buy users.
+From rules §2. Two of these routinely cause a stall:
 
----
+- A **personal email address that is not the school account**
+- **Home** address with **9-digit** zip, Congressional District, and Member of Congress
+- **School** address with **9-digit** zip, Congressional District, and Member of Congress
+- A **parent or guardian's** name and email
+- Coding teacher or mentor name and email (optional)
 
-## Phase 5 — Scale
+Other eligibility facts worth confirming once, from §1:
 
-**Proves: it's a business.**
-
-500,000 users. **≈ $172,000/month**, **$0.34 per user** `[modeled]` — Tier 3.
-
-| Work |
-|------|
-| Genomic criteria matching — the biggest expansion of addressable trials, and the biggest new ethical surface ([`RISKS.md`](RISKS.md) #12) |
-| Multi-region infrastructure |
-| Direct sponsor relationships alongside site-level referrals |
-| Clinical review board |
-| Governance commitments that survive a change of control ([`RISKS.md`](RISKS.md) #7) — the data-sale risk is a charter problem, and it should be solved before an acquirer is at the table, not after |
+| Rule | Detail |
+|---|---|
+| Enrollment | Must be enrolled in middle or high school **on October 26, 2026** |
+| District | Compete in the district where you **live or attend school** — one district only, one app only |
+| Teams | Up to **4** students; **at least half** must live or attend school in the same district |
+| Prior work | The app must have been created **after October 30, 2025**. OpenHealth started in September 2026 — fine |
 
 ---
 
-## What we'd need that isn't code
+## Week 2 — Oct 5 → Oct 11: depth a judge can see
 
-The honest answer to "what do you need?"
+**Goal: demonstrate programming skill beyond "it computes a number."**
 
-| Need | When | Why it's not optional |
-|------|------|----------------------|
-| **A clinical advisor** | Phase 2 | Someone has to sign off that a score presentation is safe. Not a formality |
-| **A healthcare attorney** | Phase 1 (scoping), Phase 3 (full) | HIPAA posture, FDA CDS analysis, state law. The product design depends on the answers |
-| **An advocacy partner** | Phase 3 | Both the distribution channel and the trust proxy. We have no standing with patients; they do |
-| **3 site letters of intent** | Phase 1 | Without these there is no revenue model to build toward |
-| **A security engineer** | Phase 4 | [`RISKS.md`](RISKS.md) §1 is permanent. At 50,000 records it needs an owner, not a checklist |
-| **Patient advisors** | Phase 1 onward | The consent-theater risk (#6) can only be tested by people who aren't us |
+| # | Work | Why it scores |
+|---|------|---------------|
+| 2.1 | **A test file** — `tests.html` or an in-page harness asserting known profiles produce known verdicts (edge: exactly at threshold, missing lab, all-fail) | Almost no entry at this level ships tests. Visible, cheap, and it's the clearest possible signal of engineering maturity |
+| 2.2 | **Ranking** — feed all trials through `matchScore`, sort, and let the ordering on Home be an output of the engine rather than a fixed list | Shows the engine generalizes past two hand-picked cases |
+| 2.3 | **Explainability panel** — per criterion, show the actual comparison (`Ferritin 8 ng/mL < 12 required`) rather than a bar alone | Directly demos the algorithm in the video. Also just better UX |
+| 2.4 | Add a 3rd and 4th scored trial so ranking is non-trivial (promote two from the `SOON` list) | |
+| 2.5 | **Persistence** — `localStorage` for sent-state and last-viewed biomarker, every read/write in `try/catch` with a working no-storage fallback | State management is a named skill |
+| 2.6 | **Accessibility pass** — keyboard nav on the tab bar and biomarker switch, visible focus rings, `prefers-reduced-motion` honored, roles verified | Feeds the Design score and it is genuinely the right thing |
+| 2.7 | Run `/qa-only`, fix what it finds | |
+
+**Definition of done:** tests pass, app is fully keyboard-operable, and the trial order on
+Home changes if you edit a lab value.
 
 ---
 
-## Timeline
+## Week 3 — Oct 12 → Oct 18: polish, then freeze
 
-Not a commitment — a shape. Phases 1 and 2 are gates, and a gate that fails should stop the
-project rather than slip.
+**Goal: stop building. Start finishing.**
+
+| # | Work |
+|---|------|
+| 3.1 | `/design-review` pass — spacing, hierarchy, motion timing, any remaining inconsistency |
+| 3.2 | Edge and empty states: no matching trials, a lab with no recent draw, send-failure path |
+| 3.3 | Cross-device check — real iPhone, real Android, desktop browser, and whatever the judge's machine might be |
+| 3.4 | Repo as a deliverable: README screenshots, clean `docs/` index, commit history that reads like a build log |
+| 3.5 | Capture screenshots into `assets/processed/` for the README and any poster |
+
+### 🔒 FEATURE FREEZE — end of day Saturday, October 18
+
+**After this date: bug fixes only.** No new screens, no new trials, no new animations. A
+feature added on Oct 22 that breaks on Oct 25 is how good projects get submitted broken.
+Anything that arrives late goes on the cut list and gets mentioned in the video as "what's
+next," which scores *better* than a half-finished feature anyway.
+
+---
+
+## Week 4 — Oct 19 → Oct 25: the video and the submission
+
+The rules call the video "the most critical component" of the application, and the rubric
+backs that up — **up to 10 of 30 points are scored on it.**
+
+### Required in the video — all six, per the rules
+
+Not suggestions. A missing one is a dropped point on *Structure*.
+
+- [ ] The **name(s) of each participant**
+- [ ] The **name of the app**
+- [ ] The **purpose of the app — in one clear sentence** (the rules specify one sentence)
+- [ ] The **target audience** — who it's for
+- [ ] **The tools and coding languages used** — say "HTML, CSS, and vanilla JavaScript, no frameworks" out loud
+- [ ] **Showcase the functionality**
+
+### Suggested cut — 2:45 of a 3:00 maximum
+
+| Time | Beat | Rubric target |
+|------|------|---------------|
+| 0:00–0:15 | Name, app name, purpose in one sentence, target audience | *Structure* |
+| 0:15–0:40 | The problem: records scattered across portals, trials nobody hears about | *Ideology* |
+| 0:40–1:30 | Walk the three screens — Home → Labs → Trials | *UI* |
+| **1:30–2:20** | **The matching engine. Show the code on screen.** Walk `matchScore()`: structured criteria in, per-criterion pass/fail with margins out, weighted to a 0–100 score. Change a lab value, show the score and ranking move | ***Code* + *Function* — the highest-value 50 seconds in the project** |
+| 2:20–2:35 | Tools and languages; honest note that data is fake and why | *Code* |
+| 2:35–2:45 | Impact and what 2.0 would be | *Impact* |
+
+| # | Work | Detail |
+|---|------|--------|
+| 4.1 | **Write the script word for word first** | 1–3 minutes, hard limit. Over-length "may be penalized at judges' discretion," and the rubric's 1-point box is "video does not follow time limit." Time the read-through |
+| 4.2 | Record screen capture on a real phone, clean audio, no background noise | Rubric penalizes "technical issues, cuts, or is confusing." Re-record rather than ship a bad take |
+| 4.3 | Upload to **YouTube or Vimeo** — **the video must be set to "public"** | Rules state this explicitly. **Not unlisted.** Verify it plays logged-out |
+| 4.4 | Answer the six submission questions (below) | |
+| 4.5 | **Write the AI disclosure** | See below. Non-optional |
+| 4.6 | **Submit Sunday Oct 25** | Deadline is noon Monday, and **after the period ends the submission cannot be modified in any way** |
+
+### The six questions — known in advance, so draft them in advance
+
+The rules publish them. Q4 is the one that rewards the entire Week 1–2 plan:
+
+1. What is the title of your app?
+2. Explain the app's purpose.
+3. What inspired you to create this app?
+4. **What technical/coding difficulty did you face in programming your app, and how did you address this technical challenge?**
+5. What did you learn while participating in the CAC? What was your biggest takeaway?
+6. What would you change about your app if you were to create a 2.0 version?
+
+**Q4 is the Technology score in written form.** The honest, specific answer is the criteria
+engine: turning free-text trial eligibility prose into structured, machine-comparable
+criteria, deciding how to weight a near-miss against a hard fail, and handling the case where
+a patient simply has no value for a required lab. Name the actual problem and the actual fix.
+Vague answers score vaguely.
+
+**Q6 has a ready answer** — the cut list further down, plus Appendix A.
+
+### The AI disclosure — read this carefully
+
+Two rules in §3 apply, and they have to be read together:
+
+> **ORIGINALITY:** "The app must be original and solely created by the contestant. **All
+> coding and technical development must be done by the student or student team.** While
+> participants may use open-source libraries, frameworks, and external tools, they must
+> clearly document any such usage and ensure their project reflects significant personal
+> effort and technical understanding."
+>
+> **AI USAGE:** "The use of AI tools in app development for the Congressional App Challenge
+> is permitted, **provided that all AI usage is fully disclosed in the submission
+> materials.** AI may only be used to support **specific aspects** of the project and **must
+> not constitute the entirety of the technical development.** Participants are expected to
+> demonstrate significant individual contributions and technical understanding of their app."
+
+This project has been built with Claude Code. That is permitted, and it is conditional.
+Three consequences that are actually load-bearing for the plan:
+
+1. **Disclose specifically, not vaguely.** "Used Claude Code for the CSS design system,
+   the doc set, and review passes; the matching engine was specified, reviewed, tested and
+   debugged by me" is a disclosure. "Used AI" is not.
+2. **"Must not constitute the entirety of the technical development" is a real constraint,
+   and Week 1 is the answer to it.** The matching engine is the core technical work of the
+   app. It should be the part with the most of your own thinking in it — the scoring weights,
+   the near-miss-vs-hard-fail decision, the missing-lab case. These are design judgments, not
+   generated code, and they're exactly what Q4 asks about.
+3. **You have to be able to explain every line, on demand.** §7.3 lets judges request the
+   source in person. Budget real time in Week 3 to read `index.html` end to end until you
+   could whiteboard `matchScore()` cold. The rubric's top *Code* box is "explanation of code
+   indicates immense understanding" — that is unfakeable, and it's 5 points.
+
+**The comfortable position here is also the highest-scoring one.** Own the engine, disclose
+the rest plainly, and both the rules and the rubric reward you for it.
+
+---
+
+## Schedule
 
 ```mermaid
 gantt
-    title OpenHealth — phase shape
-    dateFormat YYYY-MM
-    axisFormat %b %Y
+    title OpenHealth — 27 days to submission
+    dateFormat YYYY-MM-DD
+    axisFormat %b %d
 
-    section Phase 0
-    Prototype and docs (done)      :done, p0, 2026-09, 4w
+    section Blockers
+    Confirm district + register     :crit, reg, 2026-09-29, 2d
 
-    section Phase 1
-    Patient and site interviews    :p1a, 2026-10, 8w
-    Site letters of intent (GATE)  :milestone, g1, 2026-12, 0d
+    section Engineering
+    Matching engine (real scores)   :crit, w1, 2026-09-29, 6d
+    Tests, ranking, explainability  :w2, 2026-10-05, 7d
+    A11y + persistence              :w2b, 2026-10-05, 7d
+    Polish, QA, edge states         :w3, 2026-10-12, 7d
+    FEATURE FREEZE                  :milestone, crit, frz, 2026-10-18, 0d
 
-    section Phase 2
-    Registry mirror and prefilter  :p2a, after g1, 8w
-    Criteria reasoning and eval    :p2b, after g1, 13w
-    Clinical sign-off (GATE)       :milestone, g2, 2027-04, 0d
-
-    section Phase 3
-    Compliance and pen test        :p3a, after g2, 13w
-    Closed pilot, 1k users         :p3b, 2027-07, 26w
-    Referral rate proven (GATE)    :milestone, g3, 2028-01, 0d
-
-    section Phase 4
-    Partner distribution, 50k      :p4, after g3, 52w
+    section Submission
+    Script + record demo video      :crit, vid, 2026-10-19, 4d
+    Written answers + AI disclosure :ans, 2026-10-21, 3d
+    SUBMIT (internal)               :milestone, crit, sub, 2026-10-25, 0d
+    Official deadline 12pm EDT      :milestone, dl, 2026-10-26, 0d
 ```
+
+---
+
+## Cut list — explicitly not doing
+
+Named so they don't get picked up at 1am on Oct 24.
+
+| Not doing | Why |
+|-----------|-----|
+| Real API connections (Epic, FHIR, aggregators) | No accounts, no BAAs, no time, and zero judging benefit over real *trial* data with a fake patient |
+| A backend, auth, or a database | A static file is a feature here: the judge opens one link and it works |
+| Native iOS/Android build | Web app is explicitly an eligible platform. A build pipeline is 2 weeks of risk for 0 points |
+| Rewriting in React/Next.js | See [`STACK.md`](STACK.md). Framework choice is not scored; working software is |
+| Any real patient data, ever | Not a roadmap item — a permanent rule |
+| Genomic matching, multi-condition expansion | Post-submission ideas. They belong in the video's "what's next," not in the code |
+
+---
+
+## Risk register (the only risks that matter now)
+
+| Risk | Mitigation |
+|------|-----------|
+| **District isn't hosting a challenge** | Check in Week 1, day 1. Nothing else matters until this is confirmed |
+| **Noon deadline misread as midnight** | Internal deadline Oct 25. And note: **after the period ends the submission cannot be modified in any way** — there is no fixing it later |
+| **Video left "unlisted"** | Rules require **public**. Verify logged-out on a phone with a different network |
+| **Video omits a required element** | Six required items, checklist in Week 4. The "tools and coding languages" one is the easiest to forget |
+| Video runs long and gets penalized | Scripted and timed, not improvised. Rubric's 1-point box is "does not follow time limit" |
+| Feature added late breaks the demo | Freeze on Oct 18, enforced |
+| **Judge requests the source and it doesn't match the video** | §7.3 — refusing is *immediate disqualification*, and a mismatch is worse than a modest claim. Only claim what the code does |
+| Can't explain the code when asked | Week 3 read-through; engine written deliberately in Week 1 |
+| AI disclosure judged insufficient | Written specifically, listing what was AI-assisted and what wasn't |
+
+---
+
+## Submission checklist
+
+Every box, before Oct 25.
+
+**Eligibility & registration**
+- [ ] District confirmed as participating; registered at congressionalappchallenge.us
+- [ ] Eligibility quiz passed; confirmation email received
+- [ ] Personal (non-school) email, both 9-digit zips, parent/guardian contact on file
+
+**The app**
+- [ ] Live at a stable URL, opened and tested on someone else's device
+- [ ] **Every displayed number computed, not hardcoded**
+- [ ] Tests present and passing
+- [ ] Keyboard-navigable; reduced-motion honored
+- [ ] Repo README current, with screenshots
+- [ ] Source matches every claim made in the video (§7.3)
+
+**The video** — 10 of 30 points
+- [ ] 1–3 minutes, timed
+- [ ] Participant name(s) stated
+- [ ] App name stated
+- [ ] Purpose in **one clear sentence**
+- [ ] Target audience stated
+- [ ] **Tools and coding languages stated**
+- [ ] Functionality showcased
+- [ ] **Code explained on screen** (the *Code* sub-criterion lives here)
+- [ ] Uploaded to YouTube/Vimeo and set to **PUBLIC**, verified logged-out
+
+**Written**
+- [ ] All six questions answered and proofread
+- [ ] Q4 names the real technical difficulty, specifically
+- [ ] **AI usage disclosed specifically**
+- [ ] Can explain `matchScore()` cold
+
+- [ ] **Submitted — Sunday Oct 25** (no edits possible after the deadline)
+
+---
+
+## Appendix A — the hypothetical company roadmap
+
+The earlier version of this document laid out a five-phase path from prototype to 500,000
+users: validation interviews, site letters of intent, a HIPAA compliance budget, a closed
+pilot, unit economics at scale.
+
+**None of that is work to be done.** There are no users and there never will be. It is kept
+because it's *evidence for the Concept score* — it shows the problem was taken seriously past
+the screen layer — and because "what would it take to make this real?" is the most likely
+question from a judge or a Member of Congress.
+
+The material lives in:
+
+- [`COSTS.md`](COSTS.md) — what it would cost to run at 1k / 50k / 500k users
+- [`MARKET.md`](MARKET.md) — who already does this and why they're all B2B
+- [`RISKS.md`](RISKS.md) — HIPAA/FDA surface, the ethical commitments, the risk register
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — how the real data path would work
+
+**Good 20-second answer to "what would it take?":** *"Three things before a line of
+production code — a clinical advisor to sign off that showing someone a match score is safe,
+a healthcare attorney on the FDA clinical-decision-support question, and one trial site
+willing to accept a patient-sourced referral. If none of those land, the honest move is to
+stop. The prototype is the cheapest way to find out."*
 
 ---
 
 ## Related docs
 
-- [`MISSION.md`](MISSION.md) — the north star and guardrail metrics this roadmap serves
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — what Phase 2 builds
-- [`COSTS.md`](COSTS.md) — where every dollar figure above comes from
-- [`RISKS.md`](RISKS.md) — §6 is the Phase 3 gate, in full
-- [`MARKET.md`](MARKET.md) — who moves while we're doing this
+- [`BRIEF.md`](BRIEF.md) — the idea and the six required deliverable answers
+- [`BUILDSPEC.md`](BUILDSPEC.md) — the three-screen spec the prototype was built from
+- [`DESIGN.md`](DESIGN.md) — the design system Week 3 polishes against
+- [`STACK.md`](STACK.md) — why it stays one HTML file

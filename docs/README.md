@@ -32,7 +32,7 @@ Ten docs, four groups. Start wherever your question is.
 | Doc | Answers | Read if |
 |-----|---------|---------|
 | [**RISKS.md**](RISKS.md) | The full risk register, the consequence we can't remove, HIPAA and FDA surface, ethical commitments | You're evaluating whether this is responsible |
-| [**ROADMAP.md**](ROADMAP.md) | Prototype → pilot → scale, what each phase proves, kill criteria, what's needed | You're asking "so what now?" |
+| [**ROADMAP.md**](ROADMAP.md) | The 4-week build plan to the Oct 26 Congressional App Challenge deadline, what's being cut, and the submission checklist | You're asking "what's left to build?" |
 
 ---
 
@@ -44,8 +44,8 @@ Ten docs, four groups. Start wherever your question is.
 [`RISKS.md`](RISKS.md) §1 (the unintended consequence)
 
 **For "is this real?" (45 min)**
-→ [`MARKET.md`](MARKET.md) → [`COSTS.md`](COSTS.md) → [`ROADMAP.md`](ROADMAP.md) §"The five
-things that have to be true"
+→ [`MARKET.md`](MARKET.md) → [`COSTS.md`](COSTS.md) → [`ROADMAP.md`](ROADMAP.md)
+§"Appendix A — the hypothetical company roadmap"
 
 **For an engineer picking this up**
 → [`ARCHITECTURE.md`](ARCHITECTURE.md) → [`BUILDSPEC.md`](BUILDSPEC.md) →

@@ -135,4 +135,4 @@ A value you can't fail isn't a value. Each of these has a decision it would lose
 - [`MARKET.md`](MARKET.md) — who else is in this space and why they're pointed elsewhere
 - [`COSTS.md`](COSTS.md) — what it costs to run, benchmarked against real vendors
 - [`RISKS.md`](RISKS.md) — what we're taking on, including the consequence we can't remove
-- [`ROADMAP.md`](ROADMAP.md) — prototype to pilot, and what's needed
+- [`ROADMAP.md`](ROADMAP.md) — the build plan to the submission deadline; Appendix A for the long-horizon version

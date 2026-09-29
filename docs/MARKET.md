@@ -181,4 +181,4 @@ Honest ranking — some of these are real moats and some aren't.
 - [`MISSION.md`](MISSION.md) — the positioning statement this landscape supports
 - [`COSTS.md`](COSTS.md) — the referral pricing we're setting against these benchmarks
 - [`BRIEF.md`](BRIEF.md) — the class deliverable, including the "computing innovation" claim
-- [`ROADMAP.md`](ROADMAP.md) — what has to be proven, in what order
+- [`ROADMAP.md`](ROADMAP.md) — what is actually being built, and by when
