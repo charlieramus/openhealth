@@ -322,6 +322,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   width:7px;height:7px;border-radius:50%;
   background:var(--lime);box-shadow:0 0 0 3px rgba(182,227,84,.25);
 }
+.row-item .score-chip.weak .spark{background:var(--warn);box-shadow:0 0 0 3px rgba(245,165,36,.28)}
 .row-item .hint{
   display:flex;align-items:center;gap:5px;
   font-size:.74rem;font-weight:600;color:var(--ink-3);
@@ -525,6 +526,23 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .match-hero .tags{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap;justify-content:center}
 .match-hero .tags .chip{background:rgba(255,255,255,.72);color:#12301C}
 
+/* the same hero, warmed over, when the match is a poor one */
+.match-hero.weak{
+  background:linear-gradient(160deg,#F2994A 0%,#F5B461 46%,#F7D9A6 100%);
+  box-shadow:0 18px 34px -22px rgba(186,118,24,.9);
+}
+.match-hero.weak h2,
+.match-hero.weak .ring-center .n{color:#3B2408}
+.match-hero.weak .ring-center .d{color:#5A3A11}
+.match-hero.weak .tags .chip{color:#3B2408}
+
+.elig-note{
+  display:flex;align-items:flex-start;gap:7px;
+  margin-top:9px;padding:0 4px;
+  font-size:.76rem;color:var(--ink-2);line-height:1.45;
+}
+.elig-note svg{flex:0 0 auto;margin-top:1px;color:var(--warn)}
+
 .elig{padding:4px 16px}
 .elig .row{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line)}
 .elig .row:last-child{border-bottom:0}
@@ -551,10 +569,23 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .send .who .chip{margin-left:auto;background:var(--soft);color:var(--brand-d)}
 
 .related{padding:4px 16px}
-.related .row{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line)}
+.related .row{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line);width:100%;text-align:left}
 .related .row:last-child{border-bottom:0}
-.related .nm{font-family:var(--display);font-weight:700;font-size:.88rem;color:var(--ink-2)}
-.related .field{font-size:.74rem;color:var(--ink-3)}
+.related .nm{display:block;font-family:var(--display);font-weight:700;font-size:.88rem;color:var(--ink-2)}
+.related .field{display:block;font-size:.74rem;color:var(--ink-3)}
+.related button.row{cursor:pointer;transition:opacity .15s ease}
+.related button.row:active{opacity:.6}
+.related button.row .nm{color:var(--ink)}
+.related .score{
+  margin-left:auto;display:inline-flex;align-items:center;gap:6px;
+  background:var(--ink);color:#fff;border-radius:999px;
+  padding:5px 10px;font-size:.71rem;font-weight:700;white-space:nowrap;
+}
+.related .score i{
+  width:6px;height:6px;border-radius:50%;background:var(--lime);
+  box-shadow:0 0 0 3px rgba(182,227,84,.25);
+}
+.related .score.weak i{background:var(--warn);box-shadow:0 0 0 3px rgba(245,165,36,.28)}
 
 .plane{
   position:absolute;left:50%;bottom:150px;z-index:40;
@@ -786,12 +817,12 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
                 </div>
 
                 <div style="display:flex;flex-direction:column;gap:11px">
-                  <div class="row-item live tappable" role="button" tabindex="0" onclick="go(2)" onkeydown="key(event,2)">
+                  <div class="row-item live tappable" role="button" tabindex="0" onclick="openTrial('cgx')" onkeydown="keyTrial(event,'cgx')">
                     <span class="ic" style="background:rgba(225,29,116,.12);color:var(--iron)">CGX</span>
                     <span class="tx"><b>CGX Clinical Trial #4</b><small>Hematology · Phase II · 3 sites near you</small></span>
                     <span class="add"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
                     <span class="meta">
-                      <span class="score-chip"><i class="spark"></i>87 / 100 match</span>
+                      <span class="score-chip"><i class="spark"></i>93 / 100 match</span>
                       <span class="hint">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                         Tap to view
@@ -799,12 +830,16 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
                     </span>
                   </div>
 
-                  <div class="row-item soon">
-                    <span class="ic">LMI</span>
-                    <span class="tx"><b>LMI Clinical Trial</b><small>Metabolic · Phase I</small></span>
-                    <span class="add ghost"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                  <div class="row-item live tappable" role="button" tabindex="0" onclick="openTrial('lmi')" onkeydown="keyTrial(event,'lmi')">
+                    <span class="ic" style="background:rgba(124,77,255,.12);color:var(--hgb)">LMI</span>
+                    <span class="tx"><b>LMI Clinical Trial</b><small>Metabolic · Phase I · 1 site, 84 mi away</small></span>
+                    <span class="add"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
                     <span class="meta">
-                      <span class="chip" style="background:#E4E8E0;color:var(--ink-3)">Screening opens Oct 14</span>
+                      <span class="score-chip weak"><i class="spark"></i>45 / 100 match</span>
+                      <span class="hint">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Tap to view
+                      </span>
                     </span>
                   </div>
 
@@ -814,6 +849,15 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
                     <span class="add ghost"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
                     <span class="meta">
                       <span class="chip" style="background:#E4E8E0;color:var(--ink-3)">Screening opens Nov 2</span>
+                    </span>
+                  </div>
+
+                  <div class="row-item soon">
+                    <span class="ic">VTL</span>
+                    <span class="tx"><b>VTL Clinical Trial</b><small>Cardiology · Phase III</small></span>
+                    <span class="add ghost"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                    <span class="meta">
+                      <span class="chip" style="background:#E4E8E0;color:var(--ink-3)">Screening opens Nov 21</span>
                     </span>
                   </div>
                 </div>
@@ -1036,52 +1080,40 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
             <div class="topbar reveal">
               <button class="back" onclick="go(1)" aria-label="Back to lab results"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-              <div class="mid"><h1>CGX Clinical Trial #4</h1><div class="sub">Matched to your health profile</div></div>
+              <div class="mid"><h1 id="tName">CGX Clinical Trial #4</h1><div class="sub" id="tSub">Matched to your health profile</div></div>
               <span class="more"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg></span>
             </div>
 
-            <div class="match-hero reveal">
+            <div class="match-hero reveal" id="hero">
               <div class="ring-wrap">
                 <svg width="186" height="186" viewBox="0 0 186 186" aria-hidden="true">
                   <circle cx="93" cy="93" r="72" fill="none" stroke="rgba(255,255,255,.42)" stroke-width="15"/>
-                  <circle class="ring-prog" cx="93" cy="93" r="72" fill="none" stroke="#fff" stroke-width="15"
+                  <circle class="ring-prog" id="ring" cx="93" cy="93" r="72" fill="none" stroke="#fff" stroke-width="15"
                           stroke-linecap="round" transform="rotate(-90 93 93)"
-                          style="stroke-dasharray:452;stroke-dashoffset:452;--off:58.8"/>
+                          style="stroke-dasharray:452;stroke-dashoffset:452;--off:31.6"/>
                 </svg>
                 <div class="ring-center">
                   <span class="n" id="scoreNum">0</span>
                   <span class="d">/ 100 match</span>
                 </div>
               </div>
-              <h2>Strong match</h2>
-              <div class="tags">
-                <span class="chip">Recruiting now</span>
-                <span class="chip">Phase II · Hematology</span>
-              </div>
+              <h2 id="tVerdict">Strong match</h2>
+              <div class="tags" id="tTags"></div>
             </div>
 
             <div class="reveal">
-              <div class="eyebrow">Why you qualify</div>
-              <div class="card elig">
-                <div class="row"><span class="lab">Iron levels</span><span class="track"><i style="--w:53%;background:var(--iron)"></i></span><span class="pct" style="color:var(--iron)">53</span></div>
-                <div class="row"><span class="lab">Hemoglobin</span><span class="track"><i style="--w:82%;background:var(--hgb)"></i></span><span class="pct" style="color:var(--hgb)">82</span></div>
-                <div class="row"><span class="lab">O₂ saturation</span><span class="track"><i style="--w:97%;background:var(--o2)"></i></span><span class="pct" style="color:var(--o2)">97</span></div>
-                <div class="row"><span class="lab">LDL cholesterol</span><span class="track"><i style="--w:95%;background:var(--ldl)"></i></span><span class="pct" style="color:var(--ldl)">95</span></div>
-              </div>
+              <div class="eyebrow" id="eligHead">Why you qualify</div>
+              <div class="card elig" id="eligCard"></div>
+              <p class="elig-note" id="eligNote"></p>
             </div>
 
             <div class="reveal">
               <div class="eyebrow">Trial details</div>
-              <div class="card summary">
-                <div class="line"><span>Sponsor</span><span>Cascade Genomics (CGX)</span></div>
-                <div class="line"><span>Studying</span><span>Iron-deficiency anemia</span></div>
-                <div class="line"><span>Location</span><span>3 sites near you</span></div>
-                <div class="line"><span>Commitment</span><span>6 visits over 12 weeks</span></div>
-              </div>
+              <div class="card summary" id="tSummary"></div>
             </div>
 
             <div class="reveal">
-              <div class="eyebrow">Auto-send to your doctor</div>
+              <div class="eyebrow" id="sendHead">Auto-send to your doctor</div>
               <div class="card send">
                 <div class="who">
                   <div class="av f-chen" role="img" aria-label="Dr. Chen"></div>
@@ -1091,10 +1123,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
                   </div>
                   <span class="chip">Auto</span>
                 </div>
-                <button class="btn" id="sendBtn" onclick="send()">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-                  Send my records to Dr. Chen
-                </button>
+                <button class="btn" id="sendBtn" onclick="send()"></button>
               </div>
             </div>
 
@@ -1114,11 +1143,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
             </div>
 
             <div class="reveal">
-              <div class="eyebrow">Related trials</div>
-              <div class="card related">
-                <div class="row"><span class="dot" style="background:var(--ink-3)"></span><div><div class="nm">LMI Clinical Trial</div><div class="field">Metabolic · Phase I</div></div><span class="chip" style="margin-left:auto;background:var(--surface-2);color:var(--ink-3)">Soon</span></div>
-                <div class="row"><span class="dot" style="background:var(--ink-3)"></span><div><div class="nm">PPF Clinical Trial</div><div class="field">Pulmonary · Phase II</div></div><span class="chip" style="margin-left:auto;background:var(--surface-2);color:var(--ink-3)">Soon</span></div>
-              </div>
+              <div class="eyebrow">Other trials for you</div>
+              <div class="card related" id="tRelated"></div>
             </div>
 
           </div>
@@ -1148,7 +1174,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
       <div class="modal">
         <div class="check"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--brand-d)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
         <h3>Sent to Dr. Chen</h3>
-        <p>Your CGX Trial&nbsp;#4 records are on the way. Dr. Chen reviews new records within 24&nbsp;hours.</p>
+        <p id="sentMsg">Your CGX Trial&nbsp;#4 records are on the way. Dr. Chen reviews new records within 24&nbsp;hours.</p>
       </div>
     </div>
 
@@ -1256,6 +1282,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
     screens.forEach(function(s,idx){
       if(idx === i){
+        if(idx === 2) renderTrial(currentTrial);       // fill screen 3 before the animations replay
         s.scrollTop = 0;
         s.classList.remove('in');
         void s.offsetWidth;                            // force reflow so animations replay
@@ -1267,7 +1294,132 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     });
   };
 
-  window.key = function(e,i){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(i); } };
+  /* ---------------- the trials themselves (fake data) ----------------
+     Two are open and scored; the rest are still in screening. Tapping
+     either open one re-renders screen 3 from the record below.        */
+  var TRIALS = {
+    cgx: {
+      code:'CGX', name:'CGX Clinical Trial #4', sub:'Matched to your health profile',
+      field:'Hematology · Phase II', score:93, verdict:'Strong match', tone:'good',
+      tags:['Recruiting now','Phase II · Hematology'],
+      eligHead:'Why you qualify',
+      elig:[
+        { lab:'Iron levels',      w:53, color:'var(--iron)' },
+        { lab:'Hemoglobin',       w:82, color:'var(--hgb)'  },
+        { lab:'O₂ saturation',    w:97, color:'var(--o2)'   },
+        { lab:'LDL cholesterol',  w:95, color:'var(--ldl)'  }
+      ],
+      note:'You meet all four entry criteria. Sites near you are enrolling now.',
+      summary:[
+        ['Sponsor','Cascade Genomics (CGX)'],
+        ['Studying','Iron-deficiency anemia'],
+        ['Location','3 sites near you'],
+        ['Commitment','6 visits over 12 weeks']
+      ],
+      sendHead:'Auto-send to your doctor',
+      cta:'Send my records to Dr. Chen',
+      sent:'Your CGX Trial&nbsp;#4 records are on the way. Dr. Chen reviews new records within 24&nbsp;hours.'
+    },
+    lmi: {
+      code:'LMI', name:'LMI Clinical Trial', sub:'Screened against your health profile',
+      field:'Metabolic · Phase I', score:45, verdict:'Weak match', tone:'weak',
+      tags:['Screening opens Oct 14','Phase I · Metabolic'],
+      eligHead:'Where you fall short',
+      elig:[
+        { lab:'A1c range',        w:22, color:'var(--warn)' },
+        { lab:'BMI criteria',     w:38, color:'var(--warn)' },
+        { lab:'Age bracket',      w:90, color:'var(--good)' },
+        { lab:'Travel distance',  w:30, color:'var(--warn)' }
+      ],
+      note:'You miss 3 of the 4 entry criteria. Dr. Chen can still flag you if the criteria widen.',
+      summary:[
+        ['Sponsor','Lumen Metabolic Institute'],
+        ['Studying','Type 2 diabetes remission'],
+        ['Location','1 site · 84 miles away'],
+        ['Commitment','14 visits over 9 months']
+      ],
+      sendHead:'Ask about this one',
+      cta:'Ask Dr. Chen about eligibility',
+      sent:'Your question about LMI is with Dr. Chen. She reviews new requests within 24&nbsp;hours.'
+    }
+  };
+  var SOON = [
+    { name:'PPF Clinical Trial', field:'Pulmonary · Phase II', when:'Nov 2' },
+    { name:'VTL Clinical Trial', field:'Cardiology · Phase III', when:'Nov 21' }
+  ];
+
+  var currentTrial = 'cgx';
+  var sentFor = {};
+
+  function renderTrial(id){
+    var t = TRIALS[id];
+    currentTrial = id;
+
+    document.getElementById('tName').textContent = t.name;
+    document.getElementById('tSub').textContent = t.sub;
+
+    document.getElementById('hero').classList.toggle('weak', t.tone === 'weak');
+    document.getElementById('ring').style.setProperty('--off', (452 * (1 - t.score / 100)).toFixed(1));
+    document.getElementById('scoreNum').textContent = reduce ? t.score : 0;
+    document.getElementById('tVerdict').textContent = t.verdict;
+    document.getElementById('tTags').innerHTML = t.tags.map(function(x){
+      return '<span class="chip">' + x + '</span>';
+    }).join('');
+
+    document.getElementById('eligHead').textContent = t.eligHead;
+    document.getElementById('eligCard').innerHTML = t.elig.map(function(r){
+      return '<div class="row"><span class="lab">' + r.lab + '</span>' +
+             '<span class="track"><i style="--w:' + r.w + '%;background:' + r.color + '"></i></span>' +
+             '<span class="pct" style="color:' + r.color + '">' + r.w + '</span></div>';
+    }).join('');
+    document.getElementById('eligNote').innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>' + t.note;
+
+    document.getElementById('tSummary').innerHTML = t.summary.map(function(l){
+      return '<div class="line"><span>' + l[0] + '</span><span>' + l[1] + '</span></div>';
+    }).join('');
+
+    document.getElementById('sendHead').textContent = t.sendHead;
+    var btn = document.getElementById('sendBtn');
+    btn.disabled = !!sentFor[id];
+    btn.innerHTML = sentFor[id]
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Sent to Dr. Chen'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg> ' + t.cta;
+
+    /* every other trial, scored ones first and tappable */
+    var rows = '';
+    Object.keys(TRIALS).forEach(function(k){
+      if(k === id) return;
+      var o = TRIALS[k];
+      rows += '<button class="row" onclick="openTrial(\'' + k + '\')">' +
+              '<span class="dot" style="background:' + (o.tone === 'weak' ? 'var(--warn)' : 'var(--brand)') + '"></span>' +
+              '<span><span class="nm">' + o.name + '</span><span class="field">' + o.field + '</span></span>' +
+              '<span class="score' + (o.tone === 'weak' ? ' weak' : '') + '"><i></i>' + o.score + ' / 100</span>' +
+              '</button>';
+    });
+    SOON.forEach(function(o){
+      rows += '<div class="row"><span class="dot" style="background:var(--ink-3)"></span>' +
+              '<div><div class="nm">' + o.name + '</div><div class="field">' + o.field + '</div></div>' +
+              '<span class="chip" style="margin-left:auto;background:var(--surface-2);color:var(--ink-3)">Opens ' + o.when + '</span></div>';
+    });
+    document.getElementById('tRelated').innerHTML = rows;
+  }
+
+  window.openTrial = function(id){
+    if(current === 2 && id === currentTrial) return;
+    renderTrial(id);
+    if(current === 2){
+      var s = screens[2];
+      s.scrollTop = 0;
+      s.classList.remove('in');
+      void s.offsetWidth;                              // replay the ring + bars
+      s.classList.add('in');
+      countScore();
+    } else {
+      go(2);
+    }
+  };
+  window.keyTrial = function(e,id){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openTrial(id); } };
 
   /* ---------------- match score count-up ---------------- */
   function countUp(el, to){
@@ -1281,7 +1433,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     }
     requestAnimationFrame(step);
   }
-  function countScore(){ countUp(document.getElementById('scoreNum'), 87); }
+  function countScore(){ countUp(document.getElementById('scoreNum'), TRIALS[currentTrial].score); }
 
   /* ---------------- send-to-doctor flow ---------------- */
   window.send = function(){
@@ -1289,11 +1441,15 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     var plane = document.getElementById('plane');
     var overlay = document.getElementById('overlay');
     if(btn.disabled) return;
+    var id = currentTrial;
+    document.getElementById('sentMsg').innerHTML = TRIALS[id].sent;
     plane.classList.remove('fly'); void plane.offsetWidth; plane.classList.add('fly');
     setTimeout(function(){
       overlay.classList.add('on');
       setTimeout(function(){
         overlay.classList.remove('on');
+        sentFor[id] = true;
+        if(currentTrial !== id) return;               // they switched trials mid-flight
         btn.disabled = true;
         btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Sent to Dr. Chen';
       }, 1600);
