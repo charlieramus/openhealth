@@ -7,6 +7,7 @@ intake/       ← raw source material dropped in by a human. Never edited in pla
   sketches/     the original hand-drawn mockups (IMG_0631–0634)
   references/   look-and-feel references we borrowed the visual language from
   cac/          Congressional App Challenge official rules + judging rubric (PDFs)
+  trials/       the four ClinicalTrials.gov records the matching engine is built on (JSON)
 processed/    ← anything we produce FROM intake: screenshots, poster art, QR codes,
                 exported mockups. Safe to regenerate/delete.
 ```
@@ -33,3 +34,15 @@ them, which matters because the summaries circulating online get at least two th
 (the video must be **public**, not unlisted; the rubric is six sub-criteria, not three).
 
 See [`intake/cac/README.md`](intake/cac/README.md) for the extracted facts.
+
+## intake/trials
+
+The four ClinicalTrials.gov records the prototype's trials are built from, as the public
+API returned them on 2026-09-29. Also primary sources: every eligibility threshold the
+matching engine compares against is quoted from the protocol text in these files, so a
+judge can check any number on screen 3 against the registry.
+
+The patient is still entirely invented. The trials are not.
+
+See [`intake/trials/README.md`](intake/trials/README.md) for what the engine takes from
+each record and why these four were chosen.

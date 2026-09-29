@@ -8,7 +8,11 @@ patient's fragmented US health data — labs, insurance, billing, doctors — pu
 place, then surfaces a clinical trial the patient qualifies for and lets them send their
 records to a doctor in one tap.
 
-Everything runs on realistic **fake data**. No real APIs, accounts, or PHI.
+**The patient is invented. The trials are real.** Every lab value, doctor and insurance
+detail is fabricated — no real APIs, accounts, or PHI. The four clinical trials are genuine
+records pulled from the [ClinicalTrials.gov](https://clinicaltrials.gov) public API, and
+every eligibility threshold in the matching engine is quoted from the trial's own protocol.
+Each NCT ID shown in the app can be looked up.
 
 ---
 
@@ -17,7 +21,7 @@ Everything runs on realistic **fake data**. No real APIs, accounts, or PHI.
 **Prototype:** https://claude.ai/artifact/5H4KWf2bja3DKDydumaqyo
 
 Open it on a phone for the intended experience. Tap through **Home → Labs → Trials**
-using the bottom tab bar, the in-screen buttons, or the CGX trial card.
+using the bottom tab bar, the in-screen buttons, or either scored trial card.
 
 ---
 
@@ -27,7 +31,21 @@ using the bottom tab bar, the in-screen buttons, or the CGX trial card.
 |---|--------|--------------|---------------|
 | 1 | **Home** | Input | Updates, new trials, bloodwork snapshot, insurance, doctors |
 | 2 | **Labs** | Processing | Four color-coded biomarkers vs. normal range + a health gauge |
-| 3 | **Trials** | Output | CGX Trial #4 match (87/100), why you qualify, one-tap send to doctor |
+| 3 | **Trials** | Output | Computed match score per trial, the comparison behind each criterion, one-tap send to doctor |
+
+### The trials in the app
+
+All four are live registry records, retrieved 2026-09-29.
+
+| Trial | NCT ID | Sponsor | Match | Why |
+|---|---|---|---|---|
+| Iron Revisited | [NCT06942208](https://clinicaltrials.gov/study/NCT06942208) | University of Calgary | **79** | Meets all 4 entry criteria; only site is 2,006 mi away |
+| Icovamenib in Type 2 Diabetes | [NCT07502508](https://clinicaltrials.gov/study/NCT07502508) | Biomea Fusion | **21** | No A1c on file and BMI outside 25–40, despite a site 138 mi away |
+| N-acetylglucosamine in Crohn's | [NCT07225998](https://clinicaltrials.gov/study/NCT07225998) | Johns Hopkins | — | Not yet recruiting |
+| Weight regain after GLP-1 | [NCT07729332](https://clinicaltrials.gov/study/NCT07729332) | Mass General | — | Not yet recruiting |
+
+The two scores are computed by `matchScore()` in `index.html`, not typed in. Distance is
+OpenHealth's own preference filter, marked `protocol:false`, and never blocks eligibility.
 
 ---
 

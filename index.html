@@ -525,6 +525,11 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 }
 .match-hero .tags{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap;justify-content:center}
 .match-hero .tags .chip{background:rgba(255,255,255,.72);color:#12301C}
+/* the ClinicalTrials.gov ID — monospaced so it reads as a record, not a label */
+.match-hero .tags .chip.reg{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.66rem;letter-spacing:.02em;background:rgba(255,255,255,.52);
+}
 
 /* the same hero, warmed over, when the match is a poor one */
 .match-hero.weak{
@@ -818,51 +823,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
                   <button class="link" onclick="go(2)">See all</button>
                 </div>
 
-                <div style="display:flex;flex-direction:column;gap:11px">
-                  <div class="row-item live tappable" role="button" tabindex="0" onclick="openTrial('cgx')" onkeydown="keyTrial(event,'cgx')">
-                    <span class="ic" style="background:rgba(225,29,116,.12);color:var(--iron)">CGX</span>
-                    <span class="tx"><b>CGX Clinical Trial #4</b><small>Hematology · Phase II · 3 sites near you</small></span>
-                    <span class="add"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
-                    <span class="meta">
-                      <span class="score-chip" data-trial="cgx"><i class="spark"></i></span>
-                      <span class="hint">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
-                        Tap to view
-                      </span>
-                    </span>
-                  </div>
-
-                  <div class="row-item live tappable" role="button" tabindex="0" onclick="openTrial('lmi')" onkeydown="keyTrial(event,'lmi')">
-                    <span class="ic" style="background:rgba(124,77,255,.12);color:var(--hgb)">LMI</span>
-                    <span class="tx"><b>LMI Clinical Trial</b><small>Metabolic · Phase I · 1 site, 84 mi away</small></span>
-                    <span class="add"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
-                    <span class="meta">
-                      <span class="score-chip" data-trial="lmi"><i class="spark"></i></span>
-                      <span class="hint">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
-                        Tap to view
-                      </span>
-                    </span>
-                  </div>
-
-                  <div class="row-item soon">
-                    <span class="ic">PPF</span>
-                    <span class="tx"><b>PPF Clinical Trial</b><small>Pulmonary · Phase II</small></span>
-                    <span class="add ghost"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-                    <span class="meta">
-                      <span class="chip" style="background:#E4E8E0;color:var(--ink-3)">Screening opens Nov 2</span>
-                    </span>
-                  </div>
-
-                  <div class="row-item soon">
-                    <span class="ic">VTL</span>
-                    <span class="tx"><b>VTL Clinical Trial</b><small>Cardiology · Phase III</small></span>
-                    <span class="add ghost"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-                    <span class="meta">
-                      <span class="chip" style="background:#E4E8E0;color:var(--ink-3)">Screening opens Nov 21</span>
-                    </span>
-                  </div>
-                </div>
+                <!-- filled by renderHomeTrials() from the same records screen 3 reads -->
+                <div style="display:flex;flex-direction:column;gap:11px" id="homeTrials"></div>
               </div>
 
               <div class="tiles">
@@ -1082,7 +1044,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
             <div class="topbar reveal">
               <button class="back" onclick="go(1)" aria-label="Back to lab results"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-              <div class="mid"><h1 id="tName">CGX Clinical Trial #4</h1><div class="sub" id="tSub">Matched to your health profile</div></div>
+              <div class="mid"><h1 id="tName">Iron Revisited</h1><div class="sub" id="tSub">Matched to your health profile</div></div>
               <span class="more"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg></span>
             </div>
 
@@ -1176,7 +1138,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
       <div class="modal">
         <div class="check"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--brand-d)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
         <h3>Sent to Dr. Chen</h3>
-        <p id="sentMsg">Your CGX Trial&nbsp;#4 records are on the way. Dr. Chen reviews new records within 24&nbsp;hours.</p>
+        <p id="sentMsg">Your <b>Iron Revisited</b> records are on the way. Dr. Chen reviews new records within 24&nbsp;hours.</p>
       </div>
     </div>
 
@@ -1345,6 +1307,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
   function clamp01(x){ return x < 0 ? 0 : x > 1 ? 1 : x; }
 
+  /* 2006 reads as a year on a phone screen; 2,006 reads as a distance */
+  function num(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
   /* criteria can ask about a lab, about the patient, or about the trial's own
      site (travel distance). Returns null when there is simply no value on file. */
   function readFact(trial, key){
@@ -1363,21 +1328,28 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
       return { pass:false, missing:true, credit:0, evidence:'No ' + c.label + ' on file' };
     }
 
-    var v = fact.value, u = fact.unit ? ' ' + fact.unit : '', pass, off, evidence;
+    /* labs carry their own unit; a plain fact (age, BMI, miles) takes the
+       unit the criterion names, if it names one at all.                  */
+    var unit = fact.unit || c.unit || '';
+    var v = fact.value, u = unit ? ' ' + unit : '', pass, off, evidence;
+
+    /* a protocol threshold is "required"; our own travel filter is only
+       "preferred", and the wording has to keep those apart.            */
+    var word = c.protocol === false ? ' preferred' : ' required';
 
     if(c.op === 'range'){
       pass = v >= c.min && v <= c.max;
       off  = pass ? Math.min(v - c.min, c.max - v)
                   : (v < c.min ? c.min - v : v - c.max);
-      evidence = v + u + (pass ? ' is inside ' : ' is outside ') + c.min + '–' + c.max;
+      evidence = num(v) + u + (pass ? ' is inside ' : ' is outside ') + num(c.min) + '–' + num(c.max);
     } else if(c.op === '>='){
       pass = v >= c.threshold;
       off  = Math.abs(v - c.threshold);
-      evidence = v + u + (pass ? ' ≥ ' : ' < ') + c.threshold + ' required';
+      evidence = num(v) + u + (pass ? ' ≥ ' : ' < ') + num(c.threshold) + word;
     } else {                                              /* '<=' */
       pass = v <= c.threshold;
       off  = Math.abs(v - c.threshold);
-      evidence = v + u + (pass ? ' ≤ ' : ' > ') + c.threshold + ' required';
+      evidence = num(v) + u + (pass ? ' ≤ ' : ' > ') + num(c.threshold) + word;
     }
 
     /* how far inside (or outside) the threshold, as a fraction of the band */
@@ -1396,10 +1368,14 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
      so the chart is a picture of the same numbers that produced the score.   */
   function matchScore(trial){
     var total = 0, weight = 0, rows = [], failed = 0, blocked = false;
+    /* the protocol's own criteria are counted apart from our travel filter —
+       missing a preference is not the same as missing an entry criterion  */
+    var protoTotal = 0, protoFailed = 0;
 
     trial.criteria.forEach(function(c){
       var r = evaluateCriterion(trial, c);
       if(!r.pass){ failed++; if(c.required) blocked = true; }
+      if(c.protocol !== false){ protoTotal++; if(!r.pass) protoFailed++; }
       total  += r.credit * c.weight;
       weight += c.weight;
       rows.push({ lab:c.label, w:Math.round(r.credit * 100), color:c.color,
@@ -1412,58 +1388,97 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
           :                          { verdict:'Weak match',     tone:'weak' };
 
     return { score:score, rows:rows, failed:failed, total:trial.criteria.length,
+             protoTotal:protoTotal, protoFailed:protoFailed,
              blocked:blocked, verdict:v.verdict, tone:v.tone };
   }
 
-  /* ---------------- the trials themselves (fake data) ----------------
-     Two are open and scored; the rest are still in screening. Tapping
-     either open one re-renders screen 3 from the record below.        */
+  /* ================= the trials themselves =================
+     THE PATIENT ABOVE IS INVENTED. THE TRIALS BELOW ARE NOT.
+
+     Every record here was pulled from the ClinicalTrials.gov public API on
+     2026-09-29 and is reproducible:
+
+       https://clinicaltrials.gov/api/v2/studies/<nctId>
+
+     nctId, sponsor, status, phase, enrollment, the site list and every
+     threshold in `criteria` come from that record. `source` on each criterion
+     is the protocol's own wording, so any line on screen 3 can be checked
+     against the registry entry in about ten seconds.
+
+     `protocol:false` marks a criterion that is OpenHealth's own filter rather
+     than something the trial asks for — travel distance is a patient
+     preference, not an eligibility rule, and it is never `required`.
+
+     siteDistanceMi is a real great-circle distance from the (fake) patient's
+     home city to the trial's nearest real site, computed from the lat/lon the
+     registry publishes for each location.                                  */
   var TRIALS = {
-    cgx: {
-      code:'CGX', name:'CGX Clinical Trial #4', sub:'Matched to your health profile',
-      field:'Hematology · Phase II',
-      tags:['Recruiting now','Phase II · Hematology'],
-      /* enrolling iron-deficient patients who are not yet severely anemic */
+    iron: {
+      code:'IR', name:'Iron Revisited', sub:'Matched to your health profile',
+      /* field is kept short on purpose — the renderers append the NCT ID to
+         it, and on a 402pt screen anything longer truncates the ID away  */
+      field:'Iron deficiency',
+      nctId:'NCT06942208',
+      tags:['Recruiting now','Interventional · Iron deficiency'],
+      facts:{ siteDistanceMi:2006 },                    // Philadelphia → Calgary, AB
+      /* Alternate-day oral iron in female athletes with low ferritin who are
+         NOT yet anemic — which is exactly this patient's picture.           */
       criteria:[
-        { key:'ferritin',   label:'Iron levels',     op:'<=',    threshold:15,  band:10, weight:3, required:true,  color:'var(--iron)' },
-        { key:'hemoglobin', label:'Hemoglobin',      op:'>=',    threshold:11,  band:3,  weight:2, required:true,  color:'var(--hgb)'  },
-        { key:'spo2',       label:'O₂ saturation',   op:'>=',    threshold:94,  band:4,  weight:1, required:true,  color:'var(--o2)'   },
-        { key:'ldl',        label:'LDL cholesterol', op:'<=',    threshold:130, band:40, weight:1, required:false, color:'var(--ldl)'  }
+        { key:'ferritin',   label:'Ferritin',    op:'<=',    threshold:50, band:25, weight:3, required:true,  color:'var(--iron)', protocol:true,
+          source:'Inclusion — "Suboptimal ferritin levels (≤50 mcg/L)"' },
+        { key:'hemoglobin', label:'Hemoglobin',  op:'>=',    threshold:12, band:3,  weight:2, required:true,  color:'var(--hgb)',  protocol:true,
+          source:'Exclusion — "Anemic (hemoglobin <120g/L)", i.e. must be ≥12.0 g/dL' },
+        { key:'bmi',        label:'BMI',         op:'range', min:16, max:30, band:7, weight:1, required:true, color:'var(--good)', protocol:true,
+          source:'Exclusion — "Have a BMI <16 but >30kg/m2"' },
+        { key:'age',        label:'Age',         op:'range', min:16, max:35, band:10, weight:1, required:true, color:'var(--good)', protocol:true,
+          source:'Inclusion — "Age 16-35"' },
+        { key:'siteDistanceMi', label:'Travel distance', unit:'mi', op:'<=', threshold:25, band:25, weight:1, required:false, color:'var(--warn)', protocol:false,
+          source:'OpenHealth preference — not a trial criterion' }
       ],
       summary:[
-        ['Sponsor','Cascade Genomics (CGX)'],
-        ['Studying','Iron-deficiency anemia'],
-        ['Location','3 sites near you'],
-        ['Commitment','6 visits over 12 weeks']
+        ['Sponsor','University of Calgary'],
+        ['Studying','Iron deficiency in female athletes'],
+        ['Registry','NCT06942208'],
+        ['Nearest site','Calgary, AB · 2,006 mi'],
+        ['Enrolling','36 participants']
       ],
-      notePass:'Sites near you are enrolling now.',
+      notePass:'The only site is in Calgary, though — Dr. Chen can ask whether a closer one is opening.',
       noteFail:'Dr. Chen can still flag you if the criteria widen.',
       sendHead:'Auto-send to your doctor',
       cta:'Send my records to Dr. Chen',
-      sent:'Your CGX Trial&nbsp;#4 records are on the way. Dr. Chen reviews new records within 24&nbsp;hours.'
+      sent:'Your <b>Iron Revisited</b> records are on the way. Dr. Chen reviews new records within 24&nbsp;hours.'
     },
-    lmi: {
-      code:'LMI', name:'LMI Clinical Trial', sub:'Screened against your health profile',
-      field:'Metabolic · Phase I',
-      tags:['Screening opens Oct 14','Phase I · Metabolic'],
-      facts:{ siteDistanceMi:84 },
+    icov: {
+      code:'ICO', name:'Icovamenib in Type 2 Diabetes', sub:'Screened against your health profile',
+      field:'Phase II · Metabolic',
+      nctId:'NCT07502508',
+      tags:['Recruiting now','Phase II · Metabolic'],
+      facts:{ siteDistanceMi:138 },                     // Philadelphia → Burke, VA
+      /* Kept in the feed on purpose: the nearest site is 15× closer than the
+         iron trial's, and she still scores near zero. Distance is not the
+         thing that decides a match.                                        */
       criteria:[
-        { key:'a1c',            label:'A1c range',       op:'>=',    threshold:6.5, band:1.5, weight:3, required:true,  color:'var(--warn)' },
-        { key:'bmi',            label:'BMI criteria',    op:'>=',    threshold:27,  band:6,   weight:2, required:true,  color:'var(--warn)' },
-        { key:'age',            label:'Age bracket',     op:'range', min:18, max:75, band:20, weight:1, required:true,  color:'var(--good)' },
-        { key:'siteDistanceMi', label:'Travel distance', op:'<=',    threshold:25,  band:25,  weight:1, required:false, color:'var(--warn)' }
+        { key:'a1c', label:'A1c',  op:'range', min:7.5, max:9.5, band:2, weight:3, required:true, color:'var(--warn)', protocol:true,
+          source:'Inclusion — "Have HbA1c ≥7.5 and ≤9.5%"' },
+        { key:'bmi', label:'BMI',  op:'range', min:25,  max:40,  band:6, weight:2, required:true, color:'var(--warn)', protocol:true,
+          source:'Inclusion — "Have a BMI 25 to 40 kg/m2"' },
+        { key:'age', label:'Age',  op:'range', min:18,  max:70,  band:20, weight:1, required:true, color:'var(--good)', protocol:true,
+          source:'Registry eligibility — 18 Years to 70 Years' },
+        { key:'siteDistanceMi', label:'Travel distance', unit:'mi', op:'<=', threshold:25, band:50, weight:1, required:false, color:'var(--warn)', protocol:false,
+          source:'OpenHealth preference — not a trial criterion' }
       ],
       summary:[
-        ['Sponsor','Lumen Metabolic Institute'],
-        ['Studying','Type 2 diabetes remission'],
-        ['Location','1 site · 84 miles away'],
-        ['Commitment','14 visits over 9 months']
+        ['Sponsor','Biomea Fusion, Inc.'],
+        ['Studying','Type 2 diabetes · icovamenib'],
+        ['Registry','NCT07502508'],
+        ['Nearest site','Burke, VA · 138 mi'],
+        ['Enrolling','60 participants']
       ],
-      notePass:'Screening opens October 14 — Dr. Chen can put you forward.',
+      notePass:'Dr. Chen can put you forward for screening.',
       noteFail:'Dr. Chen can still flag you if the criteria widen.',
       sendHead:'Ask about this one',
       cta:'Ask Dr. Chen about eligibility',
-      sent:'Your question about LMI is with Dr. Chen. She reviews new requests within 24&nbsp;hours.'
+      sent:'Your question about <b>icovamenib (NCT07502508)</b> is with Dr. Chen. She reviews new requests within 24&nbsp;hours.'
     }
   };
 
@@ -1471,12 +1486,21 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   var RESULT = {};
   function scoreAll(){ Object.keys(TRIALS).forEach(function(k){ RESULT[k] = matchScore(TRIALS[k]); }); }
   scoreAll();
+
+  /* trial ids best-first — the order on screen is an output of the engine */
+  function rankedTrials(){
+    return Object.keys(TRIALS).sort(function(a,b){ return RESULT[b].score - RESULT[a].score; });
+  }
+  /* not scored — listed because the registry says they start soon and are
+     within range of the patient's home city. Real records, same API.      */
   var SOON = [
-    { name:'PPF Clinical Trial', field:'Pulmonary · Phase II', when:'Nov 2' },
-    { name:'VTL Clinical Trial', field:'Cardiology · Phase III', when:'Nov 21' }
+    { code:'NAG', name:'N-acetylglucosamine', field:'Crohn’s · Phase II',
+      nctId:'NCT07225998', sponsor:'Johns Hopkins University', when:'Nov 1' },
+    { code:'WMP', name:'Weight regain after GLP-1', field:'Obesity · Phase IV',
+      nctId:'NCT07729332', sponsor:'Massachusetts General Hospital', when:'Nov 1' }
   ];
 
-  var currentTrial = 'cgx';
+  var currentTrial = 'iron';
   var sentFor = {};
 
   function renderTrial(id){
@@ -1491,11 +1515,14 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     document.getElementById('ring').style.setProperty('--off', (452 * (1 - m.score / 100)).toFixed(1));
     document.getElementById('scoreNum').textContent = reduce ? m.score : 0;
     document.getElementById('tVerdict').textContent = m.verdict;
+    /* the registry ID rides along with the tags — a judge can paste it into
+       clinicaltrials.gov and check every number on this screen             */
     document.getElementById('tTags').innerHTML = t.tags.map(function(x){
       return '<span class="chip">' + x + '</span>';
-    }).join('');
+    }).join('') + '<span class="chip reg">' + t.nctId + '</span>';
 
-    document.getElementById('eligHead').textContent = m.failed ? 'Where you fall short' : 'Why you qualify';
+    /* a failed travel preference is not falling short of the protocol */
+    document.getElementById('eligHead').textContent = m.protoFailed ? 'Where you fall short' : 'Why you qualify';
 
     /* each row shows the comparison the engine actually made, not just a bar */
     document.getElementById('eligCard').innerHTML = m.rows.map(function(r){
@@ -1505,9 +1532,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
              '<span class="pct" style="color:' + r.color + '">' + r.w + '</span></div>';
     }).join('');
 
-    var note = m.failed
-      ? 'You miss ' + m.failed + ' of the ' + m.total + ' entry criteria. ' + t.noteFail
-      : 'You meet all ' + m.total + ' entry criteria. ' + t.notePass;
+    var note = m.protoFailed
+      ? 'You miss ' + m.protoFailed + ' of the ' + m.protoTotal + ' entry criteria. ' + t.noteFail
+      : 'You meet all ' + m.protoTotal + ' entry criteria. ' + t.notePass;
     document.getElementById('eligNote').innerHTML =
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>' + note;
 
@@ -1524,19 +1551,19 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
     /* every other trial, scored ones first and tappable */
     var rows = '';
-    Object.keys(TRIALS).forEach(function(k){
+    rankedTrials().forEach(function(k){
       if(k === id) return;
       var o = TRIALS[k], om = RESULT[k];
       rows += '<button class="row" onclick="openTrial(\'' + k + '\')">' +
               '<span class="dot" style="background:' + (om.tone === 'weak' ? 'var(--warn)' : 'var(--brand)') + '"></span>' +
-              '<span><span class="nm">' + o.name + '</span><span class="field">' + o.field + '</span></span>' +
+              '<span><span class="nm">' + o.name + '</span><span class="field">' + o.field + ' · ' + o.nctId + '</span></span>' +
               '<span class="score' + (om.tone === 'weak' ? ' weak' : '') + '"><i></i>' + om.score + ' / 100</span>' +
               '</button>';
     });
     SOON.forEach(function(o){
       rows += '<div class="row"><span class="dot" style="background:var(--ink-3)"></span>' +
-              '<div><div class="nm">' + o.name + '</div><div class="field">' + o.field + '</div></div>' +
-              '<span class="chip" style="margin-left:auto;background:var(--surface-2);color:var(--ink-3)">Opens ' + o.when + '</span></div>';
+              '<div><div class="nm">' + o.name + '</div><div class="field">' + o.field + ' · ' + o.nctId + '</div></div>' +
+              '<span class="chip" style="margin-left:auto;background:var(--surface-2);color:var(--ink-3)">Starts ' + o.when + '</span></div>';
     });
     document.getElementById('tRelated').innerHTML = rows;
   }
@@ -1594,17 +1621,45 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
   document.getElementById('overlay').addEventListener('click', function(){ this.classList.remove('on'); });
 
-  /* the two match chips on Home come from the same engine as screen 3 */
-  function renderHomeChips(){
-    Array.prototype.slice.call(document.querySelectorAll('.score-chip[data-trial]')).forEach(function(el){
-      var m = RESULT[el.getAttribute('data-trial')];
-      if(!m) return;
-      el.classList.toggle('weak', m.tone === 'weak');
-      el.innerHTML = '<i class="spark"></i>' + m.score + ' / 100 match';
+  /* The trial feed on Home is built from TRIALS/SOON, not typed into the
+     markup, so a name or a score can never say one thing here and another
+     on screen 3. Scored trials come first, ranked by the engine.          */
+  var EYE = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var PLUS = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+  var CLOCK = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  var CODE_TINT = { iron:['rgba(225,29,116,.12)','var(--iron)'], icov:['rgba(124,77,255,.12)','var(--hgb)'] };
+
+  function renderHomeTrials(){
+    var html = '';
+
+    rankedTrials().forEach(function(k){
+      var t = TRIALS[k], m = RESULT[k], tint = CODE_TINT[k] || ['var(--surface-2)','var(--ink-3)'];
+      html +=
+        '<div class="row-item live tappable" role="button" tabindex="0" onclick="openTrial(\'' + k + '\')" onkeydown="keyTrial(event,\'' + k + '\')">' +
+          '<span class="ic" style="background:' + tint[0] + ';color:' + tint[1] + '">' + t.code + '</span>' +
+          '<span class="tx"><b>' + t.name + '</b><small>' + t.field + ' · ' + t.nctId + '</small></span>' +
+          '<span class="add">' + PLUS + '</span>' +
+          '<span class="meta">' +
+            '<span class="score-chip' + (m.tone === 'weak' ? ' weak' : '') + '"><i class="spark"></i>' + m.score + ' / 100 match</span>' +
+            '<span class="hint">' + EYE + 'Tap to view</span>' +
+          '</span>' +
+        '</div>';
     });
+
+    SOON.forEach(function(o){
+      html +=
+        '<div class="row-item soon">' +
+          '<span class="ic">' + o.code + '</span>' +
+          '<span class="tx"><b>' + o.name + '</b><small>' + o.field + ' · ' + o.nctId + '</small></span>' +
+          '<span class="add ghost">' + CLOCK + '</span>' +
+          '<span class="meta"><span class="chip" style="background:#E4E8E0;color:var(--ink-3)">Starts ' + o.when + '</span></span>' +
+        '</div>';
+    });
+
+    document.getElementById('homeTrials').innerHTML = html;
   }
 
-  renderHomeChips();
+  renderHomeTrials();
   pick(0);
   go(0);
 })();
