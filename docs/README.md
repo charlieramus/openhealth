@@ -1,6 +1,6 @@
 # OpenHealth — Documentation
 
-Ten docs, four groups. Start wherever your question is.
+Eleven docs, five groups. Start wherever your question is.
 
 ---
 
@@ -34,9 +34,19 @@ Ten docs, four groups. Start wherever your question is.
 | [**RISKS.md**](RISKS.md) | The full risk register, the consequence we can't remove, HIPAA and FDA surface, ethical commitments | You're evaluating whether this is responsible |
 | [**ROADMAP.md**](ROADMAP.md) | The 4-week build plan to the Oct 26 Congressional App Challenge deadline, what's being cut, and the submission checklist | You're asking "what's left to build?" |
 
+## Presenting it
+
+| Doc | Answers | Read if |
+|-----|---------|---------|
+| [**PITCH.md**](PITCH.md) | The 2–4 min two-person mock Shark Tank script, the $250k/20% offer sheet, the negotiation ladder, and split Q&A prep | You're presenting tomorrow. **Speaking time is split equal by word count — rebalance if you edit a beat** |
+
 ---
 
 ## Reading paths
+
+**For the mock pitch panel (rehearsal)**
+→ [`PITCH.md`](PITCH.md) start to finish, then [`COSTS.md`](COSTS.md) §5 and §7 so you can
+defend the offer sheet under questioning
 
 **For a class presentation or a judge (15 min)**
 → [`BRIEF.md`](BRIEF.md) → [`MISSION.md`](MISSION.md) §"The pitch, at three lengths" →

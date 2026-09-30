@@ -56,6 +56,7 @@ index.html              ← the entire prototype (one file, no build step)
 docs/
   README.md             ← doc index + reading paths. Start here if you're browsing
   BRIEF.md              ← the idea + all 6 required deliverable answers (source of truth)
+  PITCH.md              ← two-person mock Shark Tank script + offer sheet (equal speaking time)
   MISSION.md            ← mission, values, positioning, the pitch at three lengths
   ARCHITECTURE.md       ← how data is collected from APIs, matched, and distributed (flowcharts)
   COSTS.md              ← run cost at 1k/50k/500k users, unit economics, real vendor prices
@@ -93,6 +94,7 @@ The prototype is the picture. These docs are the thinking.
 | What could go wrong? | [**RISKS.md**](docs/RISKS.md) |
 | What's left to build before the deadline? | [**ROADMAP.md**](docs/ROADMAP.md) |
 | Shouldn't this be Next.js? | [**STACK.md**](docs/STACK.md) |
+| How do we pitch it out loud in 3 minutes? | [**PITCH.md**](docs/PITCH.md) |
 
 Cost and market figures are tagged `[sourced]`, `[modeled]`, or `[assumed]` so you can tell
 a real vendor price from our arithmetic from a guess. Sources are linked in each doc.
