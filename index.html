@@ -244,6 +244,45 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .macro .v{font-size:.72rem;font-weight:600;color:#16351F;opacity:.72;white-space:nowrap}
 .macro .v b{font-weight:700;opacity:1}
 
+/* the number is a word on first run, and a 4rem word overruns the ring */
+.ring-center .n.none{font-size:1.42rem;letter-spacing:-.02em;text-align:center}
+
+/* one action, and the only one that can change the state it is explaining */
+.first-run{
+  align-self:center;margin:20px auto 4px;
+  display:flex;align-items:center;gap:8px;
+  padding:13px 22px;border-radius:999px;background:var(--brand-d);color:#fff;
+  font-family:var(--display);font-weight:700;font-size:.9rem;
+  box-shadow:0 8px 20px -10px rgba(14,42,23,.6);
+  transition:transform .15s ease;
+}
+.first-run:active{transform:scale(.97)}
+
+/* ---- Records captured: the one full-width panel on the Today card ---- */
+.captured{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:20px;padding:14px;
+  display:flex;flex-direction:column;gap:12px;
+}
+.cap-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.cap-strip{display:flex;gap:9px;overflow-x:auto;scrollbar-width:none}
+.cap-strip::-webkit-scrollbar{display:none}
+.cap-item{
+  flex:0 0 auto;width:58px;display:flex;flex-direction:column;align-items:center;gap:5px;
+}
+.cap-item .sh{
+  width:58px;height:72px;border-radius:12px;background:var(--surface-2);
+  border:1px solid var(--line);overflow:hidden;display:grid;place-items:center;
+}
+.cap-item .sh img{width:100%;height:100%;object-fit:cover;display:block}
+.cap-item .cl{
+  font-size:.62rem;font-weight:600;color:var(--ink-3);
+  max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+button.cap-item{cursor:pointer;transition:transform .15s ease}
+button.cap-item:active{transform:scale(.96)}
+button.cap-item .sh{border-style:dashed;color:var(--brand-d)}
+
 .see{
   align-self:center;margin:18px auto 22px;
   display:flex;align-items:center;gap:8px;
@@ -729,6 +768,8 @@ button.tile:active{transform:scale(.98)}
   box-shadow:0 0 0 2px #fff;
 }
 
+[hidden]{display:none !important}
+
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   .reveal{opacity:1;transform:none}
@@ -940,7 +981,7 @@ button.tile:active{transform:scale(.98)}
                             stroke-linecap="round" transform="rotate(-90 108 108)" style="--off:534"/>
                   </svg>
                   <div class="ring-center">
-                    <span class="n" id="hs">0</span>
+                    <span class="n" id="hs"></span>
                     <span class="d">Health Score</span>
                     <span class="conf" id="hsConf"></span>
                   </div>
@@ -950,6 +991,14 @@ button.tile:active{transform:scale(.98)}
 
                 <!-- filled by renderMacros() from the same MARKERS the Metrics tab charts -->
                 <div class="macros" id="macros"></div>
+
+                <!-- First run, per spec screen 10: no marker has a value, so there is
+                     nothing to bar-chart and exactly one thing to do. renderHealth()
+                     shows this and hides the bars and the "See details" pill. -->
+                <button class="first-run" id="firstRun" hidden onclick="go(3)">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                  Add your first lab result
+                </button>
 
                 <button class="see" onclick="go(1)">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#12301C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
@@ -967,27 +1016,19 @@ button.tile:active{transform:scale(.98)}
                 <span class="go"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
               </div>
 
-              <!-- the way into the document rail, and the count of what it
-                   actually holds. Both tiles are written by renderToday(). -->
-              <div class="tiles">
-                <button class="tile" onclick="go(3)">
-                  <div class="top">
-                    <span class="k">Add<br>records</span>
-                    <span class="ic" style="background:rgba(70,188,92,.13)">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-d)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                    </span>
+              <!-- ONE full-width panel, per the spec's screen 1: what this page is
+                   actually holding. Thumbnails, count and the add tile are all written
+                   by renderToday() from DOCS — the same list the document rail shows,
+                   so the two surfaces cannot disagree about what was captured. -->
+              <div class="captured">
+                <div class="cap-head">
+                  <div>
+                    <div class="eyebrow">Records captured</div>
+                    <div class="sub-line" id="capCount"></div>
                   </div>
-                  <div class="v" id="docTile"></div>
-                </button>
-                <div class="tile">
-                  <div class="top">
-                    <span class="k">Markers<br>with a value</span>
-                    <span class="ic" style="background:rgba(47,128,237,.13)">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ldl)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6l-5 8a2 2 0 0 0 1.7 3h12.6a2 2 0 0 0 1.7-3l-5-8V3"/><path d="M8 3h8M7.5 14h9"/></svg>
-                    </span>
-                  </div>
-                  <div class="v" id="markerTile"></div>
+                  <button class="link" onclick="go(3)">See more</button>
                 </div>
+                <div class="cap-strip" id="capStrip"></div>
               </div>
 
               <div>
@@ -1002,27 +1043,6 @@ button.tile:active{transform:scale(.98)}
 
                 <!-- the top of the same ranking screen 3 reads, written by renderHomeTrials() -->
                 <div style="display:flex;flex-direction:column;gap:11px" id="homeTrials"></div>
-              </div>
-
-              <div class="tiles">
-                <div class="tile">
-                  <div class="top">
-                    <span class="k">Insurance</span>
-                    <span class="ic" style="background:rgba(70,188,92,.13)">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-d)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                    </span>
-                  </div>
-                  <div class="v ok" style="font-size:1.1rem">Full coverage</div>
-                </div>
-                <div class="tile">
-                  <div class="top">
-                    <span class="k">Balance due</span>
-                    <span class="ic" style="background:var(--surface-2)">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/></svg>
-                    </span>
-                  </div>
-                  <div class="v">$0<span class="u">.00</span></div>
-                </div>
               </div>
 
             </div>
@@ -1398,7 +1418,7 @@ button.tile:active{transform:scale(.98)}
       </button>
       <button class="tab" id="t1" onclick="go(1)">
         <span class="badge"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6l-5 8a2 2 0 0 0 1.7 3h12.6a2 2 0 0 0 1.7-3l-5-8V3"/><path d="M8 3h8M7.5 14h9"/></svg></span>
-        Labs
+        Metrics
       </button>
       <button class="tab" id="t2" onclick="go(2)">
         <span class="badge"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
@@ -1555,11 +1575,23 @@ button.tile:active{transform:scale(.98)}
      healthScore() output — nothing on this card is typed into the markup. */
   function renderHealth(){
     var hs = healthScore();
+    var num = document.getElementById('hs');
+    var empty = hs.score === null;        /* no marker has a value: not a zero */
 
     document.querySelector('#s0 .ring-prog')
-            .style.setProperty('--off', (534 * (1 - hs.score / 100)).toFixed(1));
-    countUp(document.getElementById('hs'), hs.score);
+            .style.setProperty('--off', (534 * (1 - (empty ? 0 : hs.score) / 100)).toFixed(1));
+
+    /* the ring reads a word on first run. A 0 here would be the single most
+       dishonest thing this screen could render — it is the shape of a bad
+       result, and the truth is that nothing has been measured. */
+    num.classList.toggle('none', empty);
     document.getElementById('hsConf').textContent = hs.n + ' of ' + hs.total + ' markers';
+    document.getElementById('firstRun').hidden = !empty;
+    document.getElementById('macros').hidden   = empty;
+    document.querySelector('#s0 .see').hidden  = empty;
+    document.getElementById('hsTrend').hidden  = empty;
+    if(empty){ num.textContent = 'No data yet'; return; }
+    countUp(num, hs.score);
 
     /* the same formula run over the profile as it stood at the baseline draw,
        so the pill can never claim a move the markers did not actually make   */
@@ -1583,6 +1615,13 @@ button.tile:active{transform:scale(.98)}
   function renderMacros(){
     document.getElementById('macros').innerHTML = MARKERS.slice(0, 3).map(function(m){
       var v  = m.values[m.values.length - 1];
+      /* no value is "Not measured", never an empty track that reads as a floor */
+      if(v === undefined || v === null)
+        return '<div class="macro">' +
+                 '<span class="lab">' + MACRO_LAB[m.key] + '</span>' +
+                 '<span class="track"></span>' +
+                 '<span class="v">Not measured</span>' +
+               '</div>';
       var hi = m.refHigh === null ? m.max : m.refHigh;
       var w  = Math.max(3, Math.min(100, 100 * v / hi));
       return '<div class="macro">' +
@@ -1716,7 +1755,7 @@ button.tile:active{transform:scale(.98)}
   var screens = ['s0','s1','s2','s3','s4'].map(function(id){ return document.getElementById(id); });
   var tabs    = [document.getElementById('t0'), document.getElementById('t1'), document.getElementById('t2')];
   /* the two document screens are reached from the Today card rather than from a
-     tab of their own, and they belong to the lab rail — so the Labs tab stays
+     tab of their own, and they belong to the lab rail — so the Metrics tab stays
      lit while you are in them, instead of no tab being lit at all */
   var TAB_OF = [0, 1, 2, 1, 1];
   var seen = [false,false,false,false,false];
@@ -1729,7 +1768,7 @@ button.tile:active{transform:scale(.98)}
     phone.classList.toggle('hero', i === 0);           // gradient only behind Home
     seen[i] = true;
     tabs.forEach(function(t,idx){ t.classList.toggle('active', idx === TAB_OF[i]); });
-    tabs[1].classList.toggle('has-badge', !seen[1]);   // "new results" dot on Labs
+    tabs[1].classList.toggle('has-badge', !seen[1]);   // "new results" dot on Metrics
 
     screens.forEach(function(s,idx){
       if(idx === i){
@@ -3166,6 +3205,11 @@ button.tile:active{transform:scale(.98)}
     matchScore:    matchScore,
     rankCorpus:    rankCorpus,
     healthScore:   healthScore,
+    /* MARKERS and recompute() are exposed for the same reason as the rest: so a
+       check can empty a marker in the SHIPPED state and watch every screen
+       re-derive, instead of asserting against a copy of the data. */
+    MARKERS:       MARKERS,
+    recompute:     function(){ return recompute(); },
     ANALYTES:      ANALYTES,
     CORPUS:        CORPUS,
     PROFILE:       PROFILE,
@@ -3345,6 +3389,8 @@ button.tile:active{transform:scale(.98)}
      audit screen, so the two lists cannot drift apart. Both numbers ride in it
      and they stay apart: the headline is the score, the line under it is how
      much of the trial that score was computed from. */
+  var PIN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.6"/></svg>';
+
   function listChip(res){
     var c = res.confidence, cover = c.decidable + ' of ' + c.total + ' checkable';
     if(res.blocked)
@@ -3570,7 +3616,12 @@ button.tile:active{transform:scale(.98)}
 
   /* ---------------- match score count-up ---------------- */
   function countUp(el, to){
-    if(reduce){ el.textContent = to; return; }
+    /* requestAnimationFrame does not fire in a background tab, so the number is
+       written straight in when nothing can animate it. Until this check existed
+       a tab that loaded in the background kept whatever was in the markup — and
+       the markup's placeholder was a 0, which is the one thing the ring must
+       never read as. The markup no longer carries a number at all. */
+    if(reduce || document.hidden){ el.textContent = to; return; }
     var start = null, dur = 1200;
     function step(ts){
       if(!start) start = ts;
@@ -3608,7 +3659,16 @@ button.tile:active{transform:scale(.98)}
         '<span class="tx"><b>' + esc(t.briefTitle) + '</b><small>' +
           esc(t.nctId) + ' · ' + esc((t.conditions || [])[0] || '') + '</small></span>' +
         '<span class="add">' + GO + '</span>' +
+        /* three chips, per the spec: the score, the distance, and the way in.
+           The distance is the corpus's own build-time great-circle to the fixed
+           origin — "from Philadelphia" is said out loud rather than implying the
+           app knows where you are, and a record with no geoPoint says so. */
         '<span class="meta">' + listChip(res) +
+          '<span class="hint">' + PIN +
+            (t.siteDistanceMi === null || t.siteDistanceMi === undefined
+              ? 'Distance unknown'
+              : num(t.siteDistanceMi) + ' mi from ' + DISTANCE_ORIGIN.split(',')[0]) +
+          '</span>' +
           '<span class="hint">' + EYE + 'Tap to view</span>' +
         '</span>' +
       '</div>';
@@ -3767,17 +3827,31 @@ button.tile:active{transform:scale(.98)}
   /* the two Today tiles: how many documents this page is holding, and how much
      of the marker panel actually has a value behind it */
   function renderToday(){
-    var hs = healthScore();
     document.getElementById('todayHead').textContent = 'Today, ' +
       dateLabel(todayISO()).replace(/, \d{4}$/, '');
     /* DOCS holds both kinds of entry the rail produces — a document that was
        read and a value that was typed in. Calling a typed value a "document"
        on this tile contradicted the rail's own list, which already says
        "Typed in". The noun is the one both can be. */
-    document.getElementById('docTile').innerHTML =
-      DOCS.length + '<span class="u">' + (DOCS.length === 1 ? 'entry' : 'entries') + '</span>';
-    document.getElementById('markerTile').innerHTML =
-      hs.n + '<span class="u">of ' + hs.total + '</span>';
+    document.getElementById('capCount').textContent = DOCS.length
+      ? plural(DOCS.length, 'entry', 'entries') + ' · held in this page only'
+      : 'Nothing captured yet';
+
+    /* newest first, and the add tile is always the last thing in the strip so the
+       panel is never a dead end. Thumbnails are the real object URL the rail
+       made from the file that was read; a typed value has no image and says so. */
+    document.getElementById('capStrip').innerHTML =
+      DOCS.slice().reverse().map(function(d){
+        return '<div class="cap-item">' +
+          '<span class="sh">' + (d.url ? '<img src="' + d.url + '" alt="">' : DOCICON) + '</span>' +
+          '<span class="cl" title="' + esc(d.name) + '">' +
+            (d.kind === 'manual' ? 'Typed in' : esc(d.name)) +
+          '</span></div>';
+      }).join('') +
+      '<button class="cap-item" onclick="go(3)" aria-label="Add a record">' +
+        '<span class="sh"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>' +
+        '<span class="cl">Add</span>' +
+      '</button>';
   }
 
   /* ================= the document rail =================
