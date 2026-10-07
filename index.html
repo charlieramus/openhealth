@@ -126,17 +126,17 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
 /* ============================ screen track ============================ */
 .viewport{position:relative;z-index:1;flex:1 1 auto;min-height:0;overflow:hidden}
-.track{display:flex;width:300%;height:100%;transition:transform .48s cubic-bezier(.4,.9,.25,1)}
+.track{display:flex;width:500%;height:100%;transition:transform .48s cubic-bezier(.4,.9,.25,1)}
 .screen{
-  width:33.3333%;height:100%;
+  width:20%;height:100%;
   overflow-y:auto;overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
   scrollbar-width:none;
 }
 .screen::-webkit-scrollbar{display:none}
-#s1,#s2{background:var(--screen)}
+#s1,#s2,#s3,#s4{background:var(--screen)}
 .screen-inner{display:flex;flex-direction:column;padding:0 0 26px}
-#s1 .screen-inner,#s2 .screen-inner{gap:18px;padding:6px var(--pad) 26px}
+#s1 .screen-inner,#s2 .screen-inner,#s3 .screen-inner,#s4 .screen-inner{gap:18px;padding:6px var(--pad) 26px}
 
 /* staggered entrance — replayed each time a screen becomes active */
 .reveal{opacity:0;transform:translateY(14px)}
@@ -347,6 +347,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .tile .v{font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.04em}
 .tile .v .u{font-family:var(--body);font-size:.78rem;font-weight:600;color:var(--ink-3);margin-left:4px}
 .tile .v.ok{color:var(--brand-d)}
+button.tile{text-align:left;cursor:pointer;transition:transform .15s ease}
+button.tile:active{transform:scale(.98)}
 
 /* ============================ screen 2 · labs ============================ */
 .topbar{display:flex;align-items:flex-start;gap:12px;padding:6px 0 2px}
@@ -443,9 +445,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 /* overall gauge */
 .gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
 .gauge-wrap svg{display:block}
-.needle{transform-origin:115px 118px;transform:rotate(-78deg)}
+.needle{transform-origin:115px 118px;transform:rotate(var(--ang,0deg))}
 .screen.in .needle{animation:swing 1.5s cubic-bezier(.3,1.4,.4,1) .35s forwards}
-@keyframes swing{0%{transform:rotate(-78deg)}60%{transform:rotate(10deg)}100%{transform:rotate(0deg)}}
+@keyframes swing{0%{transform:rotate(-78deg)}60%{transform:rotate(calc(var(--ang,0deg) + 10deg))}100%{transform:rotate(var(--ang,0deg))}}
 .gauge-status{font-family:var(--display);font-weight:800;font-size:1.22rem;letter-spacing:-.03em;margin-top:6px}
 .gauge-note{font-size:.76rem;color:var(--ink-3);text-align:center}
 
@@ -458,6 +460,11 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .marker .val{font-family:var(--display);font-weight:800;font-size:1.02rem;letter-spacing:-.03em}
 .marker .val .u{font-family:var(--body);font-size:.7rem;font-weight:600;color:var(--ink-3);margin-left:4px}
 .scale{position:relative;height:9px;border-radius:999px;background:var(--surface-2)}
+.scale.none{
+  background:repeating-linear-gradient(135deg,
+    var(--surface-2) 0 5px, transparent 5px 10px);
+  box-shadow:inset 0 0 0 1.5px var(--line-2);
+}
 .scale .band{position:absolute;top:0;bottom:0;border-radius:999px;opacity:.2}
 .scale .pin{
   position:absolute;top:50%;width:15px;height:15px;border-radius:50%;
@@ -471,6 +478,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
 /* recommendations */
 .recs{display:flex;flex-direction:column;gap:2px;padding:4px 16px}
+.rec[hidden],.rec-group[hidden]{display:none}
 .rec{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}
 .rec:last-child{border-bottom:0}
 .rec .ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:0 0 auto}
@@ -714,12 +722,172 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   .reveal{opacity:1;transform:none}
 }
 
+
+/* ======================= the document rail · screens 4 and 5 =======================
+   Screen 4 takes a document in. Screen 5 shows what came out of it, including
+   everything that did not. The review screen gives the lines it FAILED on more
+   room than the ones it read, because that is the half a reader cannot verify
+   any other way. Nothing on either screen is typed: every row is
+   parseLabDocument() output. */
+
+/* ---- the two big stacked capture targets ---- */
+.doc-opt{
+  display:flex;align-items:center;gap:13px;width:100%;text-align:left;
+  background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);
+  padding:16px;cursor:pointer;transition:transform .15s ease;
+}
+.doc-opt:active{transform:scale(.99)}
+.doc-opt .ic{
+  flex:0 0 auto;width:50px;height:50px;border-radius:16px;
+  display:grid;place-items:center;background:var(--soft);color:var(--brand-d);
+}
+.doc-opt .tx{flex:1;min-width:0}
+.doc-opt .tx b{
+  display:block;font-family:var(--display);font-weight:700;font-size:.95rem;
+  letter-spacing:-.015em;
+}
+.doc-opt .tx small{display:block;font-size:.73rem;line-height:1.45;color:var(--ink-2);margin-top:2px}
+.doc-opt .chev{flex:0 0 auto;color:var(--ink-3)}
+.doc-opt input[type=file]{display:none}
+
+/* the plain line about where the document goes, which is nowhere */
+.doc-note{
+  display:flex;gap:9px;padding:0 2px;font-size:.73rem;line-height:1.5;color:var(--ink-2);
+}
+.doc-note svg{flex:0 0 auto;margin-top:3px;color:var(--brand-d)}
+.doc-note b{font-weight:700;color:var(--ink)}
+
+/* ---- manual entry: the correction path and the offline path ---- */
+.manual{padding:14px 16px 16px}
+.manual .lead{font-size:.74rem;line-height:1.5;color:var(--ink-2);margin-bottom:11px}
+.manual .mlab{
+  font-family:var(--display);font-weight:700;font-size:.73rem;
+  color:var(--ink-2);margin-bottom:8px;
+}
+.manual .mnote{margin-top:9px;font-size:.71rem;color:var(--ink-3)}
+.achips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.achip{
+  display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;
+  background:var(--surface-2);color:var(--ink-2);
+  font-family:var(--display);font-weight:700;font-size:.74rem;letter-spacing:-.01em;
+  border:1.5px solid transparent;
+}
+.achip .dot{width:7px;height:7px}
+.achip.on{background:#fff;border-color:var(--ink);color:var(--ink)}
+.mrow{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.mrow .num{
+  width:108px;padding:12px 13px;border-radius:14px;
+  border:1.5px solid var(--line-2);background:#fff;
+  font-family:var(--display);font-weight:800;font-size:1.05rem;color:var(--ink);
+  letter-spacing:-.02em;-moz-appearance:textfield;
+}
+.mrow .num::-webkit-outer-spin-button,.mrow .num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.mrow .num:focus{outline:none;border-color:var(--brand)}
+.units{display:flex;gap:6px;flex-wrap:wrap}
+.units .achip{font-size:.7rem;padding:6px 10px}
+.manual .err{
+  margin-top:10px;font-size:.73rem;line-height:1.45;color:#A1125A;font-weight:600;
+}
+.manual .err.ok{color:var(--brand-d)}
+.manual .err[hidden]{display:none}
+.manual .btn{margin-top:13px;padding:13px}
+
+/* ---- the documents this session actually holds ---- */
+.doc-list{padding:2px 16px}
+.doc-list .empty{padding:13px 0;font-size:.76rem;line-height:1.5;color:var(--ink-3)}
+.doc-row{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line)}
+.doc-row:last-child{border-bottom:0}
+.doc-row .thumb{
+  flex:0 0 auto;width:40px;height:50px;border-radius:9px;object-fit:cover;
+  background:var(--surface-2);border:1px solid var(--line-2);
+}
+.doc-row .tx{flex:1;min-width:0}
+.doc-row .tx b{display:block;font-size:.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-row .tx small{display:block;font-size:.7rem;color:var(--ink-3);margin-top:2px}
+
+/* ---- screen 5 · OCR progress. A real percentage from the OCR logger ---- */
+.ocr{padding:18px 16px}
+.ocr .st{font-family:var(--display);font-weight:700;font-size:.86rem;margin-bottom:11px}
+.ocr .bar{height:9px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.ocr .bar i{display:block;height:100%;width:0;border-radius:999px;background:var(--brand);transition:width .3s ease}
+.ocr .sub{margin-top:10px;font-size:.72rem;line-height:1.5;color:var(--ink-3)}
+.ocr .btn{margin-top:14px;padding:12px}
+
+/* ---- the document itself, shown so a reader can check the rows against it ---- */
+.shot{display:flex;gap:13px;padding:14px 16px;align-items:flex-start}
+.shot img{
+  flex:0 0 auto;width:84px;max-height:112px;object-fit:cover;object-position:top;
+  border-radius:12px;border:1px solid var(--line-2);background:var(--surface-2);
+}
+.shot .tx{flex:1;min-width:0;font-size:.74rem;line-height:1.5;color:var(--ink-2)}
+.shot .tx b{display:block;font-family:var(--display);font-size:.88rem;color:var(--ink);margin-bottom:3px}
+
+/* ---- the extracted rows. Editable in place: the input IS the value ---- */
+.xrows{padding:2px 16px}
+.xrow{padding:13px 0;border-bottom:1px solid var(--line)}
+.xrow:last-child{border-bottom:0}
+.xrow.low{
+  margin:9px -10px;padding:13px 10px;border-bottom:0;
+  background:rgba(245,165,36,.10);border-radius:14px;
+  box-shadow:inset 0 0 0 1.5px rgba(245,165,36,.42);
+}
+.xhead{display:flex;align-items:center;gap:9px}
+.xhead .nm{
+  flex:1;min-width:0;display:flex;align-items:center;gap:7px;
+  font-family:var(--display);font-weight:700;font-size:.88rem;letter-spacing:-.015em;
+}
+.xval{display:flex;align-items:center;gap:7px;margin-top:9px}
+.xval input{
+  width:92px;padding:9px 10px;border-radius:12px;
+  border:1.5px solid var(--line-2);background:#fff;
+  font-family:var(--display);font-weight:800;font-size:1rem;letter-spacing:-.02em;color:var(--ink);
+  -moz-appearance:textfield;
+}
+.xval input::-webkit-outer-spin-button,.xval input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.xval input:focus{outline:none;border-color:var(--brand)}
+.xval .u{font-family:var(--display);font-weight:700;font-size:.8rem;color:var(--ink-2)}
+.xval .when{margin-left:auto;font-size:.71rem;color:var(--ink-3);text-align:right}
+.xval .when em{font-style:normal;color:#8A5A04;font-weight:700}
+.xwhy{margin-top:8px;font-size:.72rem;line-height:1.45;color:#53350F}
+.xref{margin-top:7px;font-size:.71rem;color:var(--ink-3)}
+
+/* ---- the lines we could not read. Raw text, verbatim, never hidden ---- */
+.cantread{
+  background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);
+  overflow:hidden;border:1.5px solid rgba(225,29,116,.28);
+}
+.cantread .ch{
+  display:flex;align-items:center;gap:9px;padding:15px 16px 0;
+  font-family:var(--display);font-weight:700;font-size:.88rem;color:#A1125A;
+}
+.cantread .cb{padding:4px 16px 16px}
+.cantread .cnote{font-size:.72rem;line-height:1.5;color:var(--ink-2);margin:8px 0 2px}
+.cbad{padding:12px 0;border-bottom:1px solid var(--line)}
+.cbad:last-child{border-bottom:0}
+.cbad .raw{
+  padding-left:10px;border-left:2px solid rgba(225,29,116,.4);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.71rem;line-height:1.5;color:var(--ink-2);white-space:pre-wrap;word-break:break-word;
+}
+.cbad .why{margin-top:7px;font-size:.71rem;line-height:1.45;color:var(--ink-3)}
+.cbad .fix{
+  margin-top:8px;display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--display);font-weight:700;font-size:.73rem;color:var(--brand-d);
+}
+
+/* the whole OCR text, and the FHIR resources — collapsed, present, checkable */
+.raw-pre{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.68rem;line-height:1.55;color:var(--ink-2);
+  white-space:pre-wrap;word-break:break-word;
+  max-height:260px;overflow:auto;
+}
 </style>
 
 <div class="stage">
   <div class="stage-caption">
     <span class="spectrum"></span>
-    OpenHealth <small>· interactive prototype · fake data</small>
+    OpenHealth <small>· interactive prototype · real trials, invented baseline</small>
   </div>
 
   <div class="phone hero" id="phone">
@@ -744,7 +912,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
               <div class="hero-top">
                 <div class="wordmark"><i></i>OpenHealth</div>
                 <div class="right">
-                  <button class="bell" aria-label="18 new updates" onclick="go(1)">
+                  <button class="bell" aria-label="Your lab results" onclick="go(1)">
                     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#12301C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
                   </button>
                 </div>
@@ -783,28 +951,30 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
                 <span class="cal">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--brand-d)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="3"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/></svg>
                 </span>
-                <h2>Today, Sep 28</h2>
+                <h2 id="todayHead"></h2>
                 <span class="go"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
               </div>
 
+              <!-- the way into the document rail, and the count of what it
+                   actually holds. Both tiles are written by renderToday(). -->
               <div class="tiles">
-                <div class="tile">
+                <button class="tile" onclick="go(3)">
                   <div class="top">
-                    <span class="k">Records<br>synced</span>
+                    <span class="k">Add<br>records</span>
                     <span class="ic" style="background:rgba(70,188,92,.13)">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-d)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></svg>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-d)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                     </span>
                   </div>
-                  <div class="v">18<span class="u">new</span></div>
-                </div>
+                  <div class="v" id="docTile"></div>
+                </button>
                 <div class="tile">
                   <div class="top">
-                    <span class="k">Providers<br>connected</span>
+                    <span class="k">Markers<br>with a value</span>
                     <span class="ic" style="background:rgba(47,128,237,.13)">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ldl)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.6-7-10a7 7 0 0 1 14 0c0 5.4-7 10-7 10Z"/><path d="M12 8v6M9 11h6"/></svg>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ldl)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6l-5 8a2 2 0 0 0 1.7 3h12.6a2 2 0 0 0 1.7-3l-5-8V3"/><path d="M8 3h8M7.5 14h9"/></svg>
                     </span>
                   </div>
-                  <div class="v">5<span class="u">of 5</span></div>
+                  <div class="v" id="markerTile"></div>
                 </div>
               </div>
 
@@ -853,7 +1023,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
             <div class="topbar reveal">
               <button class="back" onclick="go(0)" aria-label="Back to home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-              <div class="mid"><h1>Your lab results</h1><div class="sub">Complete blood panel · Sept 24</div></div>
+              <div class="mid"><h1>Your lab results</h1><div class="sub" id="labsSub"></div></div>
               <span class="more"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg></span>
             </div>
 
@@ -919,76 +1089,31 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
             <div class="card reveal" style="padding:18px 16px 14px">
               <div class="gauge-wrap">
-                <svg width="230" height="128" viewBox="0 0 230 128" aria-label="Overall panel: balanced">
+                <svg width="230" height="128" viewBox="0 0 230 128" role="img" aria-labelledby="gaugeStatus gaugeNote">
                   <path d="M20 118 A95 95 0 0 1 210 118" fill="none" stroke="#EDEFEA" stroke-width="15" stroke-linecap="round"/>
                   <path d="M20 118 A95 95 0 0 1 63 42" fill="none" stroke="var(--iron)" stroke-width="15" stroke-linecap="round" opacity=".85"/>
                   <path d="M70 35 A95 95 0 0 1 160 35" fill="none" stroke="var(--brand)" stroke-width="15" stroke-linecap="round"/>
                   <path d="M167 42 A95 95 0 0 1 210 118" fill="none" stroke="var(--warn)" stroke-width="15" stroke-linecap="round" opacity=".85"/>
-                  <g class="needle"><line x1="115" y1="118" x2="115" y2="46" stroke="#131A16" stroke-width="3.5" stroke-linecap="round"/></g>
+                  <g class="needle" id="needle"><line x1="115" y1="118" x2="115" y2="46" stroke="#131A16" stroke-width="3.5" stroke-linecap="round"/></g>
                   <circle cx="115" cy="118" r="7" fill="#131A16"/><circle cx="115" cy="118" r="3" fill="#fff"/>
                 </svg>
-                <div class="gauge-status">Balanced</div>
-                <div class="gauge-note">3 of 4 markers in range · 1 needs attention</div>
+                <div class="gauge-status" id="gaugeStatus"></div>
+                <div class="gauge-note" id="gaugeNote"></div>
               </div>
             </div>
 
             <div class="reveal">
               <div class="eyebrow">Every marker, against its range</div>
-              <div class="card markers" style="padding:2px 16px 14px">
-                <div class="marker">
-                  <div class="head">
-                    <span class="nm"><span class="dot" style="background:var(--iron)"></span>Iron (Ferritin)</span>
-                    <span class="val" style="color:var(--iron)">8<span class="u">ng/mL</span></span>
-                  </div>
-                  <div class="scale">
-                    <span class="band" style="left:7.5%;right:6.25%;background:var(--iron)"></span>
-                    <span class="pin" style="left:5%;background:var(--iron)"></span>
-                  </div>
-                  <div class="scale-legend"><span style="color:var(--iron)"><b>Too low</b></span><span>Normal 12–150</span></div>
-                </div>
-                <div class="marker">
-                  <div class="head">
-                    <span class="nm"><span class="dot" style="background:var(--hgb)"></span>Hemoglobin</span>
-                    <span class="val" style="color:var(--hgb)">13.1<span class="u">g/dL</span></span>
-                  </div>
-                  <div class="scale">
-                    <span class="band" style="left:33%;right:33%;background:var(--hgb)"></span>
-                    <span class="pin" style="left:42.5%;background:var(--hgb)"></span>
-                  </div>
-                  <div class="scale-legend"><span><b>Average</b></span><span>Normal 12–16</span></div>
-                </div>
-                <div class="marker">
-                  <div class="head">
-                    <span class="nm"><span class="dot" style="background:var(--o2)"></span>Oxygen saturation</span>
-                    <span class="val" style="color:var(--o2)">97<span class="u">%</span></span>
-                  </div>
-                  <div class="scale">
-                    <span class="band" style="left:50%;right:0;background:var(--o2)"></span>
-                    <span class="pin" style="left:70%;background:var(--o2)"></span>
-                  </div>
-                  <div class="scale-legend"><span><b>Steady</b></span><span>Normal 95–100</span></div>
-                </div>
-                <div class="marker">
-                  <div class="head">
-                    <span class="nm"><span class="dot" style="background:var(--ldl)"></span>LDL cholesterol</span>
-                    <span class="val" style="color:var(--ldl)">95<span class="u">mg/dL</span></span>
-                  </div>
-                  <div class="scale">
-                    <span class="band" style="left:0;right:37.5%;background:var(--ldl)"></span>
-                    <span class="pin" style="left:59%;background:var(--ldl)"></span>
-                  </div>
-                  <div class="scale-legend"><span><b>Optimal</b></span><span>Target under 100</span></div>
-                </div>
-              </div>
+              <div class="card markers" id="markerCard" style="padding:2px 16px 14px"></div>
             </div>
 
             <div class="reveal">
               <div class="eyebrow">What to do about it</div>
               <div class="card recs">
-                <div class="rec-group">
+                <div class="rec-group" id="recIron" hidden>
                   <button type="button" class="rec rec-toggle" aria-expanded="false" aria-controls="ironFoods" onclick="toggleFoods(this)">
                     <span class="ic" style="background:rgba(225,29,116,.12)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--iron)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 2 8h10c0-3 2-5 2-8a7 7 0 0 0-7-7Z"/><path d="M9 21h6"/></svg></span>
-                    <div class="tx"><b>Raise your iron</b><small>Tap to see foods high in iron — then recheck ferritin in 8 weeks.</small></div>
+                    <div class="tx"><b>Raise your iron</b><small id="recIronTx"></small></div>
                     <span class="chev" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
                   </button>
                   <div class="foods" id="ironFoods" role="region" aria-label="Foods high in iron">
@@ -1003,13 +1128,19 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
                     <p class="foods-note"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 2 8h10c0-3 2-5 2-8a7 7 0 0 0-7-7Z"/><path d="M9 21h6"/></svg>Iron per typical serving. Pair with vitamin&nbsp;C to absorb more.</p>
                   </div>
                 </div>
-                <div class="rec">
+                <div class="rec" id="recFollow" hidden>
                   <span class="ic" style="background:rgba(124,77,255,.12)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--hgb)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="3"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/></svg></span>
-                  <div class="tx"><b>Book a follow-up</b><small>Schedule a hemoglobin recheck to confirm the trend holds.</small></div>
+                  <div class="tx"><b>Book a follow-up</b><small id="recFollowTx"></small></div>
                 </div>
-                <div class="rec">
+                <!-- the marker nobody has ever drawn. Unknown is a state, and it
+                     gets a card of its own rather than being left off the screen. -->
+                <div class="rec" id="recUnknown" hidden>
+                  <span class="ic" style="background:rgba(245,165,36,.17)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16h.01M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .9-1 1.6"/></svg></span>
+                  <div class="tx"><b>One marker has never been drawn</b><small id="recUnknownTx"></small></div>
+                </div>
+                <div class="rec" id="recKeep" hidden>
                   <span class="ic" style="background:rgba(70,188,92,.13)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--brand-d)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-                  <div class="tx"><b>Keep it up</b><small>Oxygen and cholesterol look great — no change needed.</small></div>
+                  <div class="tx"><b>Keep it up</b><small id="recKeepTx"></small></div>
                 </div>
               </div>
             </div>
@@ -1104,6 +1235,147 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
           </div>
         </section>
 
+        <!-- ===================== SCREEN 4 · ADD RECORDS =====================
+             Reached from the Today card on Home. Two capture targets, the
+             plain line about where the document goes (nowhere), manual entry,
+             and the documents this session is actually holding. -->
+        <section class="screen" id="s3" aria-label="Add records">
+          <div class="screen-inner">
+
+            <div class="topbar reveal">
+              <button class="back" onclick="go(0)" aria-label="Back to home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+              <div class="mid"><h1>Add records</h1><div class="sub">Lab paperwork, read on this device</div></div>
+              <span class="more"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg></span>
+            </div>
+
+            <label class="doc-opt reveal">
+              <span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5A2 2 0 0 1 5 6.5h1.6a2 2 0 0 0 1.7-1l.5-.9a2 2 0 0 1 1.7-1h3a2 2 0 0 1 1.7 1l.5.9a2 2 0 0 0 1.7 1H19a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8.5Z"/><circle cx="12" cy="13" r="3.6"/></svg></span>
+              <span class="tx"><b>Take a photo</b><small>Point the camera at the printed result. Fill the frame and hold it square — the straighter the lines, the more of them get read.</small></span>
+              <span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>
+              <input type="file" accept="image/*" capture="environment" onchange="takeDoc(this)">
+            </label>
+
+            <label class="doc-opt reveal">
+              <span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7.5 8.5 4.5-4.5 4.5 4.5"/><path d="M4 15v3.5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V15"/></svg></span>
+              <span class="tx"><b>Upload an image</b><small>A scan, a screenshot, or a photo already on the device. A PDF has to be exported as an image first — reading one here would mean a second library this app deliberately does not carry.</small></span>
+              <span class="chev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>
+              <input type="file" accept="image/*" onchange="takeDoc(this)">
+            </label>
+
+            <p class="doc-note reveal">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10.5" rx="2.5"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>
+              <span>Your document is read <b>here, by this page</b>. It is never uploaded —
+              there is no server to upload it to. The first read downloads the OCR engine
+              from a public CDN; the document itself never leaves the device.</span>
+            </p>
+
+            <div class="reveal">
+              <div class="eyebrow">Or type a value in</div>
+              <div class="card manual">
+                <p class="lead">The same path a correction takes, and the one that works
+                  with no camera and no connection. Whatever unit you pick is converted
+                  before the engine sees it.</p>
+                <div class="achips" id="mAnalytes"></div>
+                <div class="mlab">The value, and the unit it was printed in</div>
+                <div class="mrow">
+                  <input class="num" id="mVal" type="number" step="any" inputmode="decimal" aria-label="The value">
+                  <div class="units" id="mUnits"></div>
+                </div>
+                <p class="mnote" id="mWhen"></p>
+                <p class="err" id="mErr" hidden></p>
+                <button class="btn" onclick="addManual()">
+                  Add this value
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="reveal">
+              <div class="section-head">
+                <div>
+                  <div class="eyebrow">What you have added</div>
+                  <div class="sub-line" id="docCount"></div>
+                </div>
+              </div>
+              <div class="card doc-list" id="docList"></div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ================= SCREEN 5 · EXTRACTION REVIEW =================
+             The honesty screen. Every row below is parseLabDocument() output
+             read at render time. The lines it could NOT read get their own
+             section with the raw text verbatim, and the full OCR output is one
+             tap away — there is no state in which unreadable content is
+             silently dropped. -->
+        <section class="screen" id="s4" aria-label="Extraction review">
+          <div class="screen-inner">
+
+            <div class="topbar reveal">
+              <button class="back" onclick="go(3)" aria-label="Back to add records"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+              <div class="mid"><h1>Here&rsquo;s what we read</h1><div class="sub" id="xSub">&nbsp;</div></div>
+              <span class="more"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg></span>
+            </div>
+
+            <!-- OCR in flight. The percentage is the engine's own progress -->
+            <div class="card ocr reveal" id="xProg" hidden>
+              <div class="st" id="xProgSt">Reading the document&hellip;</div>
+              <div class="bar"><i id="xProgBar"></i></div>
+              <p class="sub" id="xProgSub">Downloading the OCR engine, then running it here.
+                The image stays on the device.</p>
+              <button class="btn" id="xProgBtn" hidden onclick="go(3)">Type the values in instead</button>
+            </div>
+
+            <div class="card shot reveal" id="xShot" hidden>
+              <img id="xThumb" alt="The document that was read">
+              <div class="tx"><b id="xShotName">&nbsp;</b><span id="xShotMeta"></span></div>
+            </div>
+
+            <div class="reveal" id="xGood" hidden>
+              <div class="section-head">
+                <div>
+                  <div class="eyebrow">Values we read</div>
+                  <div class="sub-line" id="xGoodSub"></div>
+                </div>
+              </div>
+              <div class="card xrows" id="xRows"></div>
+              <p class="audit-note" id="xFlagNote" hidden></p>
+            </div>
+
+            <!-- the point of the screen: what failed, shown rather than hidden -->
+            <div class="reveal" id="xBadWrap" hidden>
+              <div class="cantread">
+                <div class="ch">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></svg>
+                  <span id="xBadHead"></span>
+                </div>
+                <div class="cb">
+                  <p class="cnote">These lines looked like results and the parser refused
+                    them rather than guess. Below is exactly what came off the document.</p>
+                  <div id="xBad"></div>
+                </div>
+              </div>
+            </div>
+
+            <details class="unparsed reveal" id="xRawWrap" hidden></details>
+            <details class="unparsed reveal" id="xFhirWrap" hidden></details>
+
+            <button class="btn reveal" id="xAdd" hidden onclick="commitDoc()">
+              Add to my profile
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </button>
+
+            <p class="disclaimer reveal">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+              <span>Correct anything that looks wrong before you add it — what you add here
+              is what every trial verdict is then computed from. Values you add are held
+              in this page for as long as it is open and are not stored anywhere else.</span>
+            </p>
+
+          </div>
+        </section>
+
       </div>
     </div>
 
@@ -1129,25 +1401,51 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 (function(){
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ---------------- biomarker history (fake data, seven lab draws) ----------------
+  /* ---------------- biomarker history ----------------
+     THE BASELINE HISTORY IS INVENTED, like the rest of the profile — this app
+     has never had a patient. What is NOT invented is where a value can come
+     from: Stage 6's document rail appends real draws, read off a real document
+     by the parser, to the arrays below, and every screen reads them from here.
+
      Reference ranges are stored as numbers, not as the sentence the screen shows.
      The "12–150 ng/mL" label, the dashed limit line and its caption are all
-     derived from refLow/refHigh below, so a range only has to be edited once.  */
-  var MONTHS = ['Mar','Apr','May','Jun','Jul','Aug','Sep'];
+     derived from refLow/refHigh below, so a range only has to be edited once.
+
+     Draws are DATES, not month names. One source of truth: the chart's x-axis,
+     the lab screen's subtitle, the "as of" column the Health Score trend
+     compares against, and the effectiveDateTime of every FHIR Observation all
+     come off this array — and a document added at runtime splices its own date
+     into the marker it belongs to, in order.                                  */
+  var DRAWS = ['2026-03-12','2026-04-09','2026-05-14','2026-06-11',
+               '2026-07-16','2026-08-13','2026-09-24'];
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var MON_FULL = ['January','February','March','April','May','June','July',
+                  'August','September','October','November','December'];
+  function monthIx(iso){ return parseInt(String(iso).slice(5, 7), 10) - 1; }
+  function monthOf(iso){ return MON[monthIx(iso)] || ''; }
+  function dateLabel(iso){
+    if(!iso) return null;
+    return monthOf(iso) + ' ' + parseInt(String(iso).slice(8, 10), 10) + ', ' + String(iso).slice(0, 4);
+  }
+  function todayISO(){
+    var d = new Date(), z = function(n){ return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
+  }
+  var MONTHS = DRAWS.map(monthOf);
   var MARKERS = [
     { key:'ferritin', name:'Iron (Ferritin)', unit:'ng/mL', color:'var(--iron)', rgba:'rgba(225,29,116,.22)',
-      refLow:12, refHigh:150, values:[26,23,19,16,13,10,8], max:30,
-      verdict:'<b>Trending down.</b> Seven draws since March, each one lower. You dropped under the normal floor in August.' },
+      refLow:12, refHigh:150, values:[26,23,19,16,13,10,8], max:30 },
     { key:'hemoglobin', name:'Hemoglobin', unit:'g/dL', color:'var(--hgb)', rgba:'rgba(124,77,255,.22)',
-      refLow:12, refHigh:16, values:[14.2,14.0,13.8,13.6,13.4,13.2,13.1], max:17,
-      verdict:'<b>Holding, but sliding.</b> Still inside the range — it has drifted a full point since March, which usually follows iron.' },
+      refLow:12, refHigh:16, values:[14.2,14.0,13.8,13.6,13.4,13.2,13.1], max:17 },
     { key:'spo2', name:'Oxygen saturation', unit:'%', color:'var(--o2)', rgba:'rgba(18,179,166,.22)',
-      refLow:95, refHigh:100, values:[96,97,97,96,98,97,97], max:100,
-      verdict:'<b>Rock steady.</b> Every draw this year sat inside the normal band. Nothing to act on here.' },
+      refLow:95, refHigh:100, values:[96,97,97,96,98,97,97], max:100 },
     { key:'ldl', name:'LDL cholesterol', unit:'mg/dL', color:'var(--ldl)', rgba:'rgba(47,128,237,.22)',
-      refLow:null, refHigh:100, values:[128,122,116,110,104,99,95], max:140,
-      verdict:'<b>Real progress.</b> Down 33 points since March and under the target ceiling for two draws running.' }
+      refLow:null, refHigh:100, values:[128,122,116,110,104,99,95], max:140 }
   ];
+
+  /* every marker starts on the committed draw dates; a document appends to its
+     own copy, so two markers can hold different numbers of draws */
+  MARKERS.forEach(function(m){ m.draws = DRAWS.slice(); });
 
   /* the range sentence under the big number, built from the numbers above */
   function rangeLabel(m){
@@ -1177,20 +1475,37 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
      is kept explicit rather than dropped, but no marker has been handed a
      clinical weight this build cannot defend.                               */
   var TRACKED = MARKERS.map(function(m){
-    return { key:m.key, name:m.name, refLow:m.refLow, refHigh:m.refHigh,
-             values:m.values, weight:1 };
+    /* values and draws are shared by REFERENCE with MARKERS on purpose: a draw
+       appended by the document rail has to reach the score and the chart at
+       once, or the ring and the bars start disagreeing about the same number */
+    return { key:m.key, name:m.name, unit:m.unit, color:m.color,
+             refLow:m.refLow, refHigh:m.refHigh,
+             values:m.values, draws:m.draws, weight:1 };
   }).concat([
     /* known to the engine, never drawn on this profile */
-    { key:'a1c', name:'HbA1c', refLow:null, refHigh:5.7, values:[], weight:1 }
+    { key:'a1c', name:'HbA1c', unit:'%', color:'var(--warn)',
+      refLow:null, refHigh:5.7, values:[], draws:[], weight:1 }
   ]);
 
   function clamp01(x){ return x < 0 ? 0 : x > 1 ? 1 : x; }
 
+  /* the marker's value as of a date, or its latest when no date is given.
+     Indexing by column broke the moment the document rail could splice a draw
+     into the middle of the history, so the question is asked by date instead. */
+  function valueAt(t, asOf){
+    if(!t.values.length) return null;
+    if(!asOf) return t.values[t.values.length - 1];
+    var v = null;
+    for(var i = 0; i < t.values.length; i++){
+      if(!t.draws[i] || t.draws[i] <= asOf) v = t.values[i];
+    }
+    return v;
+  }
+
   /* one marker -> its credit in [0,1], or null when there is no value to score.
      null means EXCLUDED, and is deliberately not the same thing as 0.        */
-  function markerCredit(t, idx){
-    if(!t.values.length) return null;
-    var v = t.values[idx === undefined ? t.values.length - 1 : idx];
+  function markerCredit(t, asOf){
+    var v = valueAt(t, asOf);
     if(v === undefined || v === null) return null;
 
     var lo = t.refLow  === null ? 0 : t.refLow;          /* implicit floor   */
@@ -1202,11 +1517,11 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   }
 
   /* -> { score, n, total }: the number, and how much of the picture it covers.
-     idx picks a column of lab history; omit it for the latest draw.          */
-  function healthScore(idx){
+     asOf is an ISO date to score the profile as it stood then; omit it for now. */
+  function healthScore(asOf){
     var num = 0, den = 0, n = 0;
     TRACKED.forEach(function(t){
-      var c = markerCredit(t, idx);
+      var c = markerCredit(t, asOf);
       if(c === null) return;                   /* excluded, not scored as zero */
       num += t.weight * c;
       den += t.weight;
@@ -1215,6 +1530,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     return { score: den ? Math.round(100 * num / den) : null,
              n: n, total: TRACKED.length };
   }
+
+  /* the draw the trend pill measures against. A date, so appending a newer
+     draw cannot quietly move the baseline the way a column index did. */
+  var BASELINE = DRAWS[3];
 
   var ARROW_UP   = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 15 7-7 7 7"/></svg>';
   var ARROW_DOWN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 9 7 7 7-7"/></svg>';
@@ -1230,15 +1549,17 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     countUp(document.getElementById('hs'), hs.score);
     document.getElementById('hsConf').textContent = hs.n + ' of ' + hs.total + ' markers';
 
-    /* the same formula run over the June column, so the pill can never claim
-       a move the markers did not actually make                              */
-    var d = hs.score - healthScore(MONTHS.indexOf('Jun')).score;
+    /* the same formula run over the profile as it stood at the baseline draw,
+       so the pill can never claim a move the markers did not actually make   */
+    var base = healthScore(BASELINE).score;
+    var word = MON_FULL[monthIx(BASELINE)];
+    var d = base === null ? 0 : hs.score - base;
     var a = Math.abs(d);
     document.getElementById('hsTrend').innerHTML =
       (d > 0 ? ARROW_UP : d < 0 ? ARROW_DOWN : ARROW_FLAT) +
-      (d === 0 ? 'Unchanged since your June panel'
+      (d === 0 ? 'Unchanged since your ' + word + ' panel'
                : a + (a === 1 ? ' point ' : ' points ') + (d > 0 ? 'up' : 'down') +
-                 ' since your June panel');
+                 ' since your ' + word + ' panel');
   }
 
   /* the three bars under the ring, read from the same MARKERS the Metrics tab
@@ -1276,16 +1597,21 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     facts: { age:34, bmi:22.4 },
     labs: {}
   };
-  MARKERS.forEach(function(m){
+  /* one lab record per marker, folded out of MARKERS so the chart and the
+     engine can never disagree about a value. ingest() rewrites these in place
+     when a document is added, and origin says where the number came from. */
+  function foldLab(m){
     PROFILE.labs[m.key] = {
       analyte: m.key,
       value:   m.values[m.values.length - 1],
       unit:    m.unit,
       refLow:  m.refLow,
       refHigh: m.refHigh,
-      drawnOn: MONTHS[m.values.length - 1]
+      drawnOn: m.draws[m.values.length - 1],
+      origin:  'baseline'
     };
-  });
+  }
+  MARKERS.forEach(foldLab);
 
   var chart = document.getElementById('chart');
   var limit = document.getElementById('limit');
@@ -1303,7 +1629,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
       col.innerHTML =
         '<span class="cap">' + v + '</span>' +
         '<span class="bar"></span>' +
-        '<span class="x">' + MONTHS[idx] + '</span>';
+        '<span class="x">' + monthOf(m.draws[idx]) + '</span>';
       chart.appendChild(col);
 
       var bar = col.querySelector('.bar');
@@ -1324,8 +1650,31 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     document.getElementById('cUnit').textContent = m.unit;
     document.getElementById('cRange').textContent = rangeLabel(m);
     document.getElementById('vDot').style.background = m.color;
-    document.getElementById('vTx').innerHTML = m.verdict;
+    document.getElementById('vTx').innerHTML = trendLine(m);
   }
+
+  /* The sentence under the chart. It was four hand-written paragraphs until the
+     document rail made the values move at runtime — a typed sentence about a
+     number a user can change is a lie with a delay on it. Every clause below
+     is read off m.values and the reference range. */
+  function trendLine(m){
+    var v  = m.values[m.values.length - 1];
+    var v0 = m.values[0];
+    var n  = m.values.length;
+    var d  = round1(v - v0);
+    var lo = m.refLow, hi = m.refHigh;
+    var head = d === 0 ? 'Flat.' : d < 0 ? 'Trending down.' : 'Trending up.';
+    var move = d === 0
+      ? 'Unchanged across ' + n + ' draws'
+      : Math.abs(d) + ' ' + m.unit + ' ' + (d < 0 ? 'lower' : 'higher') +
+        ' than your first of ' + n + ' draws';
+    var where;
+    if(lo !== null && v < lo)       where = ', and ' + round1(lo - v) + ' ' + m.unit + ' under the ' + lo + ' floor';
+    else if(hi !== null && v > hi)  where = ', and ' + round1(v - hi) + ' ' + m.unit + ' over the ' + hi + ' ceiling';
+    else                            where = ', inside the normal range of ' + rangeLabel(m);
+    return '<b>' + head + '</b> ' + move + where + '.';
+  }
+  function round1(n){ return Math.round(n * 10) / 10; }
 
   window.pick = function(i){
     if(i === active) return;
@@ -1352,18 +1701,22 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   /* ---------------- screen navigation ---------------- */
   var track  = document.getElementById('track');
   var phone  = document.getElementById('phone');
-  var screens = [document.getElementById('s0'), document.getElementById('s1'), document.getElementById('s2')];
+  var screens = ['s0','s1','s2','s3','s4'].map(function(id){ return document.getElementById(id); });
   var tabs    = [document.getElementById('t0'), document.getElementById('t1'), document.getElementById('t2')];
-  var seen = [false,false,false];
+  /* the two document screens are reached from the Today card rather than from a
+     tab of their own, and they belong to the lab rail — so the Labs tab stays
+     lit while you are in them, instead of no tab being lit at all */
+  var TAB_OF = [0, 1, 2, 1, 1];
+  var seen = [false,false,false,false,false];
   var current = -1;
 
   window.go = function(i){
     if(i === current) return;
     current = i;
-    track.style.transform = 'translateX(' + (-i * (100/3)) + '%)';
+    track.style.transform = 'translateX(' + (-i * (100 / screens.length)) + '%)';
     phone.classList.toggle('hero', i === 0);           // gradient only behind Home
     seen[i] = true;
-    tabs.forEach(function(t,idx){ t.classList.toggle('active', idx === i); });
+    tabs.forEach(function(t,idx){ t.classList.toggle('active', idx === TAB_OF[i]); });
     tabs[1].classList.toggle('has-badge', !seen[1]);   // "new results" dot on Labs
 
     screens.forEach(function(s,idx){
@@ -1376,6 +1729,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
         if(idx === 1) { active = -1; pick(0); closeFoods(); }  // redraw the chart, collapse the drawer
         if(idx === 0) renderHealth();
         if(idx === 2) countScore();
+        if(idx === 3) renderAddRecords();
+        if(idx === 4) renderReview();
       }
     });
   };
@@ -1865,40 +2220,51 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
                 "Hba1C \< 48" (Danish mmol/mol, no unit printed) from being read
                 as "A1c under 48%", which everything on earth would pass.
      band       near-miss tolerance: how far short still counts as a near miss.
-     weight     how much the criterion counts toward the score. */
+     weight     how much the criterion counts toward the score.
+     ucum       the UCUM code the canonical unit is written as in a FHIR
+                valueQuantity. Kept next to the unit it codes rather than in the
+                FHIR writer, so the two cannot drift apart.
+     fhirCat    the US Core Observation category. null means this is not an
+                Observation at all -- age is demographics, not a measurement. */
   var ANALYTES = {
     ferritin: {
-      loinc:'2276-4', canonical:'ng/mL', band:10, weight:3, lo:1, hi:3000,
+      loinc:'2276-4', canonical:'ng/mL', ucum:'ng/mL', fhirCat:'laboratory',
+      band:10, weight:3, lo:1, hi:3000,
       match:/\bferritins?\b/i,
       units:{ 'ng/ml':1, 'µg/l':1, 'ug/l':1, 'mcg/l':1 }
     },
     hemoglobin: {
-      loinc:'718-7', canonical:'g/dL', band:1, weight:2, lo:3, hi:25,
+      loinc:'718-7', canonical:'g/dL', ucum:'g/dL', fhirCat:'laboratory',
+      band:1, weight:2, lo:3, hi:25,
       match:/\bha?emoglobin\b|\bhgb\b|\bhb\b/i,
       units:{ 'g/dl':1, 'g/l':0.1 }
     },
     a1c: {
-      loinc:'4548-4', canonical:'%', band:0.5, weight:3, lo:3, hi:20,
+      loinc:'4548-4', canonical:'%', ucum:'%', fhirCat:'laboratory',
+      band:0.5, weight:3, lo:3, hi:20,
       match:/\bhba1c\b|\ba1c\b|glycated ha?emoglobin/i,
       units:{ '%':1, 'mmol/mol':'ifcc' }      /* IFCC -> NGSP, see toCanonical */
     },
     ldl: {
-      loinc:'18262-6', canonical:'mg/dL', band:20, weight:2, lo:10, hi:600,
+      loinc:'18262-6', canonical:'mg/dL', ucum:'mg/dL', fhirCat:'laboratory',
+      band:20, weight:2, lo:10, hi:600,
       match:/\bldl\b|\bldl-c\b|low[- ]density lipoprotein/i,
       units:{ 'mg/dl':1, 'mmol/l':38.67 }
     },
     spo2: {
-      loinc:'2708-6', canonical:'%', band:2, weight:2, lo:50, hi:100,
+      loinc:'2708-6', canonical:'%', ucum:'%', fhirCat:'vital-signs',
+      band:2, weight:2, lo:50, hi:100,
       match:/\bspo2\b|\bsao2\b|oxygen saturation/i,
       units:{ '%':1 }
     },
     bmi: {
-      loinc:'39156-5', canonical:'kg/m2', band:3, weight:2, lo:10, hi:80,
+      loinc:'39156-5', canonical:'kg/m2', ucum:'kg/m2', fhirCat:'vital-signs',
+      band:3, weight:2, lo:10, hi:80,
       match:/\bbmi\b|body mass index/i,
       units:{ 'kg/m2':1, 'kg/m²':1, 'kg/m²':1 }
     },
     age: {
-      canonical:'years', band:5, weight:1, lo:0, hi:120,
+      canonical:'years', ucum:'a', fhirCat:null, band:5, weight:1, lo:0, hi:120,
       match:/\bages?\b|\byears? old\b|\byo\b/i,
       units:{ 'years':1, 'year':1, 'yrs':1, 'yr':1, 'y':1 }
     }
@@ -1949,11 +2315,22 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
      names more than one. More than one is deliberately a refusal: binding a
      number to the wrong analyte is the failure mode that produces a confidently
      wrong answer, which is the one outcome worse than saying "unknown". */
-  function findAnalyte(text){
+  function analytesNamed(text){
     var found = [];
     for(var k in ANALYTES){
       if(ANALYTES[k].match.test(text)) found.push(k);
     }
+    return found;
+  }
+
+  function findAnalyte(text){
+    var found = analytesNamed(text);
+    /* "Hgb A1c" and "Hemoglobin A1c" are one analyte spelled long, and a real
+       lab report prints it that way as often as it prints "HbA1c". The A1c
+       wins: glycated haemoglobin is what both halves of the name mean. Found by
+       running the parser over a real report, not by a test. */
+    if(found.length === 2 && found.indexOf('a1c') > -1 && found.indexOf('hemoglobin') > -1 &&
+       /\b(?:hgb|ha?emoglobin)[\s.-]*a1c\b/i.test(text)) return 'a1c';
     /* "HbA1c" also matches the /\bhb\b/ hemoglobin alias; prefer the specific */
     if(found.length === 2 && found.indexOf('a1c') > -1 && found.indexOf('hemoglobin') > -1){
       if(/\bhba1c\b|\ba1c\b/i.test(text) && !/\bh(?:ae)?moglobin\b|\bhgb\b/i.test(text)) return 'a1c';
@@ -2002,9 +2379,77 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     var m = text.match(new RegExp(
       '(\\d+(?:[.,]\\d+)?)\\s*(?:-|to)\\s*(\\d+(?:[.,]\\d+)?)\\s*(' + UNIT_RE + ')?', 'i'));
     if(!m) return null;
-    return { min:toNumber(m[1]), max:toNumber(m[2]), unit:m[3] || '' };
+    return { min:toNumber(m[1]), max:toNumber(m[2]), unit:m[3] || '',
+             at:m.index, len:m[0].length };
   }
 
+
+  /* ---- the lab-report side of the SAME tokenizer ------------------------
+     A criterion says "ferritin \< 50 ng/mL"; a lab line says "Ferritin 8
+     ng/mL". Same problem, one operator apart. These three readers are the
+     difference, and parseLabDocument() is built out of them plus findAnalyte,
+     toCanonical and plausible above — there is no second extractor. */
+
+  /* every bare "number unit?" in the text, in order, with WHERE it sat.
+     readComparisons needs an operator to anchor on; a result line has none. */
+  function readQuantities(text){
+    var out = [];
+    var re = new RegExp('(?:^|[^\\w.,/-])(\\d+(?:[.,]\\d+)?)\\s*(' + UNIT_RE + ')?', 'gi');
+    var m;
+    while((m = re.exec(text)) !== null){
+      var at = m.index + m[0].indexOf(m[1]);
+      out.push({ value:toNumber(m[1]), unit:(m[2] || '').trim(), at:at, len:m[1].length });
+      if(re.lastIndex === m.index) re.lastIndex++;
+    }
+    return out;
+  }
+
+  var MON_IX = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6,
+                 jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
+  function pad2(n){ return (Number(n) < 10 ? '0' : '') + Number(n); }
+
+  /* -> { iso, at, len, assumed } or null. assumed is true only for a
+     numeric M/D/Y whose order cannot be proved from the numbers themselves —
+     the row carries that forward as a flag rather than presenting a guessed
+     date as read. */
+  function readDate(text){
+    var m = text.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
+    if(m) return { iso:m[1] + '-' + pad2(m[2]) + '-' + pad2(m[3]),
+                   at:m.index, len:m[0].length, assumed:false };
+
+    var MN = '(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*';
+    m = text.match(new RegExp('\\b' + MN + '\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?,?\\s+(\\d{4})\\b', 'i'));
+    if(m) return { iso:m[3] + '-' + pad2(MON_IX[m[1].toLowerCase()]) + '-' + pad2(m[2]),
+                   at:m.index, len:m[0].length, assumed:false };
+
+    m = text.match(new RegExp('\\b(\\d{1,2})\\s+' + MN + '\\.?,?\\s+(\\d{4})\\b', 'i'));
+    if(m) return { iso:m[3] + '-' + pad2(MON_IX[m[2].toLowerCase()]) + '-' + pad2(m[1]),
+                   at:m.index, len:m[0].length, assumed:false };
+
+    m = text.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/);
+    if(m){
+      var a = +m[1], b = +m[2], mo = a, dy = b, assumed = true;
+      if(a > 12 && b <= 12){ mo = b; dy = a; assumed = false; }   /* order provable */
+      if(mo > 12 || dy > 31) return null;
+      return { iso:m[3] + '-' + pad2(mo) + '-' + pad2(dy),
+               at:m.index, len:m[0].length, assumed:assumed };
+    }
+    return null;
+  }
+
+  /* the date the specimen was taken. A line that says so wins over the first
+     date on the page, which on a real report is usually the print date. */
+  var DATE_CUE = /collect|drawn|draw date|specimen|accession|resulted|date of service/i;
+  function documentDate(lines){
+    var first = null;
+    for(var i = 0; i < lines.length; i++){
+      var d = readDate(normalizeText(lines[i]));
+      if(!d) continue;
+      if(DATE_CUE.test(lines[i])) return d;
+      if(!first) first = d;
+    }
+    return first;
+  }
   /* ---- splitting the text into blocks, then bullets --------------------- */
 
   var INCLUSION_HEAD = /^\s*(?:key\s+)?inclusion\s+criteria\b/i;
@@ -2246,6 +2691,215 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     return rules;
   }
 
+  /* ================= parseLabDocument(text) -> Measurement[] =================
+     ARCHITECTURE §4a, the second consumer of the tokenizer above. Same analyte
+     vocabulary, same unit table, same plausibility bounds, same refusal to
+     guess. The text comes from Tesseract.js reading a photograph, or from a
+     value typed in by hand — the reader cannot tell the difference and does not
+     need to.
+
+     A LINE IT CANNOT READ IS NOT DROPPED AND DOES NOT GO DOWN A SIDE CHANNEL.
+     It comes back in the same array with analyte:null and the raw line in
+     source, exactly the way parseCriteria returns kind:'unparsed' rules
+     alongside the ones it read. The review screen splits on that and gives the
+     refused lines a section of their own, with the raw text verbatim.
+
+     Measurement = { analyte, value, unit, drawnOn, confidence, source }
+       + refLow / refHigh  when the report printed its own reference interval
+       + flags[]           WHY a row is low-confidence, or why it was refused
+       + hint              the analyte a refused line named, when it named one
+
+     confidence is 0..1. It starts at 1 and is only ever reduced, by things that
+     are actually true of this line: the OCR engine's own per-line confidence,
+     a unit that was not printed and had to be assumed, an analyte matched only
+     by a two-letter alias. A value typed in by hand has no OCR term and so
+     scores 1 — which is the right answer: a human read it. */
+
+  var LOW_CONF = 0.75;      /* at or below this a row is flagged on screen */
+
+  /* unit-shaped, but not a unit we hold a conversion for. Everything in a lab
+     unit table that matters here carries a slash, which is what keeps "Low" and
+     "High" from being mistaken for one. */
+  var UNKNOWN_UNIT = /^[ 	]*([a-zµμ]{1,8}\/[a-z0-9²^]{1,8})/i;
+
+  /* a unit we hold a conversion for somewhere, just not for this marker */
+  function unitKnownElsewhere(u){
+    var k = String(u).toLowerCase().replace(/\s+/g, '');
+    for(var a in ANALYTES) if(ANALYTES[a].units[k] !== undefined) return true;
+    return false;
+  }
+
+  function refuseLine(raw, code, detail, hint){
+    return { analyte:null, value:null, unit:null, drawnOn:null,
+             confidence:0, source:raw, refLow:null, refHigh:null,
+             flags:[code], detail:detail === undefined ? null : detail,
+             hint:hint || null,
+             hintName:hint ? ((typeof ANALYTE_LABEL !== 'undefined' && ANALYTE_LABEL[hint]) || hint) : null };
+  }
+
+  function readLabLine(raw, docDate, lineConf){
+    var t = normalizeText(raw);
+    var named = analytesNamed(t);
+    var key = findAnalyte(t);
+    var all = readQuantities(t);
+    var anyUnit = all.some(function(q){ return q.unit; });
+
+    /* Is this line a RESULT LINE at all? It is if it names a marker, or carries
+       a number with a clinical unit. The lab's address, the page header and the
+       patient block are neither — they are not reported as values we failed to
+       read, they are in the full-text view, which is one tap away and complete. */
+    if(!named.length && !anyUnit) return null;
+
+    if(!key) return refuseLine(raw, named.length > 1 ? 'two-analytes' : 'not-tracked',
+                               named.length > 1 ? named.join(' and ') : null);
+
+    var a = ANALYTES[key];
+    var conf = 1, flags = [];
+
+    var oc = lineConf ? lineConf(raw) : null;
+    if(typeof oc === 'number' && isFinite(oc)){
+      conf *= Math.max(0, Math.min(1, oc / 100));
+      if(oc < 80) flags.push('ocr');
+    }
+
+    /* The reference interval printed beside a result is not the result, and the
+       collection date is not the result either. Take both out of the running
+       before looking for the value, or the bottom of the range wins. */
+    var skip = [];
+    var ref = readBareRange(t), refOk = false;
+    if(ref){
+      var rlo = toCanonical(key, ref.min, ref.unit), rhi = toCanonical(key, ref.max, ref.unit);
+      refOk = rlo !== null && rhi !== null && rlo < rhi && plausible(key, rlo) && plausible(key, rhi);
+      if(refOk){ skip.push([ref.at, ref.at + ref.len]); ref.lo = round2(rlo); ref.hi = round2(rhi); }
+    }
+    var dt = readDate(t);
+    if(dt) skip.push([dt.at, dt.at + dt.len]);
+
+    var qs = all.filter(function(q){
+      return !skip.some(function(sp){ return q.at >= sp[0] && q.at < sp[1]; });
+    });
+
+    var withUnit = [], bare = [], badUnit = [];
+    qs.forEach(function(q){
+      /* A unit this app has never heard of is still a printed unit. UNIT_RE only
+         knows the ones in the conversion table, so a number followed by
+         something unit-SHAPED — anything with a slash in it — has to be refused
+         rather than read as a bare number in the canonical unit. "Ferritin 8
+         pg/mL" read as 8 ng/mL is off by a factor of a thousand, and §4a is
+         explicit that a conversion we do not have is an unknown, not a guess. */
+      var tail = q.unit ? null : t.slice(q.at + q.len).match(UNKNOWN_UNIT);
+      if(tail) badUnit.push({ value:q.value, unit:tail[1] });
+      else if(!q.unit) bare.push(q);
+      else if(toCanonical(key, q.value, q.unit) === null) badUnit.push(q);
+      else withUnit.push(q);
+    });
+
+    /* One value, or no value. Two candidates is a refusal, not a coin toss:
+       binding the wrong number to a marker is the failure mode that produces a
+       confidently wrong answer, and §4a would rather say nothing. */
+    var pick = null;
+    if(withUnit.length === 1)      pick = withUnit[0];
+    else if(withUnit.length > 1)   return refuseLine(raw, 'two-values', null, key);
+    else if(badUnit.length)        return refuseLine(raw,
+      unitKnownElsewhere(badUnit[0].unit) ? 'unit-mismatch' : 'unit-unknown',
+      badUnit[0].unit, key);
+    else if(bare.length === 1){    pick = bare[0]; flags.push('unit-assumed'); conf *= 0.6; }
+    else if(bare.length > 1)       return refuseLine(raw, 'two-values', null, key);
+    else                           return refuseLine(raw, 'no-value', null, key);
+
+    var v = toCanonical(key, pick.value, pick.unit);
+    if(v === null)         return refuseLine(raw,
+      unitKnownElsewhere(pick.unit) ? 'unit-mismatch' : 'unit-unknown', pick.unit, key);
+    if(!plausible(key, v)) return refuseLine(raw, 'implausible',
+                                 pick.value + (pick.unit ? ' ' + pick.unit : ' ' + a.canonical), key);
+
+    if(pick.unit && pick.unit.toLowerCase().replace(/\s+/g, '') !== a.canonical.toLowerCase())
+      flags.push('converted');
+
+    /* "Hb" is the weakest match the vocabulary makes — one OCR slip from "Mb"
+       or "H6" — so a line that only ever spells it that way is marked down. */
+    if(key === 'hemoglobin' && /\bhb\b/i.test(t) && !/\bha?emoglobin\b|\bhgb\b/i.test(t)){
+      flags.push('alias'); conf *= 0.85;
+    }
+
+    var when = dt ? dt.iso : docDate ? docDate.iso : null;
+    if(dt && dt.assumed) flags.push('date-order');
+    else if(!dt && docDate && docDate.assumed) flags.push('date-order');
+    if(!when) flags.push('no-date');
+
+    return {
+      analyte: key,
+      value:   round2(v),
+      unit:    a.canonical,
+      drawnOn: when,
+      confidence: Math.round(conf * 100) / 100,
+      source:  raw,
+      refLow:  refOk ? ref.lo : null,
+      refHigh: refOk ? ref.hi : null,
+      flags:   flags,
+      hint:    key
+    };
+  }
+
+  function parseLabDocument(text, lineConf){
+    var lines = String(text).split(/\r?\n/);
+    var docDate = documentDate(lines);
+    var out = [];
+    lines.forEach(function(raw){
+      if(!raw.trim()) return;
+      var m = readLabLine(raw, docDate, lineConf);
+      if(m) out.push(m);
+    });
+    return out;
+  }
+
+  /* ================= FHIR R4 / US Core, the format only =================
+     docs/ARCHITECTURE.md §3: one internal resource shape regardless of where
+     the number came from. This writer produces a US Core Laboratory Result
+     Observation, LOINC-coded, UCUM-coded, from a Measurement OR from a profile
+     lab record — they are the same shape on purpose, so the resource a
+     document produces and the resource the profile holds are identical.
+
+     THE SHAPE AND THE CODING ARE REAL. NOTHING IS EVER POSTED. There is no
+     endpoint (docs/SIMPLIFY.md §4.3) and no subject: nothing here identifies
+     anybody, which is also why status is 'final' and the resource has no id. */
+  var FHIR_CAT = 'http://terminology.hl7.org/CodeSystem/observation-category';
+  var UCUM = 'http://unitsofmeasure.org';
+
+  function toObservation(m){
+    var a = ANALYTES[m.analyte];
+    if(!a || !a.fhirCat) return null;               /* age is demographics */
+    function q(v){ return { value:v, unit:a.canonical, system:UCUM, code:a.ucum }; }
+    var label = (typeof ANALYTE_LABEL !== 'undefined' && ANALYTE_LABEL[m.analyte]) || m.analyte;
+    var o = {
+      resourceType:'Observation',
+      status:'final',
+      category:[{ coding:[{ system:FHIR_CAT, code:a.fhirCat }] }],
+      code:{ coding:[{ system:'http://loinc.org', code:a.loinc, display:label }], text:label },
+      subject:{ display:'no Patient resource — nothing here identifies anyone' },
+      valueQuantity:q(m.value)
+    };
+    if(m.drawnOn) o.effectiveDateTime = m.drawnOn;
+    if(m.refLow !== null && m.refLow !== undefined ||
+       m.refHigh !== null && m.refHigh !== undefined){
+      var rr = {};
+      if(m.refLow  !== null && m.refLow  !== undefined) rr.low  = q(m.refLow);
+      if(m.refHigh !== null && m.refHigh !== undefined) rr.high = q(m.refHigh);
+      o.referenceRange = [rr];
+    }
+    return o;
+  }
+
+  /* the profile as a FHIR collection Bundle. Derived, never stored: PROFILE is
+     the single source and this is a view of it, so the two cannot drift. */
+  function fhirBundle(ms){
+    var list = [];
+    if(ms){ ms.forEach(function(m){ var o = toObservation(m); if(o) list.push(o); }); }
+    else { for(var k in PROFILE.labs){ var p = toObservation(PROFILE.labs[k]); if(p) list.push(p); } }
+    return { resourceType:'Bundle', type:'collection',
+             entry:list.map(function(r){ return { resource:r }; }) };
+  }
+
   /* ================= the evaluator =================
      docs/ARCHITECTURE.md §4a, second half of the contract:
 
@@ -2269,6 +2923,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
   /* the patient's value for an analyte, in the canonical unit, or null.
      null means "no value on file" and must never be read as a zero. */
+
+
   function readValue(profile, analyte){
     if(!profile) return null;
     if(profile.labs && profile.labs[analyte] &&
@@ -2484,6 +3140,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   /* exposed so tests.html can drive the SHIPPED engine instead of a copy of it */
   window.OpenHealthEngine = {
     parseCriteria: parseCriteria,
+    parseLabDocument: parseLabDocument,
+    toObservation: toObservation,
+    fhirBundle:    fhirBundle,
+    LOW_CONF:      LOW_CONF,
     evaluateRule:  evaluateRule,
     matchScore:    matchScore,
     rankCorpus:    rankCorpus,
@@ -2933,8 +3593,677 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     }).join('');
   }
 
+
+  /* ================= screen 2 · the parts that used to be typed =============
+     The pin positions, the band widths, the gauge note, the trend sentence and
+     the three recommendation cards were all typed into the markup. They were
+     true of the committed baseline and they stop being true the second a
+     document lands, so each one is now read off TRACKED — the same arrays the
+     Health Score and the matching engine read. */
+
+  /* one marker -> where its latest value sits against its reference range */
+  function labState(t){
+    var v = valueAt(t);
+    if(v === null || v === undefined) return { t:t, v:null, where:'unknown' };
+    if(t.refLow  !== null && v < t.refLow)  return { t:t, v:v, where:'low' };
+    if(t.refHigh !== null && v > t.refHigh) return { t:t, v:v, where:'high' };
+    return { t:t, v:v, where:'in' };
+  }
+  function labStates(){ return TRACKED.map(labState); }
+
+  function rangeWords(t){
+    if(t.refLow === null)  return 'Target under ' + t.refHigh + ' ' + t.unit;
+    if(t.refHigh === null) return 'Target over ' + t.refLow + ' ' + t.unit;
+    return 'Normal ' + t.refLow + '–' + t.refHigh + ' ' + t.unit;
+  }
+
+  /* The axis one marker row is drawn against: its reference interval plus 30%
+     of that interval's width as headroom each side, widened if the value falls
+     outside even that. A pin was a typed percentage until a document could move
+     the value it points at. */
+  function axisOf(st){
+    var t = st.t;
+    var lo = t.refLow  === null ? 0 : t.refLow;
+    var hi = t.refHigh === null ? (lo * 2 || 1) : t.refHigh;
+    var pad = (hi - lo) * 0.3 || 1;
+    var a = t.refLow === null ? 0 : Math.max(0, lo - pad);
+    var b = hi + pad;
+    if(st.v !== null){
+      if(st.v < a) a = Math.max(0, st.v - pad * 0.5);
+      if(st.v > b) b = st.v + pad * 0.5;
+    }
+    return { a:a, b:b };
+  }
+  function axisPct(x, ax){ return Math.max(0, Math.min(100, 100 * (x - ax.a) / (ax.b - ax.a))); }
+
+  /* every tracked marker, including the one that has never been drawn: an
+     unknown gets a row that says so in words, never an empty bar */
+  function renderMarkerCard(){
+    document.getElementById('markerCard').innerHTML = labStates().map(function(st){
+      var t = st.t, ax = axisOf(st);
+      var bandL = t.refLow  === null ? 0 : axisPct(t.refLow, ax);
+      var bandR = t.refHigh === null ? 0 : 100 - axisPct(t.refHigh, ax);
+      var word  = st.where === 'low'  ? 'Too low'
+                : st.where === 'high' ? 'Too high'
+                : st.where === 'in'   ? 'In range' : 'Never drawn';
+      var hot   = st.where === 'low' || st.where === 'high';
+      var val   = st.v === null
+        ? '<span class="val" style="color:var(--ink-3);font-size:.78rem">No value on file</span>'
+        : '<span class="val" style="color:' + t.color + '">' + st.v +
+          '<span class="u">' + t.unit + '</span></span>';
+      var pin = st.v === null ? ''
+        : '<span class="pin" style="left:' + axisPct(st.v, ax).toFixed(1) +
+          '%;background:' + t.color + '"></span>';
+      return '<div class="marker">' +
+          '<div class="head"><span class="nm"><span class="dot" style="background:' +
+            t.color + '"></span>' + esc(t.name) + '</span>' + val + '</div>' +
+          (st.v === null
+            ? '<div class="scale none"></div>'
+            : '<div class="scale"><span class="band" style="left:' + bandL.toFixed(1) +
+              '%;right:' + bandR.toFixed(1) + '%;background:' + t.color + '"></span>' + pin + '</div>') +
+          '<div class="scale-legend"><span' + (hot ? ' style="color:' + t.color + '"' : '') +
+            '><b>' + word + '</b></span><span>' + rangeWords(t) + '</span></div>' +
+        '</div>';
+    }).join('');
+  }
+
+  /* The dial is a direction, not a score: pink left is "below range", amber
+     right is "above range", green centre is "inside it". The needle angle is
+     the net lean of the markers that have a value, and the ones that do not are
+     counted out loud in the caption rather than folded into the denominator. */
+  function renderGauge(){
+    var low = 0, high = 0, inr = 0, unk = 0;
+    labStates().forEach(function(s){
+      if(s.where === 'low') low++;
+      else if(s.where === 'high') high++;
+      else if(s.where === 'in') inr++;
+      else unk++;
+    });
+    var scored = low + high + inr;
+    var tilt = scored ? (high - low) / scored : 0;
+    document.getElementById('needle').style.setProperty('--ang', (tilt * 78).toFixed(1) + 'deg');
+    document.getElementById('gaugeStatus').textContent =
+      !scored        ? 'Nothing on file' :
+      low && high    ? 'Mixed' :
+      low            ? 'Leaning low' :
+      high           ? 'Leaning high' : 'Balanced';
+    document.getElementById('gaugeNote').textContent =
+      inr + ' of ' + scored + ' markers in range' +
+      (low + high ? ' · ' + (low + high) + ' outside' : '') +
+      (unk ? ' · ' + plural(unk, 'marker', 'markers') + ' never drawn' : '');
+  }
+
+  function joinWords(a){
+    if(a.length < 2) return a[0] || '';
+    return a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+  }
+  function show(id, on){ document.getElementById(id).hidden = !on; }
+
+  /* Advice that is only shown when it is true of the values on file. "Raise
+     your iron" over a normal ferritin is the kind of screen this project
+     deletes rather than polishes. */
+  function renderRecs(){
+    var sts = labStates();
+    var out = sts.filter(function(s){ return s.where === 'low' || s.where === 'high'; });
+    var inr = sts.filter(function(s){ return s.where === 'in'; });
+    var unk = sts.filter(function(s){ return s.where === 'unknown'; });
+    var fe  = sts.filter(function(s){ return s.t.key === 'ferritin' && s.where === 'low'; })[0];
+
+    show('recIron', !!fe);
+    if(fe) document.getElementById('recIronTx').textContent =
+      'Ferritin is ' + round1(fe.t.refLow - fe.v) + ' ' + fe.t.unit + ' under the ' +
+      fe.t.refLow + ' floor. Tap for foods high in iron, then recheck.';
+
+    show('recFollow', out.length > 0);
+    if(out.length) document.getElementById('recFollowTx').textContent =
+      'Worth a recheck: ' + joinWords(out.map(function(s){
+        return s.t.name + ' at ' + s.v + ' ' + s.t.unit; })) + '.';
+
+    show('recUnknown', unk.length > 0);
+    if(unk.length) document.getElementById('recUnknownTx').textContent =
+      'No ' + joinWords(unk.map(function(s){ return s.t.name; })) +
+      ' on file. A trial that asks for it is reported as unknown, never as a pass — ' +
+      'add it from a document or type it in.';
+
+    show('recKeep', inr.length > 0);
+    if(inr.length) document.getElementById('recKeepTx').textContent =
+      'Inside range right now: ' + joinWords(inr.map(function(s){ return s.t.name; })) + '.';
+  }
+
+  function renderLabsHead(){
+    var latest = null, fromDoc = 0;
+    TRACKED.forEach(function(t){
+      var d = t.draws[t.values.length - 1];
+      if(d && (!latest || d > latest)) latest = d;
+    });
+    for(var k in PROFILE.labs) if(PROFILE.labs[k].origin === 'document') fromDoc++;
+    document.getElementById('labsSub').textContent =
+      (latest ? 'Latest draw ' + dateLabel(latest) : 'No draws on file') +
+      (fromDoc ? ' · ' + fromDoc + ' from a document you added' : '');
+  }
+
+  /* the two Today tiles: how many documents this page is holding, and how much
+     of the marker panel actually has a value behind it */
+  function renderToday(){
+    var hs = healthScore();
+    document.getElementById('todayHead').textContent = 'Today, ' +
+      dateLabel(todayISO()).replace(/, \d{4}$/, '');
+    document.getElementById('docTile').innerHTML =
+      DOCS.length + '<span class="u">' + (DOCS.length === 1 ? 'document' : 'documents') + '</span>';
+    document.getElementById('markerTile').innerHTML =
+      hs.n + '<span class="u">of ' + hs.total + '</span>';
+  }
+
+  /* ================= the document rail =================
+     Screens 4 and 5. Everything here is a wiring job on top of
+     parseLabDocument(), which is the point: the parser was already written, so
+     the second kind of text costs a screen and no second extractor.
+
+     DOCS is what this page is holding. It is in memory and nowhere else — no
+     localStorage, no IndexedDB, no upload. Closing the tab is the delete
+     button, and that is said out loud on screen rather than implied. */
+  var DOCS = [];
+  var REVIEW = null;
+
+  /* Tesseract.js, and the four URLs it pulls. Named here rather than left to
+     the library's defaults because the default language path points at a host
+     that is not on the published artifact's allow-list, which would fail
+     silently. Everything comes from one CDN and nothing else is ever fetched. */
+  var TESS = {
+    lib:    'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
+    worker: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',
+    core:   'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',
+    lang:   'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int'
+  };
+
+  /* Loaded on the first document, never at page load. A cold open of this app
+     makes no network request at all; reading a document is the only thing that
+     ever does, and it is the user pressing a button. */
+  var tessLoading = null;
+  function loadTesseract(){
+    if(tessLoading) return tessLoading;
+    tessLoading = new Promise(function(res, rej){
+      if(window.Tesseract) return res(window.Tesseract);
+      var el = document.createElement('script');
+      el.src = TESS.lib;
+      el.onload  = function(){ window.Tesseract ? res(window.Tesseract) : rej(new Error('no-engine')); };
+      el.onerror = function(){ tessLoading = null; rej(new Error('offline')); };
+      document.head.appendChild(el);
+    });
+    return tessLoading;
+  }
+
+  window.takeDoc = function(input){
+    var f = input.files && input.files[0];
+    input.value = '';                        /* so the same file can be re-read */
+    if(!f) return;
+    var pdf = /pdf$/i.test(f.type || '') || /\.pdf$/i.test(f.name);
+    REVIEW = {
+      name: f.name || 'document', size: f.size || 0,
+      url:  pdf ? null : URL.createObjectURL(f),
+      state: pdf ? 'pdf' : 'reading',
+      pct: 0, step: 'Fetching the reader…', text: '', ms: [], committed: false
+    };
+    go(4);
+    if(!pdf) runOCR(REVIEW);
+  };
+
+  function progress(R, pct, step){
+    if(REVIEW !== R) return;
+    R.pct = pct; R.step = step;
+    var bar = document.getElementById('xProgBar');
+    if(bar){ bar.style.width = Math.round(pct * 100) + '%'; }
+    var st = document.getElementById('xProgSt');
+    if(st) st.textContent = step;
+  }
+
+  function runOCR(R){
+    progress(R, 0.02, 'Fetching the reader…');
+    loadTesseract().then(function(T){
+      progress(R, 0.08, 'Loading the English model…');
+      return T.createWorker('eng', 1, {
+        workerPath: TESS.worker,
+        corePath:   TESS.core,
+        langPath:   TESS.lang,
+        logger: function(p){
+          if(p.status === 'recognizing text') progress(R, 0.15 + 0.85 * p.progress, 'Reading the document…');
+          else if(/loading|initializing/i.test(p.status || '')) progress(R, 0.1, 'Loading the English model…');
+        }
+      });
+    }).then(function(w){
+      return w.recognize(R.url).then(function(r){
+        return w.terminate().then(function(){ return r.data; },
+                                 function(){ return r.data; });
+      });
+    }).then(function(data){
+      if(REVIEW !== R) return;
+      /* the engine's own per-line confidence, carried into the parser so a row
+         flagged low on screen is flagged for a reason the engine reported */
+      var conf = {};
+      (data.lines || []).forEach(function(l){
+        var k = String(l.text || '').trim();
+        if(k && conf[k] === undefined) conf[k] = l.confidence;
+      });
+      R.text = data.text || '';
+      R.ms = parseLabDocument(R.text, function(raw){
+        var c = conf[String(raw).trim()];
+        return typeof c === 'number' ? c : null;
+      });
+      R.state = 'done';
+      renderReview();
+    }).catch(function(e){
+      if(REVIEW !== R) return;
+      R.state = 'failed';
+      R.why = (e && e.message) === 'offline'
+        ? 'The reader could not be downloaded. You are offline, or the CDN is blocked.'
+        : 'The reader failed on this image: ' + String(e && e.message || e) + '.';
+      renderReview();
+    });
+  }
+
+  /* ---- what a flag or a refusal actually means, in words ---- */
+  var FLAG_WORDS = {
+    'ocr':           'the reader was unsure of these characters',
+    'unit-assumed':  'no unit was printed on the line, so the usual one was assumed',
+    'converted':     'converted into the unit everything is compared in',
+    'alias':         'the marker was only named as "Hb"',
+    'no-date':       'no collection date was printed',
+    'date-order':    'the date was written as numbers, so the month/day order is assumed'
+  };
+  function refusalWords(m){
+    var f = m.flags[0], d = m.detail;
+    if(f === 'not-tracked')  return 'This line is a result, but not for a marker this app tracks.';
+    if(f === 'two-analytes') return 'The line names ' + esc(d) + ' — binding a number to the wrong one is the mistake worth avoiding, so it was left alone.';
+    if(f === 'two-values')   return 'More than one number on the line could be the result, and guessing which is the failure this parser refuses.';
+    if(f === 'unit-mismatch') return 'The number here is in ' + esc(String(d)) +
+      ', which is not a unit ' + esc(m.hintName || 'this marker') + ' is ever reported in. ' +
+      'It was left alone rather than bound to the wrong marker.';
+    if(f === 'unit-unknown') return 'The unit "' + esc(String(d)) + '" has no conversion on file, and a conversion we do not have is an unknown, not a guess.';
+    if(f === 'implausible')  return esc(String(d)) + ' is outside the range this marker can physically take, which means the unit was misread rather than that the value is remarkable.';
+    if(f === 'no-value')     return 'The marker is named but no number was readable on the line.';
+    return 'The line could not be turned into a value.';
+  }
+  function usable(m){ return !!m.analyte && m.value !== null; }
+
+  /* ---- screen 5 · the honesty screen ---- */
+  function renderReview(){
+    var R = REVIEW;
+    var ids = ['xProg','xShot','xGood','xBadWrap','xRawWrap','xFhirWrap','xAdd'];
+    if(!R){
+      ids.forEach(function(i){ document.getElementById(i).hidden = true; });
+      document.getElementById('xSub').textContent = 'No document read yet';
+      return;
+    }
+
+    var good = R.ms.filter(usable);
+    var bad  = R.ms.filter(function(m){ return !usable(m); });
+    var flagged = good.filter(function(m){ return m.confidence <= LOW_CONF; });
+
+    document.getElementById('xSub').textContent =
+      R.state === 'done'    ? plural(good.length, 'value', 'values') + ' read · ' +
+                              plural(bad.length, 'line', 'lines') + ' refused'
+    : R.state === 'reading' ? 'Reading ' + R.name
+    : R.state === 'pdf'     ? 'PDFs cannot be read here'
+                            : 'The reader failed';
+
+    /* --- in flight, failed, or handed a PDF --- */
+    var prog = R.state === 'reading' || R.state === 'failed' || R.state === 'pdf';
+    show('xProg', prog);
+    if(prog){
+      document.getElementById('xProgBar').style.width =
+        R.state === 'reading' ? Math.round(R.pct * 100) + '%' : '100%';
+      document.getElementById('xProgSt').textContent =
+        R.state === 'reading' ? R.step
+      : R.state === 'pdf'     ? 'This is a PDF'
+                              : 'Could not read the document';
+      document.getElementById('xProgSub').textContent =
+        R.state === 'reading'
+          ? 'The reader is downloaded once from a public CDN, then runs here. The image itself is never sent anywhere.'
+      : R.state === 'pdf'
+          ? 'Reading a PDF in the browser needs a second library this app deliberately does not carry. Export the page as an image, or type the values in — the typed path normalizes units exactly the same way.'
+          : R.why + ' Nothing was sent anywhere and nothing was added to your profile.';
+      show('xProgBtn', R.state !== 'reading');
+    }
+
+    show('xShot', !!R.url && R.state === 'done');
+    if(R.url && R.state === 'done'){
+      document.getElementById('xThumb').src = R.url;
+      document.getElementById('xShotName').textContent = R.name;
+      document.getElementById('xShotMeta').textContent =
+        'Read on this device. Check the rows below against the image — every one of ' +
+        'them is editable, and what you add is what the trial verdicts are then computed from.';
+    }
+
+    /* --- the values --- */
+    show('xGood', R.state === 'done' && good.length > 0);
+    if(good.length){
+      document.getElementById('xGoodSub').textContent =
+        plural(good.length, 'marker', 'markers') +
+        (flagged.length ? ' · ' + flagged.length + ' worth checking' : ' · all read cleanly');
+      renderRows(good);
+      var note = document.getElementById('xFlagNote');
+      note.hidden = !flagged.length;
+      if(flagged.length) note.textContent =
+        'The highlighted rows are the ones the reader was least sure of. ' +
+        'Correcting one is the same as reading it: type over the number and it is treated as confirmed.';
+    }
+
+    /* --- what failed --- */
+    show('xBadWrap', R.state === 'done' && bad.length > 0);
+    if(bad.length){
+      document.getElementById('xBadHead').textContent =
+        plural(bad.length, 'line we couldn’t read', 'lines we couldn’t read');
+      document.getElementById('xBad').innerHTML = bad.map(function(m){
+        return '<div class="cbad"><div class="raw">' + esc(m.source.trim()) + '</div>' +
+          '<p class="why">' + refusalWords(m) + '</p>' +
+          (m.hint ? '<button class="fix" onclick="manualFor(\'' + m.hint + '\')">' +
+            'Type this one in' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>' +
+          '</button>' : '') +
+        '</div>';
+      }).join('');
+    }
+
+    /* --- the whole text, and the resources it became --- */
+    var rawEl = document.getElementById('xRawWrap');
+    rawEl.hidden = !(R.state === 'done' && R.text);
+    if(!rawEl.hidden){
+      rawEl.innerHTML = '<summary>Everything we read from the document' + CHEV + '</summary>' +
+        '<div class="ubody"><p class="unote">The complete reader output, verbatim. ' +
+        'The sections above only cover lines that looked like results — this is the rest of ' +
+        'the page, so nothing read off the document is hidden from you anywhere on this screen.</p>' +
+        '<div class="raw-pre">' + esc(R.text) + '</div></div>';
+    }
+
+    var fhirEl = document.getElementById('xFhirWrap');
+    fhirEl.hidden = !(R.state === 'done' && good.length);
+    if(!fhirEl.hidden){
+      var bundle = fhirBundle(good);
+      fhirEl.innerHTML = '<summary>FHIR R4 · ' +
+        plural(bundle.entry.length, 'Observation', 'Observations') + ', LOINC coded' + CHEV + '</summary>' +
+        '<div class="ubody"><p class="unote">US Core Laboratory Result Observations, which is ' +
+        'the shape a certified EHR is federally required to hand a patient. These would POST to a ' +
+        'real patient-access API unchanged. <b>Nothing posts them</b> — this app has no outbound ' +
+        'channel at all, and no Patient resource, because nothing here identifies anyone.</p>' +
+        '<div class="raw-pre">' + esc(JSON.stringify(bundle, null, 2)) + '</div></div>';
+    }
+
+    var add = document.getElementById('xAdd');
+    add.hidden = !(R.state === 'done' && good.length);
+    add.disabled = R.committed;
+    add.firstChild.nodeValue = R.committed
+      ? '\r\n              Added to your profile\r\n              '
+      : '\r\n              Add ' + plural(good.length, 'value', 'values') + ' to my profile\r\n              ';
+  }
+
+  /* Editable in place. The input IS the value — there is no edit mode to enter
+     and no save button per row. An edited row is a row a human has read, so its
+     confidence goes to 1 and it stops being flagged. */
+  function renderRows(good){
+    document.getElementById('xRows').innerHTML = good.map(function(m, i){
+      var low = m.confidence <= LOW_CONF;
+      var grade = m.edited          ? 'You confirmed this'
+                : m.confidence >= 0.85  ? 'Read cleanly'
+                : low                   ? 'Check this one'
+                                        : 'Read with some doubt';
+      var chip = m.edited ? 'pass' : m.confidence >= 0.85 ? 'pass' : low ? 'near' : 'unk';
+      var why = m.flags.filter(function(f){ return FLAG_WORDS[f]; })
+                       .map(function(f){ return FLAG_WORDS[f]; });
+      return '<div class="xrow' + (low && !m.edited ? ' low' : '') + '">' +
+        '<div class="xhead"><span class="nm"><span class="dot" style="background:' +
+          (ANALYTE_COLOR[m.analyte] || 'var(--ink-3)') + '"></span>' +
+          esc(ANALYTE_LABEL[m.analyte] || m.analyte) + '</span>' +
+          '<span class="vchip ' + chip + '">' + (chip === 'pass' ? I_PASS : I_UNK) + grade + '</span></div>' +
+        '<div class="xval">' +
+          '<input type="number" step="any" inputmode="decimal" value="' + m.value +
+            '" aria-label="' + esc(ANALYTE_LABEL[m.analyte] || m.analyte) + ' value" ' +
+            'onchange="editRow(' + i + ', this.value)">' +
+          '<span class="u">' + esc(m.unit) + '</span>' +
+          '<span class="when">' + (m.drawnOn ? esc(dateLabel(m.drawnOn)) : '<em>No date read</em>') + '</span>' +
+        '</div>' +
+        (why.length ? '<p class="xwhy">' + esc(why.join('; ')) + '.</p>' : '') +
+        (m.refLow !== null || m.refHigh !== null
+          ? '<p class="xref">The report prints its own range: ' +
+            (m.refLow !== null ? m.refLow : '') +
+            (m.refLow !== null && m.refHigh !== null ? '–' : '') +
+            (m.refHigh !== null ? m.refHigh : '') + ' ' + esc(m.unit) + '</p>'
+          : '') +
+        '<div class="src">' + esc(m.source.trim()) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  window.editRow = function(i, raw){
+    if(!REVIEW) return;
+    var good = REVIEW.ms.filter(usable);
+    var m = good[i];
+    if(!m) return;
+    var v = toNumber(raw);
+    if(!plausible(m.analyte, v)){
+      /* a corrected value gets the same plausibility check a read one does */
+      renderReview();
+      return;
+    }
+    m.value = round2(v);
+    m.edited = true;
+    m.confidence = 1;
+    m.flags = m.flags.filter(function(f){ return f !== 'ocr' && f !== 'unit-assumed' && f !== 'alias'; });
+    renderReview();
+  };
+
+  window.commitDoc = function(){
+    if(!REVIEW || REVIEW.committed) return;
+    var good = REVIEW.ms.filter(usable);
+    if(!good.length) return;
+    var bad = REVIEW.ms.length - good.length;
+    REVIEW.committed = true;
+    DOCS.push({ kind:'doc', name:REVIEW.name, url:REVIEW.url,
+                when:(good[0].drawnOn || todayISO()), read:good.length, failed:bad });
+    ingest(good);
+    go(1);
+  };
+
+  /* ---- screen 4 · manual entry ----
+     The correction path and the offline path, and the one the demo can lean on:
+     a value typed here is turned back into a line of text and run through
+     parseLabDocument, so a hand-entered microgram/litre is normalized by
+     exactly the code that normalizes one read off a photograph. */
+  var MANUAL_KEYS = ['ferritin','hemoglobin','a1c','ldl','spo2','bmi'];
+  var UNIT_LABEL = {
+    'ng/ml':'ng/mL', 'µg/l':'µg/L', 'ug/l':'µg/L', 'mcg/l':'mcg/L',
+    'g/dl':'g/dL', 'g/l':'g/L', '%':'%', 'mmol/mol':'mmol/mol',
+    'mg/dl':'mg/dL', 'mmol/l':'mmol/L', 'kg/m2':'kg/m²', 'kg/m²':'kg/m²'
+  };
+  var MANUAL = { key:'ferritin', unit:null };
+
+  function unitChoices(key){
+    var seen = {}, out = [];
+    Object.keys(ANALYTES[key].units).forEach(function(u){
+      var label = UNIT_LABEL[u] || u;
+      if(seen[label]) return;
+      seen[label] = true;
+      out.push({ raw:u, label:label });
+    });
+    return out;
+  }
+
+  function renderManual(){
+    document.getElementById('mAnalytes').innerHTML = MANUAL_KEYS.map(function(k){
+      return '<button class="achip' + (k === MANUAL.key ? ' on' : '') +
+        '" onclick="pickAnalyte(\'' + k + '\')">' +
+        '<span class="dot" style="background:' + (ANALYTE_COLOR[k] || 'var(--ink-3)') + '"></span>' +
+        esc(ANALYTE_LABEL[k] || k) + '</button>';
+    }).join('');
+
+    var units = unitChoices(MANUAL.key);
+    if(!MANUAL.unit || !units.some(function(u){ return u.raw === MANUAL.unit; }))
+      MANUAL.unit = units[0].raw;
+    document.getElementById('mWhen').textContent =
+      'Dated today, ' + dateLabel(todayISO()) + '. A value read off a document keeps ' +
+      'the collection date printed on it instead.';
+    document.getElementById('mUnits').innerHTML = units.map(function(u){
+      return '<button class="achip' + (u.raw === MANUAL.unit ? ' on' : '') +
+        '" onclick="pickUnit(\'' + u.raw.replace(/'/g, "\\'") + '\')">' + esc(u.label) + '</button>';
+    }).join('');
+  }
+
+  window.pickAnalyte = function(k){ MANUAL.key = k; MANUAL.unit = null; renderManual(); };
+  window.pickUnit    = function(u){ MANUAL.unit = u; renderManual(); };
+
+  /* jumped to from a line the parser refused, with that line's marker preselected */
+  window.manualFor = function(k){
+    MANUAL.key = k; MANUAL.unit = null;
+    go(3);
+    renderManual();
+    var el = document.getElementById('mVal');
+    el.focus();
+  };
+
+  function manualSay(msg, ok){
+    var el = document.getElementById('mErr');
+    el.textContent = msg;
+    el.hidden = !msg;
+    el.className = 'err' + (ok ? ' ok' : '');
+  }
+
+  window.addManual = function(){
+    var el = document.getElementById('mVal');
+    var raw = String(el.value).trim();
+    if(!raw){ manualSay('Type a number first.', false); return; }
+
+    var key = MANUAL.key;
+    var line = (ANALYTE_LABEL[key] || key) + ' ' + raw + ' ' +
+               (UNIT_LABEL[MANUAL.unit] || MANUAL.unit) + '  ' + todayISO();
+    var m = parseLabDocument(line)[0];
+
+    if(!m || !usable(m)){
+      var a = ANALYTES[key];
+      manualSay(m && m.flags[0] === 'implausible'
+        ? raw + ' ' + (UNIT_LABEL[MANUAL.unit] || MANUAL.unit) + ' is outside the ' +
+          a.lo + '–' + a.hi + ' ' + a.canonical + ' this marker can take.'
+        : 'That could not be read as a ' + (ANALYTE_LABEL[key] || key) + ' value.', false);
+      return;
+    }
+
+    el.value = '';
+    DOCS.push({ kind:'manual', name:(ANALYTE_LABEL[key] || key) + ' ' + m.value + ' ' + m.unit,
+                url:null, when:m.drawnOn, read:1, failed:0 });
+    ingest([m]);
+    manualSay((ANALYTE_LABEL[key] || key) + ' ' + m.value + ' ' + m.unit +
+              ' added. Every trial below was re-ranked against it.', true);
+  };
+
+  /* ---- screen 4 · what this page is holding ---- */
+  var DOCICON = '<svg width="19" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>';
+
+  function renderDocs(){
+    document.getElementById('docCount').textContent = DOCS.length
+      ? plural(DOCS.length, 'entry', 'entries') + ' this session, held in this page only'
+      : 'Nothing yet';
+    var list = document.getElementById('docList');
+    if(!DOCS.length){
+      list.innerHTML = '<p class="empty">Nothing added yet. A document you read or a value ' +
+        'you type appears here, and is held in this page only — closing the tab is the ' +
+        'delete button.</p>';
+      return;
+    }
+    list.innerHTML = DOCS.slice().reverse().map(function(d){
+      return '<div class="doc-row">' +
+        (d.url ? '<img class="thumb" src="' + d.url + '" alt="">'
+               : '<span class="thumb" style="display:grid;place-items:center">' + DOCICON + '</span>') +
+        '<span class="tx"><b>' + esc(d.name) + '</b><small>' +
+          (d.kind === 'manual' ? 'Typed in' : plural(d.read, 'value', 'values') + ' read' +
+            (d.failed ? ', ' + plural(d.failed, 'line', 'lines') + ' refused' : '')) +
+          (d.when ? ' · ' + esc(dateLabel(d.when)) : '') +
+        '</small></span>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderAddRecords(){ renderManual(); renderDocs(); }
+
+  /* ================= merging a measurement into the profile =================
+     docs/ARCHITECTURE.md §4a: one profile, whatever the source. A measurement
+     reaches the engine by the same door the committed baseline came through,
+     which is why the trial list can re-rank off a photograph. */
+  var FACT_KEYS = { age:1, bmi:1 };
+
+  function markerOf(key){
+    return MARKERS.filter(function(m){ return m.key === key; })[0] || null;
+  }
+  function trackedOf(key){
+    return TRACKED.filter(function(t){ return t.key === key; })[0] || null;
+  }
+
+  /* a draw lands in date order. Re-reading the same document, or correcting a
+     value from the same draw, overwrites that draw instead of inventing one. */
+  function appendDraw(t, v, when){
+    var i = t.draws.indexOf(when);
+    if(i > -1){ t.values[i] = v; return; }
+    var at = 0;
+    while(at < t.draws.length && t.draws[at] < when) at++;
+    t.draws.splice(at, 0, when);
+    t.values.splice(at, 0, v);
+  }
+
+  function ingest(ms){
+    ms.forEach(function(m){
+      if(FACT_KEYS[m.analyte]){ PROFILE.facts[m.analyte] = m.value; return; }
+      var when = m.drawnOn || todayISO();
+      var mk = markerOf(m.analyte);
+      var tr = trackedOf(m.analyte);
+      if(tr) appendDraw(tr, m.value, when);        /* shared arrays: chart and score at once */
+      if(mk && m.value > mk.max) mk.max = Math.ceil(m.value * 1.12);
+      if(mk){ foldLab(mk); PROFILE.labs[mk.key].origin = 'document'; }
+      else {
+        /* a marker the chart does not draw, but the engine still reads. The
+           app's own reference range wins where it has one; the report's
+           printed interval fills in only where it does not. */
+        PROFILE.labs[m.analyte] = {
+          analyte:m.analyte, value:m.value, unit:m.unit,
+          refLow:  tr && tr.refLow  !== null ? tr.refLow  : m.refLow,
+          refHigh: tr && tr.refHigh !== null ? tr.refHigh : m.refHigh,
+          drawnOn: when, origin:'document'
+        };
+      }
+    });
+    recompute();
+  }
+
+  /* every screen that reads the profile, re-read. The ranking is recomputed
+     from scratch rather than patched, so the order on Home and the order on the
+     trial screen cannot come apart. */
+  function recompute(){
+    RANKED = rankCorpus(PROFILE, CORPUS);
+    ROW = {};
+    RANKED.forEach(function(r){ ROW[r.trial.nctId] = r; });
+    if(!ROW[currentTrial]) currentTrial = RANKED[0].trial.nctId;
+
+    renderHealth();
+    renderMacros();
+    renderToday();
+    renderHomeTrials();
+    renderLabsHead();
+    renderMarkerCard();
+    renderGauge();
+    renderRecs();
+    renderDocs();
+    if(current === 1){ active = -1; pick(0); }
+    if(current === 2){ renderTrial(currentTrial); countScore(); }
+  }
+
+  /* ---------------- first paint ----------------
+     Every screen is written from the profile before anything is shown, so there
+     is no frame in which a typed placeholder is on screen. */
   renderHomeTrials();
   renderMacros();
+  renderToday();
+  renderLabsHead();
+  renderMarkerCard();
+  renderGauge();
+  renderRecs();
+  renderManual();
+  renderDocs();
   pick(0);
   go(0);
 })();

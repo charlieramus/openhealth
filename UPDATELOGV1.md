@@ -1036,7 +1036,250 @@ you have. Confirm DevTools Network shows only the Tesseract.js CDN. tests.html s
 
 ## Stage 6 Report
 
-_Pending._
+The input rail that removes the condition question. `parseLabDocument(text) → Measurement[]`
+is built out of the Stage 3 tokenizer — `findAnalyte`, `toCanonical`, `plausible`,
+`readBareRange` — plus three readers it did not yet have, and **no second extractor**. Two
+screens were added to the track (`#s3` add records, `#s4` extraction review), the track went
+from three screens to five, and the whole of screen 2 that was still typed into the markup
+became engine output, because the moment a document can move a lab value, a typed pin is a
+lie with a delay on it.
+
+### What the parser gained, and what it reuses
+
+Three readers, written next to `readComparisons` and `readBareRange` because they are the
+same machinery one operator apart — a criterion says `ferritin \< 50 ng/mL`, a lab line says
+`Ferritin 8 ng/mL`:
+
+| New | What it does |
+|---|---|
+| `readQuantities(text)` | every bare `number unit?` in the line, **with its position** — `readComparisons` needs an operator to anchor on and a result line has none |
+| `readDate(text)` | ISO, `Sep 24, 2026`, `24 Sep 2026`, and `M/D/YYYY`. The numeric form is flagged `date-order` unless one of the two numbers is over 12 and settles the order on its own |
+| `documentDate(lines)` | a line saying `Collected:` beats the first date on the page, which on a real report is the print date |
+
+`readBareRange` now also reports `at` / `len`. That is the whole reason the reference
+interval printed beside a result does not become the result: its span, and the collection
+date's span, are struck out of the line before the value is looked for.
+
+**Measurement selection refuses rather than guesses**, in this order: exactly one quantity
+carrying a convertible unit wins; two is a refusal; a unit we hold no conversion for is a
+refusal; one bare number is taken with the canonical unit assumed and the confidence cut to
+0.6; two bare numbers is a refusal.
+
+**A refused line comes back in the same array**, `analyte:null`, with the raw line verbatim
+in `source` — exactly the way `parseCriteria` returns `kind:'unparsed'` rules alongside the
+ones it read. `§4a` says `parseLabDocument(text) → Measurement[]` and that is what it
+returns; a second channel for failures would have been a place for failures to get lost.
+
+`confidence` is `0..1`, starts at 1 and is only ever reduced by something true of that line:
+the OCR engine's own per-line confidence, a unit that was not printed, an analyte matched
+only by the two-letter alias `Hb`. **A value typed in by hand scores 1** — a human read it.
+
+### FHIR R4 / US Core, the format only
+
+`toObservation(m)` writes a US Core Laboratory Result Observation: LOINC in `code.coding`,
+UCUM in `valueQuantity.system`/`code`, `effectiveDateTime` from the collection date,
+`referenceRange` when the report printed one. The UCUM code and the category live in
+`ANALYTES` beside the unit they code, so the two cannot drift. `age` returns `null` — it is
+demographics, not an Observation. `fhirBundle()` is a **view** of `PROFILE`, never a stored
+copy, and the review screen shows the actual JSON in a collapsed block, because a claim about
+a data standard you cannot see is not a claim. Every resource carries
+`subject: { display: 'no Patient resource — nothing here identifies anyone' }` and there is
+no outbound channel for any of it.
+
+### The two screens
+
+**Screen 4 — add records.** Camera capture and image upload, both `<input type="file">`
+behind a `<label>`; the plain line about where the document goes, which is nowhere; manual
+entry; and the list of what this page is holding. `DOCS` is in memory and nowhere else — no
+`localStorage`, no `IndexedDB` — and the empty state says so: *"closing the tab is the delete
+button."*
+
+**Screen 5 — the honesty screen.** The document thumbnail, one row per value with the number
+in an `<input>` that **is** the value (no edit mode, no per-row save), a confidence chip with
+an icon and a word, the date, the report's own printed range, and the source line quoted
+verbatim beneath. Then, in its own bordered section with more room than the rows above it,
+**"N lines we couldn't read"** — the raw text, and a sentence saying exactly why each one was
+refused. Then `Everything we read from the document`, collapsed, holding the complete OCR
+output, so no part of the page is hidden anywhere on the screen. Editing a row sets its
+confidence to 1, re-checks plausibility, and drops the flags that were about reading it.
+
+**Manual entry is the same reader.** A typed value is turned back into a line of text and run
+through `parseLabDocument`, so a hand-entered µg/L is normalized by the code that normalizes
+a µg/L read off a photograph. It is the correction path, the offline path, and the path the
+video can lean on — **the demo never has to depend on OCR succeeding live.**
+
+### No bundled sample document, deliberately
+
+The obvious way to make the demo bulletproof is to ship a sample lab report. A synthetic lab
+report *is* synthetic patient data, which is the thing this project deleted in Stage 1 and
+does not get to re-add as a convenience. Manual entry is the offline path the spec already
+asked for, and it is sufficient. The real-document run is the operator's to do with their own
+paperwork.
+
+### A PDF is refused in words
+
+Reading a PDF in the browser needs a second library (`pdf.js`), and `CLAUDE.md` allows one.
+Picking a PDF opens screen 5 on a state that says so plainly and offers manual entry. A file
+picker that silently accepts something it cannot read is the thing this standard deletes.
+
+### Verification — a real OCR run, end to end
+
+Driven through Chrome DevTools Protocol against the shipped page: a PNG was handed to the
+real `<input type="file">` via `DataTransfer`, the change event fired `takeDoc()`, and real
+Tesseract.js read it. **The image was rendered from text in a canvas — it is a test fixture,
+not anybody's lab report**, for the reason in the section above.
+
+```
+3 values read · 3 lines refused
+
+READ CLEANLY   Ferritin           6.4  ng/mL   Sep 24, 2026   report range 12–150 ng/mL
+READ CLEANLY   Hemoglobin        12.4  g/dL    Sep 24, 2026   report range 12–16 g/dL
+READ CLEANLY   Oxygen saturation   98  %       Sep 24, 2026   report range 95–100 %
+
+3 lines we couldn't read
+  "Hgb Alc 5.1 % 4.0-5.6"
+     The number here is in %, which is not a unit Hemoglobin is ever reported in.
+     It was left alone rather than bound to the wrong marker.
+  "Glucose fasting 92 mg/dL 70-99"
+     This line is a result, but not for a marker this app tracks.
+  "Ferritin 8 pg/mL"
+     The unit "pg/mL" has no conversion on file, and a conversion we do not have
+     is an unknown, not a guess.
+
+FHIR R4 · 3 Observations, LOINC coded
+```
+
+The collection date beat the report date (`Collected: 2026-09-24` over
+`Reported: 09/28/2026`). Nothing landed in a low-confidence bucket on this image because
+Tesseract read it cleanly; the flagging path is covered by a test that feeds the parser a
+line confidence of 55 and asserts the row comes back at or below `LOW_CONF`.
+
+**Then the ranked list, recomputed — without ever telling the app what condition you have.**
+After adding the document and then typing one hemoglobin correction (11.2 g/dL):
+
+```
+                         before        after
+profile ferritin         8 ng/mL       6.4 ng/mL   (origin: document)
+profile hemoglobin       13.1 g/dL     11.2 g/dL   (origin: document)
+Health Score             99, 4 of 5    94, 4 of 5
+panel gauge              Leaning low   Leaning low · 2 of 4 in range · 1 never drawn
+blocked trials           7             10
+top of the ranking       NCT07394972   NCT06270498
+```
+
+`NCT06942208` moved from the top of the list to **not eligible**, and the audit says why with
+the number:
+
+```
+Hemoglobin < 12 g/dL    FAIL     11.2 g/dL    0.8 g/dL inside the excluded range
+Age 16–35 years         PASS     34 years     1 year inside what the trial asks
+Ferritin ≤ 50 ng/mL     PASS     6.4 ng/mL    43.6 ng/mL inside what the trial asks
+```
+
+**Every network request on a cold profile**, captured on the CDP `Network` domain including
+the OCR worker's own session:
+
+```
+fonts.gstatic.com   .../bricolagegrotesque...woff          page     (pre-existing, §4.1)
+fonts.gstatic.com   .../inter...woff2                      page     (pre-existing, §4.1)
+127.0.0.1:8731      /favicon.ico                           page     (same origin)
+cdn.jsdelivr.net    tesseract.js@5.1.1/dist/tesseract.min.js        page
+cdn.jsdelivr.net    tesseract.js@5.1.1/dist/worker.min.js           worker
+cdn.jsdelivr.net    tesseract.js-core@5.1.1/...-simd-lstm.wasm.js   worker
+cdn.jsdelivr.net    @tesseract.js-data/eng@1.0.0/.../eng.traineddata.gz  worker
+blob: / data:                                              (the image, the worker, the wasm)
+```
+
+Nothing but the Tesseract.js CDN, and **nothing at all until a document is read** — the
+library is injected on the first document, not at page load, so a cold open of the app makes
+no third-party request except the pre-existing Google Fonts ones. The four Tesseract URLs are
+pinned explicitly, including `langPath`, because the library's default language host is not
+on the published artifact's allow-list and would have failed silently.
+
+`tests.html` — **all 61 passed** (42 before this stage, 19 added), headless Chromium over
+http. No console errors on `index.html`.
+
+### Four things found by reading real output
+
+In the Stage 4 and Stage 5 tradition. None was caught by a test; all four now have one.
+
+1. **Tesseract read `Hgb A1c` as `Hgb Alc`** — letter `l` for digit `1`. That resolves to
+   hemoglobin, and the row then said *"% has no conversion on file"*, which is true of
+   nothing: we convert percent all day, it is simply never what a haemoglobin is reported in.
+   A unit we hold a conversion for **somewhere** is now a different refusal
+   (`unit-mismatch`) from one we have never heard of, and it names the marker.
+2. **`Hgb A1c` was refused as two analytes in the first place.** A lab report prints it that
+   way at least as often as `HbA1c`, and `findAnalyte` only disambiguated the `HbA1c` /
+   `Hb` collision. `Hgb A1c` and `Hemoglobin A1c` now resolve to A1c — glycated haemoglobin
+   is what both halves of the name mean.
+3. **`Ferritin 8 pg/mL` was being read as 8 ng/mL.** `UNIT_RE` only knows the units in the
+   conversion table, so an unknown one was invisible and the number looked bare. **That is
+   wrong by a factor of a thousand** and is precisely the confidently-wrong answer §4a exists
+   to prevent. A number followed by anything unit-shaped — anything with a slash in it — is
+   now refused.
+4. **The confidence chip said `HIGH`.** Beside a lab value, in capitals, that reads as *high
+   result* before it reads as *high confidence*. It says `READ CLEANLY`, `READ WITH SOME
+   DOUBT`, `CHECK THIS ONE` and `YOU CONFIRMED THIS` now. The words are about reading,
+   because that is what the number measures.
+
+### Screen 2 stopped being typed
+
+Not scope creep — a consequence. Every one of these was true of the committed baseline and
+false the moment a document lands:
+
+- **The five marker rows** — value, pin position, band width and the word under them. The
+  axis is each marker's reference interval with 30% headroom, widened if the value falls
+  outside it. **HbA1c is now a row**, and an unknown gets a hatched empty track and the words
+  *"No value on file" / "Never drawn"* — never a bar, per spec rule 2.
+- **The panel gauge.** It is a direction, not a score: the needle is the net lean of the
+  markers that have a value, and the ones that do not are counted out loud in the caption
+  rather than folded into the denominator.
+- **The trend sentence under the chart** — four hand-written paragraphs, now one computed
+  line with the actual move and the actual distance from the bound.
+- **The three recommendation cards.** Each is shown only when it is true: *"Raise your iron"*
+  over a normal ferritin is the kind of screen this project deletes rather than polishes. A
+  fourth card was added for the marker that has never been drawn.
+- **The lab screen subtitle**, `Complete blood panel · Sept 24` → the latest draw date and how
+  many values came from a document.
+- **The Today card.** `Records synced 18 new` and `Providers connected 5 of 5` are gone: the
+  first is now the way into the document rail with the real count, the second is
+  `n of N markers with a value`. `Today, Sep 28` was a typed date and is computed.
+- Draw history is **dates** now, not month names. `MONTHS` is derived from `DRAWS`, markers
+  carry their own `draws` array, and a document splices its draw in by date. The Health Score
+  trend takes an as-of **date** rather than a column index, because a column index broke the
+  moment a draw could land in the middle of the history.
+
+### Named rather than rounded up to done
+
+- **The baseline history is still invented**, and now says so: the caption reads
+  *"real trials, invented baseline"* rather than *"fake data"*. The rail is real; the seven
+  committed draws are not. Shipping the app empty (spec screen 10) would make every value on
+  screen the user's own and is a real option — it is not this stage's call to make.
+- **Google Fonts is still three live requests.** Unchanged from `HANDOFF-V1.md` §4.1 and
+  still Stage 7's decision. It is the only thing standing between the app and a true
+  zero-third-party cold load.
+- **The Health Score still reads 99** on a profile whose ferritin is below range, and 94 after
+  hemoglobin drops to 11.2. `docs/SIMPLIFY.md` §6's own warning stands; a §6 revision, not a
+  code change to make here.
+- **A document's printed reference interval does not override the app's own.** It is read,
+  shown on the row and written into the Observation's `referenceRange`, but the range the
+  chart and the Health Score are drawn against is unchanged. Re-scaling a chart because one
+  lab prints a different interval is a bigger decision than this stage should take.
+- **`LDL Cholesterol 2.6 mmol/L 0.0-2.59` loses its printed range.** The range is in mmol/L
+  but the unit sits before it on the line, so the bare `0.0-2.59` fails the plausibility check
+  in mg/dL and is correctly not trusted. The value is right; the range is simply not recorded.
+- **Home still carries `Insurance`, `Balance due` and the bell's badge dot.** V2 owns the hub
+  shell. The bell's `aria-label` said *"18 new updates"* and was fixed, because a label naming
+  a number nothing computes is a lie a screen reader reads out loud.
+- **The OCR language data is cached in IndexedDB by the library after the first read.** The
+  2.9 MB `eng.traineddata.gz` is fetched once per browser profile. Worth knowing before the
+  demo: the first read on a fresh machine is slow.
+- **`<input>` now appears in the file four times** — two file pickers and two numeric fields.
+  Spec rule 1 forbids a search bar and a condition picker; it does not forbid typing a lab
+  value in. There is still no `<select>`, no `placeholder`, and no condition input anywhere.
+
+Not filed as tickets: all of the above fail the filing test's three clauses, or are already
+owned by Stage 7 or V2. They are on the record here instead.
 
 ---
 
