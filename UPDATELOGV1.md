@@ -250,7 +250,113 @@ Stage 3's job, done by code.
 
 ## Stage 2 Report
 
-_Pending._
+**23 real records** — the original 4 plus **19 new**, inside the 20–25 window. Each is the
+unmodified API response from `https://clinicaltrials.gov/api/v2/studies/<NCT ID>`, written
+byte-for-byte to `assets/intake/trials/<NCT ID>.json`, downloaded 2026-10-06.
+
+**The corpus is generated, not hand-written.** Added `scripts/build_corpus.py`: it reads the
+intake JSONs, pulls only real registry fields, computes nearest-site distance from the
+registry's own `geoPoint`, and splices `var CORPUS = [...]` into `index.html` between
+`CORPUS:BEGIN` / `CORPUS:END` markers. **Build-time step, not a backend** — nothing listens
+on a port, and because the corpus ends up inline it is loaded at page load with no fetch.
+`index.html` is now 146,835 bytes (50,285 chars of that is raw eligibility text).
+
+The generator asserts, every run, that each record's text survives the round trip into the
+generated JS unchanged. It refuses to build otherwise.
+
+### Verbatim — checked against the live registry, not just against our own file
+
+For three records I re-fetched the live API during verification and compared
+`eligibilityCriteria` exactly:
+
+| Record | Stored | Live | Identical |
+|---|---|---|---|
+| `NCT06942208` | 7,789 chars | 7,789 chars | **yes** |
+| `NCT07394972` | 889 chars | 889 chars | **yes** |
+| `NCT05856838` | 772 chars | 772 chars | **yes** |
+
+First 200 characters, stored vs. live (`repr`, so the line breaks are visible):
+
+```
+NCT06942208
+ STORED 'Inclusion Criteria:\n\n* Biologically female athlete\n* Age 16-35\n* At least one
+         year past the age of menarche\n* Complete and pass the Get Active Questionnaire
+         (GAQ)\n* Suboptimal ferritin levels (≤50 mcg'
+ LIVE   (identical)
+
+NCT07394972
+ STORED 'Inclusion Criteria:\n\n* Serum ferritin \\< 45 µg/L (iron depleted)\n* Body weight
+         \\< 70 kg\n* Body mass index 18,5 - 24,9 kg/m2 (normal weight)\n* Hemoglobin (Hb)
+         \\> 120 g/L (nonanemic)\n* C-reactive protei'
+ LIVE   (identical)
+
+NCT05856838
+ STORED 'Inclusion Criteria:\n\n* ≥ 35 years - ≤ 50 years\n* Heavy menstrual bleeding (PBAC
+         ≥ 150)\n* Unsuccessful drug treatment, contraindication to drug treatment or
+         rejection of drug treatment by the patient\n*'
+ LIVE   (identical)
+```
+
+Worth noting what was **not** cleaned up, because it is exactly what the parser has to
+survive: `NCT07394972` writes its BMI range as **`18,5 - 24,9`** with European decimal
+commas, and its hemoglobin in **g/L** rather than g/dL. The escaped `\\<` is the registry's
+own markdown escaping. All of it is preserved as-is. Stage 3's unit normalization now has a
+real problem to solve rather than a tidied-up one.
+
+All **23 of 23** records are byte-identical to their intake file.
+
+### Nothing was hand-structured
+
+Checked every record for predicate-shaped fields (`op`, `threshold`, `min`, `max`, `band`,
+`weight`, `required`, `criteria`, `rules`, `analyte`): **0 found.** Every
+`eligibilityCriteria` is a plain string. The corpus carries text; turning it into rules is
+Stage 3's job, done by code.
+
+### Real fields kept
+
+0 records missing sponsor, status, conditions, NCT ID or criteria.
+Status: **21 Recruiting, 2 Not yet recruiting.**
+Phase: 11 `NA`, 4 Phase 4, 4 Phase 3, 3 Phase 2, 1 empty.
+
+That one empty phase is `NCT06990373`, which is observational and genuinely has no phase. My
+first generator pass substituted `"N/A"` there — a value the registry never returned — so I
+fixed it to carry the registry's own empty value rather than invent one.
+
+### Spread — picked for range, not for wins
+
+| Group | Records | Purpose |
+|---|---|---|
+| Iron deficiency **without** anemia | `NCT06942208`, `NCT07394972`, `NCT06851130`, `NCT07546591` | The profile's real picture — should genuinely score well |
+| Iron trials **requiring** anemia | `NCT07014371`, `NCT05462704` | Hemoglobin 13.1 g/dL **should fail these** |
+| Iron, wrong disease | `NCT05226169`, `NCT05759078`, `NCT06270498` | Gastric carcinoma, post-MI, heart failure — must fail on context |
+| A1c-gated | `NCT07743983`, `NCT06897475`, `NCT07588438`, `NCT07775404`, `NCT07502508` | **The standing UNKNOWN test**, five ways |
+| Lipids / age | `NCT06894004`, `NCT06422741`, `NCT05614219`, `NCT04485871` | Real LDL; `NCT04485871` also fails cleanly on a 45–74 age window |
+| **Prose only** | `NCT05856838`, `NCT06510998`, `NCT06990373` | **No analyte the engine knows** — honest input for the `unparsed` bucket |
+
+**3 of 23 records contain no analyte in the engine's vocabulary at all**, which is
+deliberate. Criteria-text length runs 564 → 7,789 chars, so the parser also gets a real
+range of input sizes rather than a uniform one.
+
+### Verify
+
+- Corpus parsed back out of the served page: **23 records**, all with non-empty string
+  criteria, no predicate fields.
+- Served at `127.0.0.1:8731` and navigated Home → Labs → Trials → Home: **zero runtime
+  errors**. The Stage 1 Health Score still renders.
+- **Network unchanged by this stage:** the page itself plus the same three Google Fonts
+  requests, and nothing else. The corpus added **zero** requests, which is the point of
+  inlining it. The Google Fonts rail is still the outstanding item carried from Stage 1.
+- `assets/intake/trials/README.md` rewritten for 23 records, the generator pipeline, and the
+  spread rationale. It also **quoted two retired score constants** (*"scores 79"*,
+  *"scores 21"*) in its old table, against the `CLAUDE.md` rule — those are gone.
+
+### Not done here, on purpose
+
+The corpus is **not yet wired into the UI**. `TRIALS` still holds the two hand-transcribed
+trial objects and still drives both screens. Stage 3 builds the parser against `CORPUS`
+without touching the UI; Stage 5 is where `TRIALS` is deleted and the parser's output takes
+over. Leaving both in place is intended at this point in the log, not an oversight — but
+until Stage 5 lands, the app on screen is still reading hand-written criteria.
 
 ---
 
