@@ -28,7 +28,7 @@ Two claims are doing the work in that sentence, and both turn out to be false at
 
 ## 2 · What we'd actually be porting
 
-Measured, not estimated — `index.html` at the time of this decision:
+Measured, not estimated — `index.html` at the time of this decision: 
 
 | Region | Lines | Port cost | Why |
 |--------|-------|-----------|-----|
@@ -133,13 +133,67 @@ Port when **any one** of these is true. Not before, and not on general principle
 
 | Trigger | Why it changes the answer |
 |---------|---------------------------|
-| **Real data, auth, or an API arrives** — explicitly on the cut list in [`ROADMAP.md`](ROADMAP.md), so: not before submission | Server-side rendering, routing, and secret handling become real requirements. Port against those, not against a guess |
+| ~~**Real data, auth, or an API arrives**~~ — **EVALUATED 2026-10-02: does not fire.** See below | Server-side rendering, routing, and secret handling become real requirements. Port against those, not against a guess |
 | **Screens grow past ~6, with genuinely shared components** | Repetition to dedupe is the actual thing components solve |
 | **A second person needs to edit in parallel** | File-level separation starts preventing conflicts rather than creating searches |
 | **Code Connect round-tripping becomes the design workflow** | Per §4, this is the one place React is the better-supported target |
 
 At that point the port is a few hours of markup conversion plus a careful rewrite of the
 motion logic in §2 — a known, bounded cost, paid when something is actually bought with it.
+
+### 6a · The first trigger was tested, and it does not fire
+
+[`REBUILD.md`](REBUILD.md) put two real APIs into the app — ClinicalTrials.gov v2 and
+`r4.smarthealthit.org`. That looked like trigger #1 firing. **It didn't**, and the reason is
+worth recording because it is the whole basis of the trigger:
+
+The trigger is not "an API arrives." It is **"secret handling and server-side rendering become
+real requirements."** Both of those APIs were:
+
+- **unauthenticated** — no key, no OAuth, no token. **There is no secret to keep off the
+  client**, which is the only thing that would force a server
+- **CORS-enabled** (`access-control-allow-origin: *` on CT.gov; permissive on the SMART
+  sandbox) — verified by live test, so `fetch()` from a static file works
+- **read-only GETs** — no write path, no session, no auth state to render against
+
+So the app could gain real data and keep every property §3 was protecting: `$0`, no account,
+no build step, no deploy, one link that works. **A static file calling a public API is still a
+static file.**
+
+[`SIMPLIFY.md`](SIMPLIFY.md) §4.3–4.4 has since cut both calls for unrelated reasons — the
+app now ships cached real responses and a committed data snapshot, and makes **zero network
+calls at runtime**. That strengthens this section rather than changing it: there is now not
+even a request to be rate-limited on stage.
+
+### 6b · A key we **have** is as unusable as a key we lack
+
+Recorded 2026-10-06, because it came up and the reasoning is not obvious:
+
+> "We have an API key for a model" is **not** an argument for using one.
+
+The constraint was never key *acquisition*. It is that **a key shipped in client-side
+JavaScript is readable by anyone who opens View Source** — so publishing the page publishes
+the credential. Making it safe requires a proxy that holds the key server-side, which is a
+server, which re-fires trigger #1 for real and costs every property in §3.
+
+This applies to every key-bearing idea that has been floated: an LLM criteria parser, an
+AI chat surface, an AI document reader, a live wearable OAuth integration. The answer is the
+same in each case, and it is not "no" — it is **"find the keyless route, and it is usually
+better anyway."** Two worked examples, both now shipping:
+
+| Wanted | Key route | Keyless route taken |
+|---|---|---|
+| Read a lab document | Send the photo to a model API | `Tesseract.js` OCR in-browser, feeding the parser we had to write regardless. **More demonstrated coding skill, not less** |
+| Real wearable vitals | Garmin Health API: partner approval, OAuth 1.0a signing, a webhook endpoint we host | A local Python script writes `garmin.json`; the app reads a committed static file. A **build-time pipeline, not a backend** — credentials never leave the operator's machine |
+
+The second pattern generalizes and is worth naming: **when real data is needed but a server is
+not allowed, move the credentialed work to build time and commit the result.** Nothing listens
+on a port, nothing is deployed, nothing can be down during a demo, and the data is genuinely
+real.
+
+If an LLM pass is ever added, **re-read this section first** — it is no longer a free decision
+at that point, and [`REBUILD.md`](REBUILD.md) §7 explains why the deterministic parser is also
+the better answer on the merits.
 
 ---
 

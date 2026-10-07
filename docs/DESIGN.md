@@ -117,11 +117,18 @@ under `prefers-reduced-motion`.
   swings into place; each biomarker's range pin springs up. Switching markers re-runs it.
 - **Home / Trials** — the ring draws to 87% while the number counts up 0→87; the three
   biomarker bars and the eligibility bars fill from zero.
-- **Send** — a paper plane flies up off the button (straight from the mockup), then a
-  confirmation modal, then the button becomes a "Sent" state. This is the signature moment.
+- ~~**Send**~~ — the paper-plane send-to-doctor moment is **deleted, 2026-10-06**. There were
+  no doctors on the other end. The signature moment is now the **audit table filling in**:
+  each criterion resolving to pass / fail / unknown / near-miss as the parser works through
+  the trial's own text, with the near-miss gap counting up to its exact number.
 
 ## Voice
 
 Plain, warm, patient-side. Name things the way a person would ("Your bloodwork", "Why you
-qualify", "Send my records to Dr. Chen"), never system jargon. Buttons say exactly what
+qualify", "Take this to your appointment"), never system jargon. Buttons say exactly what
 happens; the confirmation confirms it happened.
+
+**And never more than happened.** "Download prep sheet" is accurate; "Send to your doctor"
+would not be, because nothing is sent. This is a voice rule, not only an honesty rule — a
+button that overstates its effect is the fastest way to lose a user's trust in every other
+number on the screen.

@@ -1,7 +1,11 @@
 # OpenHealth — Market & Competitive Landscape
 
 > Who else works on this, what they built, and why the patient is still the last to know.
-> This is the evidence behind the "first consumer-facing clinical-trial matcher" claim in
+> **The "first consumer-facing clinical-trial matcher" claim is dead** — deleted from
+> `BRIEF.md` on 2026-10-02 (see [`REBUILD.md`](REBUILD.md) §4). It was false. §2 below has
+> always carried the narrower claim that survives scrutiny, and `BRIEF.md` now uses it.
+>
+> This is the evidence behind the positioning claim in
 > [`BRIEF.md`](BRIEF.md) — including the places that claim needs to be stated carefully.
 >
 > Figures labeled as in [`COSTS.md`](COSTS.md): `[sourced]`, `[modeled]`, `[assumed]`.
@@ -67,6 +71,8 @@ just aimed at whoever signed the contract.
 | Product | What it does | Where it stops |
 |---------|--------------|----------------|
 | **Antidote Match** | Trial search embedded across **250+ patient communities and health portals**, reaching an estimated **15M patients/month**; free to patients, sponsors pay to distribute `[sourced]` | It's a **search** engine, not a matcher against *your record*. The patient still answers a questionnaire from memory |
+| **ResearchMatch** | **NIH-funded**, free, nationwide, built expressly so patients find studies themselves — volunteers, researchers, and community collaborators `[sourced]` | A registry-and-introduction service, not an eligibility evaluator. It connects you to researchers; it does not read criteria against your labs. **Listed here because omitting it was the weakest point in our competitive story** |
+| **TrialJectory** | Patient-driven and consumer-facing — patients answer questions about diagnosis and preferences; AI extracts eligibility criteria from ClinicalTrials.gov `[sourced]` | Self-reported answers, not record data, and the extraction is not shown to the patient. **Note: also listed under the B2B engines above — it sells to sites and sponsors *and* serves patients directly, so it is the one competitor that genuinely straddles the line** |
 | **ClinicalTrials.gov** | The authoritative public registry. Free API `[sourced]` | Raw criteria text written for clinicians. No patient record, no matching, no interpretation |
 | **Apple Health / Health Connect** | Excellent record aggregation, real FHIR connections to hundreds of institutions | Aggregation only. Shows you your data; does nothing with it. **No trial matching at all** |
 | **Patient portals** (MyChart et al.) | Your data at one institution | One institution. That *is* the fragmentation problem |
@@ -82,7 +88,22 @@ The precise, defensible version of our claim:
 > patient's side.**
 
 That is narrower than "the first consumer trial matcher," and it's the one that survives a
-judge who knows the space. [`BRIEF.md`](BRIEF.md) should say it this way.
+judge who knows the space. ✅ **[`BRIEF.md`](BRIEF.md) §6 now says it this way** (2026-10-02).
+
+### The second half of the claim — and the stronger half
+
+Record-vs-questionnaire is a **data-source** advantage, and a competitor with distribution
+could close it (see §5 — Antidote adding record access is the named threat). There is a second
+difference that is harder to copy because it is a product-philosophy choice, not a feature:
+
+> **Every tool in both tables returns a verdict or a list. None of them shows the patient the
+> arithmetic** — which criterion, which threshold, their value, the margin, and *which
+> criteria the tool could not read.*
+
+Opacity is the norm here for a defensible reason: a vendor selling to sponsors has no
+incentive to publish its own error rate, and "8 of 11 criteria checkable" looks worse in a
+demo than a confident 87. That is exactly why it is available to us, and why
+[`REBUILD.md`](REBUILD.md) §5 makes auditability the wedge rather than the data source.
 
 ---
 

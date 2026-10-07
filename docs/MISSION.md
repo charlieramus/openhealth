@@ -21,17 +21,19 @@ you — not scattered across five portals, each of which knows a fifth of you.
 ## The pitch, at three lengths
 
 **10 seconds (the elevator)**
-> US health data is split across five portals, so patients miss clinical trials they
-> qualify for. OpenHealth pulls the record into one app and shows you the trials you match.
+> Clinical trials hide who can join inside pages of medical fine print. OpenHealth reads it,
+> checks it against your real lab results, and shows you exactly which number is keeping you
+> out — and by how much.
 
 **30 seconds (the judge)**
-> A patient's labs are in one portal, bills in another, prescriptions in a third. Nobody
-> sees the whole picture — least of all the patient. Trial-matching software already
-> exists, but every product is B2B: sold to hospitals and pharma, so the patient is the
-> last to know. OpenHealth aggregates the record through the patient-access APIs the law
-> already guarantees, matches it against the public ClinicalTrials.gov registry, and shows
-> the patient a scored match — *"CGX Trial #4, 87/100"* — with one tap to send their
-> records to their doctor.
+> Clinical trials publish who can join as free text full of numeric thresholds — "hemoglobin
+> at least 9," "A1c between 7.5 and 9.5." Patients can't read it, so **40 to 60 percent of
+> people who start screening get rejected**, often over one number they missed by a little.
+> Trial search tools exist, but they ask you a questionnaire and hand you a list. OpenHealth
+> reads the registry's own criteria text, turns each line into a rule, checks it against your
+> actual labs, and shows you the arithmetic: *"Ferritin 8, this trial needs 10 — you're short
+> by 2. Worth asking your doctor whether that's worth re-testing."* One tap sends that exact
+> question to your doctor.
 
 **2 minutes (the investor / the teacher)**
 > Start with the number: roughly 80% of clinical trials miss their original enrollment
@@ -66,10 +68,11 @@ you — not scattered across five portals, each of which knows a fifth of you.
 |-------|----------|
 | Aggregate a patient's record with their explicit, revocable authorization | Buy, sell, broker, or rent health data — ever, at any price |
 | Show a **scored, explained** trial match with per-criterion reasoning | Tell a patient they *are* eligible. Only a clinician and a site can say that |
-| Hand the patient a one-tap way to send records to their own doctor | Send anything anywhere without a per-recipient, per-instance consent |
+| Hand the patient a prep sheet to take to their own doctor | Contact a clinician on the patient's behalf, or imply we have |
 | Charge the recruitment budget that already exists | Charge the patient. Not a subscription, not a paywall, not an upsell |
 | Say "we don't know" when a criterion is undecidable from the record | Guess, round up, or hide uncertainty to make a score look better |
 | Translate labs into plain language | Diagnose, prescribe, or advise treatment |
+| Read the patient's own records and tell them what they might qualify for | Ask the patient to name their condition before we will help them |
 
 ## Non-goals (deliberate, not "not yet")
 
@@ -82,6 +85,13 @@ you — not scattered across five portals, each of which knows a fifth of you.
    mandates. Other countries need a different product.
 5. **Not a data platform with an app on top.** If the business ever pays better for the
    dataset than for the referrals, we've become the thing we replaced.
+6. **We do not contact your doctor.** Not a message, not a referral, not a fax. We generate
+   the sheet; you book the appointment and bring it. Any feature that implies a clinician is
+   on the other end is a lie about what the software does — see
+   [`SIMPLIFY.md`](SIMPLIFY.md) §4.1.
+7. **We do not ask you what you have.** Every competitor opens with a questionnaire, which
+   quietly requires the patient to already know the medical name for their situation. We
+   read the record and do the work. See [`SIMPLIFY.md`](SIMPLIFY.md) §2.
 
 ---
 
@@ -96,8 +106,10 @@ A value you can't fail isn't a value. Each of these has a decision it would lose
    *Test:* The match score would look better if we treated missing labs as passing
    criteria. We show them as "unknown" and the score goes down.
 3. **Consent is specific and revocable.**
-   *Test:* A patient wants to send records to Dr. Chen but not to the trial site. That
-   must be two separate decisions, and both must be undoable.
+   *Test:* A patient wants to share their record with their own clinician but not with the
+   trial site. That must be two separate decisions, and both must be undoable. In the
+   prototype this is trivially satisfied: nothing leaves the device at all, and the prep
+   sheet is a file the patient chooses to download and hand over themselves.
 4. **Concentration is a real risk we own.**
    *Test:* We write the attack surface into our own docs (`RISKS.md`) instead of letting a
    reviewer find it.
@@ -110,9 +122,10 @@ A value you can't fail isn't a value. Each of these has a decision it would lose
 ## Positioning statement
 
 > For **patients managing an ongoing condition** who **have their health data split across
-> five or more portals and no way to see what it qualifies them for**, OpenHealth is a
-> **consumer health app** that **assembles the record and returns scored clinical-trial
-> matches with one-tap send-to-doctor**.
+> paperwork, portals and devices and no way to see what it qualifies them for**, OpenHealth
+> is a **consumer health app** that **reads their own records and devices — without asking
+> them to name their condition — and returns scored clinical-trial matches with the
+> per-criterion arithmetic shown**.
 >
 > Unlike **MatchMiner, Deep 6 AI, and TrialJectory — which sell matching to hospitals,
 > pharma, and sites** — OpenHealth **answers to the patient, because the patient is the
