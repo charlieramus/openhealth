@@ -2247,7 +2247,12 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     var margin = signedMargin(rule, v);
     /* an exclusion the patient MATCHES is a failure; an inclusion they match is a pass */
     var ok     = (rule.sense === 'exclusion') ? !holds : holds;
-    var shown  = v + ' ' + rule.unit + (ok ? ' meets ' : ' misses ') + readable(rule);
+    /* phrase it by what the value DOES, not by whether that is good news. An
+       exclusion the patient fails to match is a pass, but saying they "meet"
+       an exclusion reads as the opposite of what happened. */
+    var shown  = rule.sense === 'exclusion'
+      ? v + ' ' + rule.unit + (holds ? ' matches ' : ' does not match ') + readable(rule)
+      : v + ' ' + rule.unit + (holds ? ' meets ' : ' misses ') + readable(rule);
 
     if(ok) return { status:PASS, value:v, margin:margin, evidence:shown };
 
@@ -2316,13 +2321,30 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   }
 
   /* rank every trial in the corpus. No search, no filter, no condition question:
-     the app reads the profile and scores everything it knows about. */
+     the app reads the profile and scores everything it knows about.
+
+     ORDER IS score x confidence, and the reason is the whole point of the project.
+     Ranking on score alone puts the trials the engine knows LEAST about at the top:
+     NCT05462704 (pregnancy) and NCT05759078 (post-MI) both score 100 on one or two
+     checkable criteria out of eleven and twenty. That is §4a's "confident-looking 87
+     built on 4 of 11 criteria" coming back as a sort order instead of as a number.
+
+     This is the ONLY place the two numbers are combined, and it never reaches the
+     screen as a figure: the UI still shows the score and "n of N checkable" side by
+     side and separately. An ordering is not a claim about a patient; a merged number
+     would be. Blocked trials sort last whatever they score. */
+  function rankWeight(r){
+    if(r.blocked || r.score === null) return -1;
+    var c = r.confidence;
+    return c.total ? r.score * (c.decidable / c.total) : 0;
+  }
+
   function rankCorpus(profile, corpus){
     return corpus.map(function(t){
       return { trial:t, result:matchScore(profile, t) };
     }).sort(function(a, b){
       if(a.result.blocked !== b.result.blocked) return a.result.blocked ? 1 : -1;
-      return (b.result.score || 0) - (a.result.score || 0);
+      return rankWeight(b.result) - rankWeight(a.result);
     });
   }
 
