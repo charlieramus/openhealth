@@ -472,14 +472,17 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 }
 /* a navigation affordance, not an action button: the row opens the audit */
 .row-item .add{grid-area:add;align-self:start;display:grid;place-items:center;color:var(--ink-3)}
+/* three chips — the tally, the distance, the way in — and at 349px they do not
+   all fit on one line. They wrap rather than truncate: a distance clipped to
+   "4,010 mi from Philad" reads as a bug, and the origin is the half of that
+   string that has to survive (the app does not know where you are). */
 .row-item .meta{
   grid-area:meta;min-width:0;
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  display:flex;align-items:center;flex-wrap:wrap;gap:7px 14px;
 }
 .row-item .meta .hint{
-  display:inline-flex;align-items:center;gap:5px;min-width:0;
-  font-size:var(--t-tick);color:var(--ink-3);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;
+  font-size:var(--t-tick);color:var(--ink-3);white-space:nowrap;
 }
 .row-item .meta .hint svg{flex:0 0 auto}
 .row-item .vscore{text-align:left}
@@ -3727,7 +3730,11 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 
     document.getElementById('homeTrials').innerHTML = RANKED.slice(0, 3).map(function(r){
       var t = r.trial, res = r.result;
-      return '<div class="row-item live tappable" role="button" tabindex="0" ' +
+      /* no `live` class here: it meant "raised card with a shadow" under the old
+         sheet, Tolerance retired that treatment, and the name now collides with
+         the registry-state badge rule (.reg,.gov,.live,...) which would override
+         this row's grid with display:inline-flex. */
+      return '<div class="row-item tappable" role="button" tabindex="0" ' +
         'onclick="openTrial(\'' + t.nctId + '\')" onkeydown="keyTrial(event,\'' + t.nctId + '\')">' +
         '<span class="ic" style="background:var(--surface-2);color:' + trialColor(res) + '">' +
           esc(trialCode(t)) + '</span>' +
