@@ -130,6 +130,12 @@ def main():
         "     per record. eligibilityCriteria below is that response's text VERBATIM:",
         "     original line breaks, original bullet markers, original typos. It is parsed",
         "     into rules at runtime by parseCriteria(); nothing here is pre-structured. */",
+        "",
+        "  /* Every siteDistanceMi below is measured from here. Emitted with the corpus",
+        "     rather than typed into the page, so the label on screen and the origin the",
+        "     distances were computed from cannot drift apart. */",
+        "  var DISTANCE_ORIGIN = %s;" % json.dumps(HOME["label"], ensure_ascii=False),
+        "",
         "  var CORPUS =",
         body + ";",
         END,
@@ -150,7 +156,17 @@ def main():
     print("index.html is now %d bytes" % len(src.encode("utf-8")))
 
 
-TODAY = datetime.date.today().isoformat()
+# The date the records were DOWNLOADED, not the date this script was last run.
+# date.today() silently rewrote the provenance line on every rebuild — a rebuild
+# that re-downloads nothing has no business moving the date a reader uses to go
+# check the registry. The newest intake file's mtime is when the corpus actually
+# landed; assets/intake/trials/README.md carries the full range.
+def downloaded_on():
+    files = [os.path.join(INTAKE, f) for f in os.listdir(INTAKE) if f.endswith(".json")]
+    return datetime.date.fromtimestamp(max(os.path.getmtime(f) for f in files)).isoformat()
+
+
+TODAY = downloaded_on()
 
 if __name__ == "__main__":
     main()

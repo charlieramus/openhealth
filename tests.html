@@ -474,6 +474,151 @@
       eq(bad.length, 0, 'rules in a non-canonical unit: ' + bad.join(', '));
     });
 
+    /* ================= the document rail =================
+       parseLabDocument is the second consumer of the parser's tokenizer, so the
+       cases that matter are the ones where a lab report says the same thing a
+       criterion does in a different shape — and the ones where it says
+       something the parser must refuse rather than read. */
+
+    function one(text){ return E.parseLabDocument(text)[0]; }
+    function read(text){
+      var m = one(text);
+      if(!m) throw new Error('nothing at all was returned for: ' + text);
+      if(!m.analyte || m.value === null)
+        throw new Error('refused (' + m.flags.join(',') + ') but should have been read: ' + text);
+      return m;
+    }
+    function refused(text){
+      var m = one(text);
+      if(!m) throw new Error('nothing at all was returned for: ' + text);
+      if(m.analyte && m.value !== null)
+        throw new Error('read as ' + m.analyte + ' ' + m.value + ' but should have been refused: ' + text);
+      return m;
+    }
+
+    test('lab documents', 'a result line reads into a Measurement', function(){
+      var m = read('Ferritin             6.4       ng/mL      12 - 150');
+      eq(m.analyte, 'ferritin', 'analyte');
+      eq(m.value, 6.4, 'value');
+      eq(m.unit, 'ng/mL', 'canonical unit');
+      eq(m.source, 'Ferritin             6.4       ng/mL      12 - 150', 'source is verbatim');
+    });
+
+    test('lab documents', 'the printed reference range is not read as the value', function(){
+      var m = read('Ferritin  6.4  ng/mL  12 - 150');
+      eq(m.value, 6.4, 'value');
+      eq(m.refLow, 12, 'reference low');
+      eq(m.refHigh, 150, 'reference high');
+      return 'the bottom of the range is the most tempting wrong answer here';
+    });
+
+    test('lab documents', 'the same unit table a criterion uses: µg/L is ng/mL 1:1', function(){
+      eq(read('Ferritin 8 µg/L').value, 8, 'value');
+      eq(read('Ferritin 8 ug/L').value, 8, 'ASCII spelling');
+    });
+
+    test('lab documents', 'hemoglobin in g/L is divided into g/dL', function(){
+      var m = read('Hemoglobin 128 g/L');
+      eq(m.value, 12.8, 'value');
+      eq(m.unit, 'g/dL', 'unit');
+    });
+
+    test('lab documents', 'A1c in mmol/mol is converted IFCC -> NGSP', function(){
+      var m = read('HbA1c 48 mmol/mol');
+      near(m.value, 6.54, 0.01, 'NGSP percent');
+    });
+
+    test('lab documents', 'a unit with no conversion is REFUSED, not read as a bare number', function(){
+      var m = refused('Ferritin 8 pg/mL');
+      eq(m.flags[0], 'unit-unknown', 'why');
+      return '8 pg/mL read as 8 ng/mL is wrong by a factor of a thousand';
+    });
+
+    test('lab documents', 'a value outside the analyte bounds is refused, unit misread not patient remarkable', function(){
+      eq(refused('Hba1C 48').flags[0], 'implausible', 'why');
+      eq(refused('Ferritin 99999 ng/mL').flags[0], 'implausible', 'why');
+    });
+
+    test('lab documents', 'two candidate values on one line is a refusal, not a coin toss', function(){
+      eq(refused('Ferritin (repeat) 6.4 ng/mL 7.1 ng/mL').flags[0], 'two-values', 'why');
+    });
+
+    test('lab documents', 'a marker named with no number is refused', function(){
+      eq(refused('Ferritin').flags[0], 'no-value', 'why');
+    });
+
+    test('lab documents', 'a refused line is RETURNED, never dropped, with its raw text', function(){
+      var ms = E.parseLabDocument('Ferritin 6.4 ng/mL\nGlucose, fasting 92 mg/dL');
+      eq(ms.length, 2, 'both lines come back');
+      eq(ms[1].analyte, null, 'the second is a refusal');
+      eq(ms[1].source, 'Glucose, fasting 92 mg/dL', 'raw text kept verbatim');
+      return 'unparsed is a first-class output on this side of the parser too';
+    });
+
+    test('lab documents', 'page furniture is not reported as a line we failed to read', function(){
+      var ms = E.parseLabDocument('NORTHSIDE CLINICAL LABORATORY\n1200 Harbor Way, Suite 300\nFerritin 6.4 ng/mL');
+      eq(ms.length, 1, 'only the result line is a Measurement');
+      return 'the address is in the full-text view, which the screen shows in full';
+    });
+
+    test('lab documents', '"Hgb A1c" is A1c, not hemoglobin', function(){
+      eq(read('Hgb A1c 5.1 %').analyte, 'a1c', 'analyte');
+      eq(read('Hemoglobin A1c 5.1 %').analyte, 'a1c', 'long spelling');
+      eq(read('Hemoglobin 13.1 g/dL').analyte, 'hemoglobin', 'plain hemoglobin still resolves');
+    });
+
+    test('lab documents', 'the collection date wins over the report date', function(){
+      var m = E.parseLabDocument(
+        'Reported: 09/28/2026\nCollected: 2026-09-24\nFerritin 6.4 ng/mL')[0];
+      eq(m.drawnOn, '2026-09-24', 'drawnOn');
+    });
+
+    test('lab documents', 'a hand-typed value normalizes through the same reader', function(){
+      var typed = read('Ferritin 8 µg/L  2026-10-06');
+      var scanned = read('Ferritin  8  µg/L  2026-10-06');
+      eq(typed.value, scanned.value, 'same value');
+      eq(typed.unit, scanned.unit, 'same unit');
+      eq(typed.confidence, 1, 'a value a human typed carries no OCR doubt');
+    });
+
+    test('lab documents', 'the OCR engine confidence reaches the Measurement', function(){
+      var ms = E.parseLabDocument('Ferritin 6.4 ng/mL', function(){ return 55; });
+      ok(ms[0].confidence <= E.LOW_CONF, 'a line the reader doubted must be flagged, got ' + ms[0].confidence);
+      ok(ms[0].flags.indexOf('ocr') > -1, 'and must say why');
+    });
+
+    /* ================= FHIR R4 / US Core shape ================= */
+
+    test('fhir', 'a Measurement becomes a LOINC-coded US Core Observation', function(){
+      var o = E.toObservation(read('Ferritin 6.4 ng/mL 12-150  2026-09-24'));
+      eq(o.resourceType, 'Observation', 'resourceType');
+      eq(o.code.coding[0].system, 'http://loinc.org', 'code system');
+      eq(o.code.coding[0].code, '2276-4', 'ferritin LOINC');
+      eq(o.valueQuantity.system, 'http://unitsofmeasure.org', 'UCUM');
+      eq(o.valueQuantity.code, 'ng/mL', 'UCUM code');
+      eq(o.effectiveDateTime, '2026-09-24', 'effectiveDateTime');
+      eq(o.category[0].coding[0].code, 'laboratory', 'US Core category');
+    });
+
+    test('fhir', 'age is demographics and never becomes an Observation', function(){
+      eq(E.toObservation({ analyte:'age', value:34, unit:'years' }), null, 'resource');
+    });
+
+    test('fhir', 'the bundle is a view of the profile, not a second copy of it', function(){
+      var b = E.fhirBundle();
+      eq(b.resourceType, 'Bundle', 'resourceType');
+      var codes = b.entry.map(function(e){ return e.resource.code.coding[0].code; });
+      ok(codes.indexOf('2276-4') > -1, 'ferritin is in the bundle');
+      ok(codes.indexOf('4548-4') === -1, 'a1c is not — it has no value, and the shape cannot invent one');
+      return b.entry.length + ' Observations, one per lab on the profile';
+    });
+
+    test('fhir', 'no Observation carries a subject that identifies anybody', function(){
+      E.fhirBundle().entry.forEach(function(e){
+        ok(!e.resource.subject.reference, 'a subject reference appeared on ' + e.resource.code.text);
+      });
+    });
+
     /* ================= the Health Score ================= */
 
     test('health score', 'markers with no value are excluded, not scored as zero', function(){
