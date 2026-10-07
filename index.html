@@ -158,6 +158,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 }
 .section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px}
 .section-head .eyebrow{margin:0}
+.sub-line{font-size:.71rem;font-weight:600;color:var(--ink-3);margin-top:2px}
 .link{font-family:var(--display);font-weight:700;font-size:.78rem;color:var(--brand-d)}
 .card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
 .chip{
@@ -287,33 +288,44 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   font-size:.84rem;letter-spacing:-.02em;
 }
 .row-item .tx{grid-area:tx;min-width:0}
+/* registry titles run to ninety characters. Two lines, then stop — the full
+   title is the heading of the screen this row opens. */
 .row-item .tx b{
-  display:block;font-family:var(--display);font-weight:700;font-size:1rem;
-  letter-spacing:-.02em;margin-bottom:2px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  font-family:var(--display);font-weight:700;font-size:.95rem;line-height:1.25;
+  letter-spacing:-.02em;margin-bottom:3px;
 }
 .row-item .tx small{
   display:block;font-size:.8rem;color:var(--ink-2);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
+/* a navigation affordance, not an action button: the row opens the audit */
 .row-item .add{
-  grid-area:add;width:38px;height:38px;border-radius:50%;
-  background:var(--brand);color:#fff;display:grid;place-items:center;
-  box-shadow:0 8px 16px -8px rgba(44,159,69,.9);
+  grid-area:add;width:34px;height:34px;border-radius:50%;
+  background:var(--surface-2);color:var(--ink-2);display:grid;place-items:center;
 }
 .row-item .add.ghost{background:var(--surface-2);color:var(--ink-3);box-shadow:none}
 .row-item .meta{
   grid-area:meta;display:flex;align-items:center;justify-content:space-between;gap:10px;
 }
-.row-item .score-chip{
-  display:inline-flex;align-items:center;gap:6px;
-  background:var(--ink);color:#fff;border-radius:999px;
-  padding:6px 11px;font-size:.73rem;font-weight:700;
+
+/* THE SCORE+CONFIDENCE CHIP. One component, used on Home and on the audit
+   screen's ranked list, so the two can never show a trial differently. The two
+   numbers share a pill but not a line: the headline is the score out of 100,
+   the line under it is how much of the trial that score was computed from.
+   Neither is the other's denominator and the chip never prints their product. */
+.vscore{
+  display:inline-flex;flex-direction:column;align-items:flex-end;gap:1px;
+  background:var(--ink);color:#fff;border-radius:14px;
+  padding:6px 11px;white-space:nowrap;
 }
-.row-item .score-chip .spark{
-  width:7px;height:7px;border-radius:50%;
-  background:var(--lime);box-shadow:0 0 0 3px rgba(182,227,84,.25);
-}
-.row-item .score-chip.weak .spark{background:var(--warn);box-shadow:0 0 0 3px rgba(245,165,36,.28)}
+.vscore b{font-family:var(--display);font-weight:800;font-size:.78rem;letter-spacing:-.015em}
+.vscore small{font-size:.59rem;font-weight:600;opacity:.74;letter-spacing:.02em}
+.vscore.weak{background:var(--warn);color:#38230A}
+.vscore.weak small{opacity:.8}
+/* blocked, or nothing checkable: no score is claimed at all */
+.vscore.none{background:var(--surface-2);color:var(--ink-2)}
+.vscore.none small{opacity:.9;color:var(--ink-3)}
 .row-item .hint{
   display:flex;align-items:center;gap:5px;
   font-size:.74rem;font-weight:600;color:var(--ink-3);
@@ -337,12 +349,19 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .tile .v.ok{color:var(--brand-d)}
 
 /* ============================ screen 2 · labs ============================ */
-.topbar{display:flex;align-items:center;gap:12px;padding:6px 0 2px}
+.topbar{display:flex;align-items:flex-start;gap:12px;padding:6px 0 2px}
 .topbar .back,.topbar .more{
   width:38px;height:38px;border-radius:50%;background:var(--surface);
   display:grid;place-items:center;color:var(--ink);box-shadow:var(--shadow);flex:0 0 auto;
 }
-.topbar h1{font-family:var(--display);font-weight:800;font-size:1.06rem;letter-spacing:-.025em}
+/* a registry briefTitle can run past ninety characters: three lines, then
+   stop. The NCT id in the tag row is the unambiguous handle. */
+.topbar h1{
+  font-family:var(--display);font-weight:800;font-size:.98rem;line-height:1.25;
+  letter-spacing:-.025em;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+.topbar .back,.topbar .more{margin-top:2px}
 .topbar .sub{font-size:.76rem;color:var(--ink-3);margin-top:1px}
 .topbar .mid{flex:1;min-width:0}
 
@@ -520,23 +539,118 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .match-hero.weak .ring-center .d{color:#5A3A11}
 .match-hero.weak .tags .chip{color:#3B2408}
 
-.elig-note{
-  display:flex;align-items:flex-start;gap:7px;
-  margin-top:9px;padding:0 4px;
-  font-size:.76rem;color:var(--ink-2);line-height:1.45;
+/* ================= screen 3 · the trial audit =================
+   THE TWO NUMBERS SIT SIDE BY SIDE AND LOOK NOTHING ALIKE. The score is a ring
+   with a counted-up figure; the confidence is a flat block with its own label
+   and its own caption. docs/FIGMA-MAKE-PROMPT.md rule 3 says they must never
+   read as one number, and two different shapes is the cheapest way to make a
+   glance get that right.                                                     */
+.hero-pair{display:flex;align-items:stretch;gap:12px;width:100%}
+.num-cell{display:flex;flex-direction:column;gap:7px;min-width:0}
+.num-cell .k{
+  font-family:var(--display);font-weight:800;font-size:.6rem;
+  letter-spacing:.11em;text-transform:uppercase;color:#1B4A2B;opacity:.74;
 }
-.elig-note svg{flex:0 0 auto;margin-top:1px;color:var(--warn)}
+.match-hero .num-cell:first-child{flex:0 0 auto;align-items:center}
+.match-hero .ring-wrap{width:150px;height:150px}
+.match-hero .ring-center .n{font-size:2.85rem}
+.match-hero .ring-center .d{font-size:.84rem;margin-top:5px}
 
-.elig{padding:4px 16px}
-.elig .row{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line)}
-.elig .row:last-child{border-bottom:0}
-.elig .lab{font-size:.84rem;font-weight:600;width:128px;flex:0 0 auto;display:flex;flex-direction:column;gap:2px}
-/* the comparison the engine actually made, under the criterion name */
-.elig .why{font-style:normal;font-weight:500;font-size:.62rem;line-height:1.25;color:var(--ink-3);letter-spacing:.01em}
-.elig .track{flex:1;height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden}
-.elig .track i{display:block;height:100%;border-radius:999px;width:0;transition:width .9s cubic-bezier(.2,.8,.3,1) .35s}
-.screen.in .elig .track i{width:var(--w)}
-.elig .pct{font-family:var(--display);font-weight:800;font-size:.84rem;width:26px;text-align:right}
+.conf-block{
+  flex:1 1 auto;justify-content:center;text-align:left;
+  background:rgba(255,255,255,.6);border-radius:18px;padding:13px 14px;
+}
+.conf-block .v{
+  font-family:var(--display);font-weight:800;font-size:1.9rem;line-height:1;
+  letter-spacing:-.035em;color:#0E2A17;margin-top:1px;
+}
+.conf-block .v small{
+  font-family:var(--display);font-size:.82rem;font-weight:700;
+  margin-left:6px;opacity:.68;letter-spacing:-.01em;
+}
+.conf-block .c{font-size:.68rem;font-weight:600;line-height:1.35;color:#1B4A2B;opacity:.8}
+
+/* nothing was checkable: a ring at zero is a score pretending to exist */
+.noscore-note{display:none}
+.match-hero.noscore .hero-pair .num-cell:first-child{display:none}
+.match-hero.noscore .noscore-note{
+  display:block;margin-top:12px;font-size:.78rem;line-height:1.45;
+  font-weight:600;color:#3B2408;text-align:left;
+}
+
+/* ---- the audit table: one row per criterion ---- */
+.audit{padding:2px 16px}
+.audit .empty{padding:12px 0;font-size:.8rem;color:var(--ink-3)}
+.arow{padding:14px 0;border-bottom:1px solid var(--line)}
+.arow:last-child{border-bottom:0}
+.atop{display:flex;align-items:flex-start;gap:9px}
+.atop .rule{
+  flex:1;min-width:0;font-family:var(--display);font-weight:700;
+  font-size:.88rem;line-height:1.3;letter-spacing:-.015em;
+}
+/* an icon AND a word, so a verdict survives being printed in greyscale */
+.vchip{
+  flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;
+  padding:4px 9px 4px 7px;border-radius:999px;border:1.5px solid currentColor;
+  font-family:var(--display);font-weight:800;font-size:.58rem;
+  letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;
+}
+.vchip.pass{color:#0B7A47;background:rgba(18,183,106,.12)}
+.vchip.fail{color:#A1125A;background:rgba(225,29,116,.11)}
+.vchip.near{color:#8A5A04;background:rgba(245,165,36,.17)}
+.vchip.unk {color:var(--ink-2);background:var(--surface-2)}
+.amid{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-top:8px}
+.amid .yours{
+  flex:0 0 auto;font-family:var(--display);font-weight:800;font-size:.86rem;
+  padding:3px 9px;border-radius:9px;background:var(--surface-2);letter-spacing:-.01em;
+}
+/* a missing value says so in words -- never a zero, a dash or an empty bar */
+.amid .yours em{font-style:normal;font-weight:700;font-size:.74rem;color:var(--ink-3)}
+.amid .ev{flex:1;min-width:0;font-size:.73rem;line-height:1.4;color:var(--ink-2)}
+
+/* the trial's own wording, quoted verbatim beneath every row */
+.src{
+  margin-top:9px;padding-left:10px;border-left:2px solid var(--line);
+  font-size:.71rem;line-height:1.5;color:var(--ink-3);
+}
+.src .sense{
+  font-family:var(--display);font-weight:800;font-size:.57rem;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin-right:6px;
+}
+
+/* ---- callouts ---- */
+.callout{display:flex;gap:10px;padding:13px 14px;border-radius:18px;font-size:.79rem;line-height:1.5}
+.callout[hidden]{display:none}
+.callout svg{flex:0 0 auto;margin-top:3px}
+.callout b{font-weight:800}
+.callout.near {background:rgba(245,165,36,.17);border:1.5px solid rgba(245,165,36,.52);color:#53350F}
+.callout.block{background:rgba(225,29,116,.10);border:1.5px solid rgba(225,29,116,.36);color:#7E0E45}
+
+/* ---- the criteria we could not read: collapsed, present, never hidden ---- */
+.unparsed{
+  background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;
+}
+.unparsed[hidden]{display:none}
+.unparsed>summary{
+  list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;
+  padding:14px 16px;font-family:var(--display);font-weight:700;font-size:.84rem;color:var(--ink-2);
+}
+.unparsed>summary::-webkit-details-marker{display:none}
+.unparsed>summary svg{margin-left:auto;color:var(--ink-3);transition:transform .2s ease}
+.unparsed[open]>summary svg{transform:rotate(180deg)}
+.unparsed .ubody{padding:0 16px 16px}
+.unparsed .unote{font-size:.72rem;line-height:1.5;color:var(--ink-3)}
+.unparsed .src{margin-top:11px}
+
+.audit-note{
+  margin-top:9px;padding:0 4px;font-size:.71rem;line-height:1.55;color:var(--ink-3);
+}
+.audit-note[hidden]{display:none}
+
+.disclaimer{
+  display:flex;gap:9px;padding:0 2px;font-size:.71rem;line-height:1.5;color:var(--ink-3);
+}
+.disclaimer svg{flex:0 0 auto;margin-top:3px}
 
 .summary{padding:4px 16px}
 .summary .line{display:flex;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);font-size:.84rem}
@@ -546,6 +660,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
 .related{padding:4px 16px}
 .related .row{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.related .who{flex:1;min-width:0}
 .related .row:last-child{border-bottom:0}
 .related .nm{display:block;font-family:var(--display);font-weight:700;font-size:.88rem;color:var(--ink-2)}
 .related .field{display:block;font-size:.74rem;color:var(--ink-3)}
@@ -562,6 +677,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   box-shadow:0 0 0 3px rgba(182,227,84,.25);
 }
 .related .score.weak i{background:var(--warn);box-shadow:0 0 0 3px rgba(245,165,36,.28)}
+.related .vscore{margin-left:auto;flex:0 0 auto}
+.related .nm{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.related .field{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* ============================ tab bar ============================ */
 .tabbar{
@@ -692,11 +810,15 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
               <div>
                 <div class="section-head">
-                  <div class="eyebrow">New trials for you</div>
+                  <div>
+                    <div class="eyebrow">Trials ranked for you</div>
+                    <!-- the count is the corpus size, written by renderHomeTrials() -->
+                    <div class="sub-line" id="homeTrialCount"></div>
+                  </div>
                   <button class="link" onclick="go(2)">See all</button>
                 </div>
 
-                <!-- filled by renderHomeTrials() from the same records screen 3 reads -->
+                <!-- the top of the same ranking screen 3 reads, written by renderHomeTrials() -->
                 <div style="display:flex;flex-direction:column;gap:11px" id="homeTrials"></div>
               </div>
 
@@ -910,28 +1032,64 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
               <span class="more"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg></span>
             </div>
 
+            <!-- THE TWO NUMBERS. Side by side, two different shapes, two
+                 labels of their own: the match score in the ring, the
+                 confidence in its own block. They measure different things and
+                 nothing on this screen merges them. -->
             <div class="match-hero reveal" id="hero">
-              <div class="ring-wrap">
-                <svg width="186" height="186" viewBox="0 0 186 186" aria-hidden="true">
-                  <circle cx="93" cy="93" r="72" fill="none" stroke="rgba(255,255,255,.42)" stroke-width="15"/>
-                  <circle class="ring-prog" id="ring" cx="93" cy="93" r="72" fill="none" stroke="#fff" stroke-width="15"
-                          stroke-linecap="round" transform="rotate(-90 93 93)"
-                          style="stroke-dasharray:452;stroke-dashoffset:452;--off:31.6"/>
-                </svg>
-                <div class="ring-center">
-                  <span class="n" id="scoreNum">0</span>
-                  <span class="d">/ 100 match</span>
+              <div class="hero-pair">
+                <div class="num-cell">
+                  <div class="k">Match score</div>
+                  <div class="ring-wrap">
+                    <svg width="150" height="150" viewBox="0 0 186 186" aria-hidden="true">
+                      <circle cx="93" cy="93" r="72" fill="none" stroke="rgba(255,255,255,.42)" stroke-width="15"/>
+                      <circle class="ring-prog" id="ring" cx="93" cy="93" r="72" fill="none" stroke="#fff" stroke-width="15"
+                              stroke-linecap="round" transform="rotate(-90 93 93)"
+                              style="stroke-dasharray:452;stroke-dashoffset:452;--off:0"/>
+                    </svg>
+                    <div class="ring-center">
+                      <span class="n" id="scoreNum">0</span>
+                      <span class="d">/ 100</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="num-cell conf-block">
+                  <div class="k">Confidence</div>
+                  <div class="v"><span id="confN">0</span><small id="confD">of 0</small></div>
+                  <div class="c" id="confCap"></div>
                 </div>
               </div>
-              <h2 id="tVerdict">Strong match</h2>
+
+              <!-- shown instead of the ring when nothing at all was checkable -->
+              <p class="noscore-note" id="tNoScore"></p>
+
+              <h2 id="tVerdict">Match</h2>
               <div class="tags" id="tTags"></div>
             </div>
 
+            <!-- ruled out by something we could actually check -->
+            <div class="callout block reveal" id="tBlocked" hidden></div>
+
+            <!-- the near-miss callout: amber, and it names the exact gap -->
+            <div class="callout near reveal" id="tNear" hidden></div>
+
+            <!-- THE AUDIT TABLE. The reason the app exists. -->
             <div class="reveal">
-              <div class="eyebrow" id="eligHead">Why you qualify</div>
-              <div class="card elig" id="eligCard"></div>
-              <p class="elig-note" id="eligNote"></p>
+              <div class="eyebrow" id="auditHead">Criteria we could read</div>
+              <div class="card audit" id="auditTable"></div>
+              <p class="audit-note" id="auditNote" hidden></p>
             </div>
+
+            <!-- present, collapsed, never hidden -->
+            <details class="unparsed reveal" id="tUnparsed" hidden></details>
+
+            <p class="disclaimer reveal">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+              <span>This is not an eligibility decision. Only a screening visit can
+              determine that. Every verdict above is computed from the values on
+              your profile against the trial&rsquo;s published criteria.</span>
+            </p>
 
             <div class="reveal">
               <div class="eyebrow">Trial details</div>
@@ -939,7 +1097,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
             </div>
 
             <div class="reveal">
-              <div class="eyebrow">Other trials for you</div>
+              <div class="eyebrow" id="tRelatedHead">Other trials, ranked</div>
               <div class="card related" id="tRelated"></div>
             </div>
 
@@ -1025,6 +1183,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     /* known to the engine, never drawn on this profile */
     { key:'a1c', name:'HbA1c', refLow:null, refHigh:5.7, values:[], weight:1 }
   ]);
+
+  function clamp01(x){ return x < 0 ? 0 : x > 1 ? 1 : x; }
 
   /* one marker -> its credit in [0,1], or null when there is no value to score.
      null means EXCLUDED, and is deliberately not the same thing as 0.        */
@@ -1220,104 +1380,14 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     });
   };
 
-  /* ================= the matching engine =================
-     Every eligibility criterion is stored the way a protocol states it — an
-     analyte, a comparison, a threshold — instead of as a bar width. The three
-     functions below turn those criteria plus the profile above into the score,
-     the verdict and the bars. Nothing on screen 3 is typed in.
-
-     band is the tolerance either side of the threshold: how far past it counts
-     as comfortably met, and how far short of it still counts as a near miss.
-     It is the one genuinely clinical number here and it is set per criterion. */
-
-  function clamp01(x){ return x < 0 ? 0 : x > 1 ? 1 : x; }
-
   /* 2006 reads as a year on a phone screen; 2,006 reads as a distance */
   function num(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 
-  /* criteria can ask about a lab, about the patient, or about the trial's own
-     site (travel distance). Returns null when there is simply no value on file. */
-  function readFact(trial, key){
-    if(trial.facts && trial.facts[key] !== undefined) return { value:trial.facts[key], unit:'' };
-    if(PROFILE.facts[key] !== undefined)              return { value:PROFILE.facts[key], unit:'' };
-    if(PROFILE.labs[key])                             return PROFILE.labs[key];
-    return null;
-  }
-
-  /* one criterion against the profile -> did it pass, by how much, and the
-     plain-English comparison to show the patient.                          */
-  function evaluateCriterion(trial, c){
-    var fact = readFact(trial, c.key);
-
-    if(!fact || fact.value === null || fact.value === undefined){
-      return { pass:false, missing:true, credit:0, evidence:'No ' + c.label + ' on file' };
-    }
-
-    /* labs carry their own unit; a plain fact (age, BMI, miles) takes the
-       unit the criterion names, if it names one at all.                  */
-    var unit = fact.unit || c.unit || '';
-    var v = fact.value, u = unit ? ' ' + unit : '', pass, off, evidence;
-
-    /* a protocol threshold is "required"; our own travel filter is only
-       "preferred", and the wording has to keep those apart.            */
-    var word = c.protocol === false ? ' preferred' : ' required';
-
-    if(c.op === 'range'){
-      pass = v >= c.min && v <= c.max;
-      off  = pass ? Math.min(v - c.min, c.max - v)
-                  : (v < c.min ? c.min - v : v - c.max);
-      evidence = num(v) + u + (pass ? ' is inside ' : ' is outside ') + num(c.min) + '–' + num(c.max);
-    } else if(c.op === '>='){
-      pass = v >= c.threshold;
-      off  = Math.abs(v - c.threshold);
-      evidence = num(v) + u + (pass ? ' ≥ ' : ' < ') + num(c.threshold) + word;
-    } else {                                              /* '<=' */
-      pass = v <= c.threshold;
-      off  = Math.abs(v - c.threshold);
-      evidence = num(v) + u + (pass ? ' ≤ ' : ' > ') + num(c.threshold) + word;
-    }
-
-    /* how far inside (or outside) the threshold, as a fraction of the band */
-    var depth = clamp01(off / c.band);
-
-    /* credit is deliberately discontinuous at the threshold: every pass scores
-       at least 0.70, every miss at most 0.45. A near miss earns partial credit
-       but can never outrank a criterion that was actually met.              */
-    var credit = pass ? 0.70 + 0.30 * depth
-                      : 0.45 * (1 - depth);
-
-    return { pass:pass, missing:false, credit:credit, evidence:evidence };
-  }
-
-  /* all criteria -> a 0-100 score. The bar widths ARE the per-criterion credit,
-     so the chart is a picture of the same numbers that produced the score.   */
-  /* SUPERSEDED by matchScore(profile, trial) below. Still drives screen 3
-     until Stage 5 re-wires the UI and deletes the hand-written criteria. */
-  function legacyTrialScore(trial){
-    var total = 0, weight = 0, rows = [], failed = 0, blocked = false;
-    /* the protocol's own criteria are counted apart from our travel filter —
-       missing a preference is not the same as missing an entry criterion  */
-    var protoTotal = 0, protoFailed = 0;
-
-    trial.criteria.forEach(function(c){
-      var r = evaluateCriterion(trial, c);
-      if(!r.pass){ failed++; if(c.required) blocked = true; }
-      if(c.protocol !== false){ protoTotal++; if(!r.pass) protoFailed++; }
-      total  += r.credit * c.weight;
-      weight += c.weight;
-      rows.push({ lab:c.label, w:Math.round(r.credit * 100), color:c.color,
-                  pass:r.pass, missing:r.missing, evidence:r.evidence });
-    });
-
-    var score = Math.round(100 * total / weight);
-    var v = score >= 75 && !blocked ? { verdict:'Strong match',   tone:'good' }
-          : score >= 50            ? { verdict:'Possible match', tone:'good' }
-          :                          { verdict:'Weak match',     tone:'weak' };
-
-    return { score:score, rows:rows, failed:failed, total:trial.criteria.length,
-             protoTotal:protoTotal, protoFailed:protoFailed,
-             blocked:blocked, verdict:v.verdict, tone:v.tone };
-  }
+  /* readFact(), evaluateCriterion() and legacyTrialScore() stood here until
+     Stage 5, reading hand-transcribed criteria objects. All three are gone. The
+     screens now read matchScore(PROFILE, record) over CORPUS, whose criteria
+     are the registry's own text parsed in the browser. Two engines reading two
+     different sets of criteria is how they end up disagreeing on stage.      */
 
   /* ===== CORPUS:BEGIN — generated by scripts/build_corpus.py. Do not hand-edit. ===== */
   /* 23 real ClinicalTrials.gov records, downloaded 2026-10-06.
@@ -2071,6 +2141,34 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     /* --- one comparison: a numeric rule --- */
     if(comps.length === 1){
       var cmp = comps[0];
+
+      /* NCT04485871's "body mass index (BMI= 25-40 kg/m2)" reads as ONE
+         comparison, "= 25", because the upper bound sits behind a hyphen where
+         the unit was expected. Taking that at face value publishes a threshold
+         the trial never wrote: the audit row said "BMI = 25 kg/m2" and quoted a
+         source line that plainly says 25-40. An equality whose value opens a
+         bare range is the range being stated, so read it as the range.
+
+         Narrow to '=' deliberately. ">= 25-40" is malformed rather than
+         ambiguous and still belongs in the unparsed bucket; and the bare range
+         has to START at the equality's own value, or this would start pulling
+         unrelated numbers out of the same sentence. Found by reading real audit
+         output in Stage 5, not by a test. */
+      if(cmp.op === '='){
+        var eqr = readBareRange(text);
+        if(eqr && eqr.min === cmp.value){
+          var elo = toCanonical(key, eqr.min, eqr.unit);
+          var ehi = toCanonical(key, eqr.max, eqr.unit);
+          if(elo !== null && ehi !== null && elo < ehi &&
+             plausible(key, elo) && plausible(key, ehi)){
+            return makeRule(sense, source, {
+              kind:'range', analyte:key, op:'range',
+              min:round2(elo), max:round2(ehi), unit:a.canonical,
+              band:a.band, weight:a.weight });
+          }
+        }
+      }
+
       var v = toCanonical(key, cmp.value, cmp.unit);
       if(v === null){
         return makeRule(sense, source, {
@@ -2313,6 +2411,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     return {
       score:         decidableW ? Math.round(100 * passW / decidableW) : null,
       confidence:    { decidable:decidableN, total:rules.length },
+      /* the score's own numerator and denominator, before rounding. The ranker
+         needs them to shrink a score by how much evidence sits behind it; no
+         screen ever shows them. */
+      weights:       { pass:passW, decidable:decidableW },
       verdicts:      verdicts,
       blocked:       blocked,
       unparsedCount: unparsedCount,
@@ -2320,23 +2422,54 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     };
   }
 
-  /* rank every trial in the corpus. No search, no filter, no condition question:
-     the app reads the profile and scores everything it knows about.
+  /* rank every trial in the corpus. No search, no filter, no condition
+     question: the app reads the profile and scores everything it knows about.
 
-     ORDER IS score x confidence, and the reason is the whole point of the project.
-     Ranking on score alone puts the trials the engine knows LEAST about at the top:
-     NCT05462704 (pregnancy) and NCT05759078 (post-MI) both score 100 on one or two
-     checkable criteria out of eleven and twenty. That is §4a's "confident-looking 87
-     built on 4 of 11 criteria" coming back as a sort order instead of as a number.
+     THE SORT KEY IS A SHRUNK SCORE, and the reason is the whole point of §4a.
 
-     This is the ONLY place the two numbers are combined, and it never reaches the
-     screen as a figure: the UI still shows the score and "n of N checkable" side by
-     side and separately. An ordering is not a claim about a patient; a merged number
-     would be. Blocked trials sort last whatever they score. */
+     Ranking on the raw score puts the trials the engine knows LEAST about at
+     the top. On this profile nine trials all score 100, and NCT05462704
+     (pregnancy) earns its 100 from a single checkable criterion out of eleven.
+     A 100 from one check is not the same claim as a 100 from six, and a sort
+     order that cannot tell them apart is §4a's "confident-looking 87 built on
+     4 of 11 criteria" coming back as a list position instead of as a number.
+
+     The first fix tried was score x (decidable / total). It got the top of the
+     list right but it pushed NCT06942208 - 3 checkable of 52, because its
+     eligibility text is 7,789 characters of mostly prose - down to ninth. That
+     denominator is a property of how verbosely a sponsor writes, not of how
+     well this patient fits: across the corpus `total` runs from 7 to 52 on the
+     same 1-3 decidable criteria. Dividing by it imports the sponsor's prose
+     style into the ranking, and penalises a trial for publishing thorough
+     criteria.
+
+     So the key shrinks the score toward an uninformative prior in proportion to
+     how little evidence is behind it - the ordinary small-sample correction,
+     and the same reason one five-star review should not outrank two hundred
+     four-star ones:
+
+         key = (passW + PRIOR_W x PRIOR_P) / (decidableW + PRIOR_W)
+
+     It is monotone in both the score and the evidence, bounded in [0,1], and it
+     never reads `total`, so a thorough sponsor is not punished for being
+     thorough. At PRIOR_W = 3 and PRIOR_P = 0.5 a 100 from three checks lands at
+     .75 and a 100 from one at .63, while a 50 from twenty checks stays at .50
+     and cannot buy its way up the list on volume alone. The constants are
+     uniform across all 23 records; nothing is special-cased, least of all the
+     trial the demo happens to be built around.
+
+     This is the ONLY place the two numbers are combined, and the combination
+     never reaches the screen as a figure: the UI shows the score and
+     "n of N checkable" side by side and visibly separate. An ordering is not a
+     claim about a patient; a merged number printed beside their value would be.
+
+     Blocked trials sort last whatever they score, and a trial with nothing
+     checkable sorts below every trial we could actually check.               */
+  var PRIOR_W = 3, PRIOR_P = 0.5;
+
   function rankWeight(r){
-    if(r.blocked || r.score === null) return -1;
-    var c = r.confidence;
-    return c.total ? r.score * (c.decidable / c.total) : 0;
+    if(r.score === null) return -1;        /* nothing checkable: no claim to make */
+    return (r.weights.pass + PRIOR_W * PRIOR_P) / (r.weights.decidable + PRIOR_W);
   }
 
   function rankCorpus(profile, corpus){
@@ -2361,167 +2494,380 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     statuses:      { PASS:PASS, FAIL:FAIL, UNKNOWN:UNKNOWN, NEAR_MISS:NEAR_MISS }
   };
 
-  /* ================= the trials themselves =================
-     THE PATIENT ABOVE IS INVENTED. THE TRIALS BELOW ARE NOT.
+  /* ================= screen 3 · the trial audit =================
+     The screen the whole app exists for.
 
-     Every record here was pulled from the ClinicalTrials.gov public API on
-     2026-09-29 and is reproducible:
+     Nothing below is transcribed. Every row, number, verdict and quoted line is
+     matchScore(PROFILE, record) output read at render time, over CORPUS — whose
+     eligibilityCriteria is the registry's own text, parsed in the browser by
+     parseCriteria(). There is no `criteria:[...]` array anywhere in this file
+     any more, and so no second score that can disagree with the first.
 
-       https://clinicaltrials.gov/api/v2/studies/<nctId>
+     THE PATIENT IS INVENTED. THE TRIALS ARE NOT. Every record came from the
+     ClinicalTrials.gov public API on 2026-10-06 and is reproducible at
+     https://clinicaltrials.gov/api/v2/studies/<nctId> — which means every line
+     quoted on this screen can be checked against the registry in ten seconds. */
 
-     nctId, sponsor, status, phase, enrollment, the site list and every
-     threshold in `criteria` come from that record. `source` on each criterion
-     is the protocol's own wording, so any line on screen 3 can be checked
-     against the registry entry in about ten seconds.
-
-     `protocol:false` marks a criterion that is OpenHealth's own filter rather
-     than something the trial asks for — travel distance is a patient
-     preference, not an eligibility rule, and it is never `required`.
-
-     siteDistanceMi is a real great-circle distance from the (fake) patient's
-     home city to the trial's nearest real site, computed from the lat/lon the
-     registry publishes for each location.                                  */
-  var TRIALS = {
-    iron: {
-      code:'IR', name:'Iron Revisited', sub:'Matched to your health profile',
-      /* field is kept short on purpose — the renderers append the NCT ID to
-         it, and on a 402pt screen anything longer truncates the ID away  */
-      field:'Iron deficiency',
-      nctId:'NCT06942208',
-      tags:['Recruiting now','Interventional · Iron deficiency'],
-      facts:{ siteDistanceMi:2006 },                    // Philadelphia → Calgary, AB
-      /* Alternate-day oral iron in female athletes with low ferritin who are
-         NOT yet anemic — which is exactly this patient's picture.           */
-      criteria:[
-        { key:'ferritin',   label:'Ferritin',    op:'<=',    threshold:50, band:25, weight:3, required:true,  color:'var(--iron)', protocol:true,
-          source:'Inclusion — "Suboptimal ferritin levels (≤50 mcg/L)"' },
-        { key:'hemoglobin', label:'Hemoglobin',  op:'>=',    threshold:12, band:3,  weight:2, required:true,  color:'var(--hgb)',  protocol:true,
-          source:'Exclusion — "Anemic (hemoglobin <120g/L)", i.e. must be ≥12.0 g/dL' },
-        { key:'bmi',        label:'BMI',         op:'range', min:16, max:30, band:7, weight:1, required:true, color:'var(--good)', protocol:true,
-          source:'Exclusion — "Have a BMI <16 but >30kg/m2"' },
-        { key:'age',        label:'Age',         op:'range', min:16, max:35, band:10, weight:1, required:true, color:'var(--good)', protocol:true,
-          source:'Inclusion — "Age 16-35"' },
-        { key:'siteDistanceMi', label:'Travel distance', unit:'mi', op:'<=', threshold:25, band:25, weight:1, required:false, color:'var(--warn)', protocol:false,
-          source:'OpenHealth preference — not a trial criterion' }
-      ],
-      summary:[
-        ['Sponsor','University of Calgary'],
-        ['Studying','Iron deficiency in female athletes'],
-        ['Registry','NCT06942208'],
-        ['Nearest site','Calgary, AB · 2,006 mi'],
-        ['Enrolling','36 participants']
-      ],
-      notePass:'The only site is in Calgary, though — worth asking whether a closer one is opening.',
-      noteFail:'Worth re-checking if the criteria widen.'
-    },
-    icov: {
-      code:'ICO', name:'Icovamenib in Type 2 Diabetes', sub:'Screened against your health profile',
-      field:'Phase II · Metabolic',
-      nctId:'NCT07502508',
-      tags:['Recruiting now','Phase II · Metabolic'],
-      facts:{ siteDistanceMi:138 },                     // Philadelphia → Burke, VA
-      /* Kept in the feed on purpose: the nearest site is 15× closer than the
-         iron trial's, and she still scores near zero. Distance is not the
-         thing that decides a match.                                        */
-      criteria:[
-        { key:'a1c', label:'A1c',  op:'range', min:7.5, max:9.5, band:2, weight:3, required:true, color:'var(--warn)', protocol:true,
-          source:'Inclusion — "Have HbA1c ≥7.5 and ≤9.5%"' },
-        { key:'bmi', label:'BMI',  op:'range', min:25,  max:40,  band:6, weight:2, required:true, color:'var(--warn)', protocol:true,
-          source:'Inclusion — "Have a BMI 25 to 40 kg/m2"' },
-        { key:'age', label:'Age',  op:'range', min:18,  max:70,  band:20, weight:1, required:true, color:'var(--good)', protocol:true,
-          source:'Registry eligibility — 18 Years to 70 Years' },
-        { key:'siteDistanceMi', label:'Travel distance', unit:'mi', op:'<=', threshold:25, band:50, weight:1, required:false, color:'var(--warn)', protocol:false,
-          source:'OpenHealth preference — not a trial criterion' }
-      ],
-      summary:[
-        ['Sponsor','Biomea Fusion, Inc.'],
-        ['Studying','Type 2 diabetes · icovamenib'],
-        ['Registry','NCT07502508'],
-        ['Nearest site','Burke, VA · 138 mi'],
-        ['Enrolling','60 participants']
-      ],
-      notePass:'Bring this one to a screening appointment.',
-      noteFail:'Worth re-checking if the criteria widen.'
-    }
+  /* Display names. ANALYTES carries units, LOINC codes and match patterns, and
+     deliberately carries no prose, so the words live here instead. */
+  var ANALYTE_LABEL = {
+    ferritin:'Ferritin', hemoglobin:'Hemoglobin', a1c:'HbA1c',
+    ldl:'LDL cholesterol', spo2:'Oxygen saturation', bmi:'BMI', age:'Age',
+    pregnancy:'Pregnancy', lactation:'Breastfeeding', smoking:'Smoking',
+    anemia:'Anemia', diabetes:'Diabetes', malignancy:'Cancer history',
+    renal:'Kidney function', hepatic:'Liver function'
   };
 
-  /* score every trial once at load; re-read anywhere the old literals were */
-  var RESULT = {};
-  function scoreAll(){ Object.keys(TRIALS).forEach(function(k){ RESULT[k] = legacyTrialScore(TRIALS[k]); }); }
-  scoreAll();
+  /* The biomarker spectrum is held constant per marker (docs/DESIGN.md), so a
+     trial's accent colour is an output of what it actually asks about rather
+     than a literal typed next to its name. */
+  var ANALYTE_COLOR = {
+    ferritin:'var(--iron)', hemoglobin:'var(--hgb)', spo2:'var(--o2)',
+    ldl:'var(--ldl)', a1c:'var(--warn)', bmi:'var(--good)', age:'var(--brand)'
+  };
 
-  /* trial ids best-first — the order on screen is an output of the engine */
-  function rankedTrials(){
-    return Object.keys(TRIALS).sort(function(a,b){ return RESULT[b].score - RESULT[a].score; });
+  function esc(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
-  /* not scored — listed because the registry says they start soon and are
-     within range of the patient's home city. Real records, same API.      */
-  var SOON = [
-    { code:'NAG', name:'N-acetylglucosamine', field:'Crohn’s · Phase II',
-      nctId:'NCT07225998', sponsor:'Johns Hopkins University', when:'Nov 1' },
-    { code:'WMP', name:'Weight regain after GLP-1', field:'Obesity · Phase IV',
-      nctId:'NCT07729332', sponsor:'Massachusetts General Hospital', when:'Nov 1' }
-  ];
 
-  var currentTrial = 'iron';
+  /* Rule.source is VERBATIM, the registry's own markdown escaping included,
+     because §4a requires it and the audit quotes it as the original wording.
+     Undo that escaping for DISPLAY ONLY — the rule is never touched — or the
+     table prints "Anemic (hemoglobin \<120g/L)" and a judge reads the backslash
+     as a typo of ours. The leading bullet marker goes the same way: it is
+     punctuation belonging to the source document, not to the criterion. */
+  function forDisplay(src){
+    return String(src)
+      .replace(/\\([<>*_\[\]()#+\-.!])/g, '$1')
+      .replace(/^\s*(?:[*\-•○●]|\d+[.)])\s+/, '')
+      .replace(/\s*\n\s*/g, '  ')
+      .trim();
+  }
+
+  var OPGLYPH = { '<=':'≤', '<':'<', '>=':'≥', '>':'>', '=':'=' };
+
+  /* the rule in plain language: what this trial is asking for */
+  function rulePhrase(rule){
+    var name = ANALYTE_LABEL[rule.analyte] || rule.analyte;
+    if(rule.kind === 'range')    return name + ' ' + rule.min + '–' + rule.max + ' ' + rule.unit;
+    if(rule.kind === 'numeric')  return name + ' ' + OPGLYPH[rule.op] + ' ' + rule.threshold + ' ' + rule.unit;
+    if(rule.kind === 'presence') return name;
+    if(rule.kind === 'negation') return 'No ' + String(name).toLowerCase();
+    return 'Stated in prose we could not turn into a check';
+  }
+
+  /* The patient's own value. An UNKNOWN never renders as a zero, a dash or an
+     empty cell — rule 2 of docs/FIGMA-MAKE-PROMPT.md — so it says, in words,
+     exactly which value is missing. */
+  function valuePhrase(rule, v){
+    if(v.value === null || v.value === undefined){
+      if(rule.kind === 'unparsed') return '<em>Nothing to compare</em>';
+      if(rule.kind === 'presence' || rule.kind === 'negation') return '<em>Not on file</em>';
+      return '<em>No ' + esc(ANALYTE_LABEL[rule.analyte] || rule.analyte) + ' on file</em>';
+    }
+    return esc(v.value + (rule.unit ? ' ' + rule.unit : ''));
+  }
+
+  /* A verdict is legible without colour: an icon AND a word, always. */
+  var I_PASS = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  var I_FAIL = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  var I_NEAR = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h11"/><path d="m10 7 5 5-5 5"/><path d="M20 4v16"/></svg>';
+  var I_UNK  = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.3 9.2a2.8 2.8 0 1 1 3.7 2.6v1.4"/><path d="M12 17h.01"/></svg>';
+  var CHEV   = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+
+  var CHIP = {};
+  CHIP[PASS]      = { cls:'pass', word:'Pass',      icon:I_PASS };
+  CHIP[FAIL]      = { cls:'fail', word:'Fail',      icon:I_FAIL };
+  CHIP[NEAR_MISS] = { cls:'near', word:'Near miss', icon:I_NEAR };
+  CHIP[UNKNOWN]   = { cls:'unk',  word:'Unknown',   icon:I_UNK  };
+
+  /* Decided verdicts lead and unknowns follow; near misses lead the decided
+     ones because they are the only rows a patient can act on. Source order is
+     preserved inside each group (Array#sort is stable), so a row can still be
+     found in the registry text it came from. */
+  var VERDICT_ORDER = {};
+  VERDICT_ORDER[NEAR_MISS] = 0; VERDICT_ORDER[FAIL] = 1;
+  VERDICT_ORDER[PASS]      = 2; VERDICT_ORDER[UNKNOWN] = 3;
+
+  function senseTag(rule){
+    return '<span class="sense">' + (rule.sense === 'exclusion' ? 'Exclusion' : 'Inclusion') + '</span>';
+  }
+  function quote(rule){
+    return '<blockquote class="src">' + senseTag(rule) + esc(forDisplay(rule.source)) + '</blockquote>';
+  }
+  function plural(n, one, many){ return n + ' ' + (n === 1 ? one : many); }
+
+  /* "1 years" is the kind of detail a judge notices */
+  function qty(n, unit){
+    if(unit === 'years') return n + ' ' + (n === 1 ? 'year' : 'years');
+    return n + (unit ? ' ' + unit : '');
+  }
+
+  /* how far INSIDE the predicate a value sits, once it already holds */
+  function headroom(rule, v){
+    if(rule.kind === 'range') return round2(Math.min(v - rule.min, rule.max - v));
+    return round2(Math.abs(v - rule.threshold));
+  }
+
+  /* The third cell of an audit row, and the only one that is new information:
+     the rule cell states the threshold, the value cell states the value, so
+     this one states the DISTANCE between them. Without it the row says the
+     same thing three times, which is how a table stops being read. */
+  function marginPhrase(rule, v){
+    if(v.value === null || v.value === undefined) return '';
+    if(rule.kind !== 'numeric' && rule.kind !== 'range') return '';
+    var holds = predicateHolds(rule, v.value);
+    if(rule.sense === 'exclusion'){
+      return holds ? qty(headroom(rule, v.value), rule.unit) + ' inside the excluded range'
+                   : qty(round2(shortfall(rule, v.value)), rule.unit) + ' clear of the exclusion';
+    }
+    if(holds) return qty(headroom(rule, v.value), rule.unit) + ' inside what the trial asks';
+    return qty(round2(shortfall(rule, v.value)), rule.unit) +
+           (v.status === NEAR_MISS ? ' short of it' : ' outside it');
+  }
+
+  /* ---------------- every trial, scored and ranked, once at load ----------
+     No search, no filter, no condition question. The order is engine output. */
+  var RANKED = rankCorpus(PROFILE, CORPUS);
+  var ROW = {};
+  RANKED.forEach(function(r){ ROW[r.trial.nctId] = r; });
+  var currentTrial = RANKED[0].trial.nctId;
+
+  /* a short badge built from the trial's own primary condition */
+  function trialCode(t){
+    var words = String((t.conditions && t.conditions[0]) || t.briefTitle || '')
+      .replace(/[^A-Za-z0-9 ]/g, ' ').split(/\s+/)
+      .filter(function(w){ return w && !/^(the|of|in|and|with|for|a|an|to|on|at|by)$/i.test(w); });
+    return words.slice(0, 3).map(function(w){ return w.charAt(0).toUpperCase(); }).join('') || 'TR';
+  }
+
+  /* the accent colour of the heaviest criterion this trial actually asks about */
+  function trialColor(res){
+    var best = null;
+    res.verdicts.forEach(function(v){
+      if(!isDecidable(v.verdict.status) || !ANALYTE_COLOR[v.rule.analyte]) return;
+      if(!best || (v.rule.weight || 1) > (best.weight || 1)) best = v.rule;
+    });
+    return best ? ANALYTE_COLOR[best.analyte] : 'var(--ink-3)';
+  }
+
+  /* The verdict sentence carries its own denominator on purpose. "Strong match"
+     standing alone over three of fifty-two criteria is exactly the overclaim
+     §4a exists to prevent, so the phrase never appears without the count. */
+  function verdictLine(res){
+    if(res.blocked)        return 'Not eligible on the criteria we could check';
+    if(res.score === null) return 'Nothing here could be checked against your data';
+    var d = res.confidence.decidable;
+    var word = res.score >= 75 ? 'Strong match' : res.score >= 50 ? 'Possible match' : 'Weak match';
+    return word + ' on the ' + plural(d, 'criterion', 'criteria') + ' we could check';
+  }
+
+  /* The chip a trial wears in a list. One component, used on Home and on the
+     audit screen, so the two lists cannot drift apart. Both numbers ride in it
+     and they stay apart: the headline is the score, the line under it is how
+     much of the trial that score was computed from. */
+  function listChip(res){
+    var c = res.confidence, cover = c.decidable + ' of ' + c.total + ' checkable';
+    if(res.blocked)
+      return '<span class="vscore none"><b>Not eligible</b><small>' + cover + '</small></span>';
+    if(res.score === null)
+      return '<span class="vscore none"><b>No score</b><small>' + cover + '</small></span>';
+    return '<span class="vscore' + (res.score < 50 ? ' weak' : '') + '"><b>' +
+           res.score + ' / 100</b><small>' + cover + '</small></span>';
+  }
 
   function renderTrial(id){
-    var t = TRIALS[id];
-    var m = RESULT[id];                                 // everything below is computed
-    currentTrial = id;
+    var row = ROW[id] || RANKED[0];
+    var t = row.trial, res = row.result, c = res.confidence;
+    currentTrial = t.nctId;
 
-    document.getElementById('tName').textContent = t.name;
-    document.getElementById('tSub').textContent = t.sub;
+    document.getElementById('tName').textContent = t.briefTitle;
+    document.getElementById('tSub').textContent  = t.sponsor;
 
-    document.getElementById('hero').classList.toggle('weak', m.tone === 'weak');
-    document.getElementById('ring').style.setProperty('--off', (452 * (1 - m.score / 100)).toFixed(1));
-    document.getElementById('scoreNum').textContent = reduce ? m.score : 0;
-    document.getElementById('tVerdict').textContent = m.verdict;
-    /* the registry ID rides along with the tags — a judge can paste it into
-       clinicaltrials.gov and check every number on this screen             */
-    document.getElementById('tTags').innerHTML = t.tags.map(function(x){
-      return '<span class="chip">' + x + '</span>';
-    }).join('') + '<span class="chip reg">' + t.nctId + '</span>';
+    /* ---- the two numbers, side by side, never merged ---- */
+    var hero = document.getElementById('hero');
+    hero.classList.toggle('weak', res.blocked || res.score === null || res.score < 50);
+    hero.classList.toggle('noscore', res.score === null);
 
-    /* a failed travel preference is not falling short of the protocol */
-    document.getElementById('eligHead').textContent = m.protoFailed ? 'Where you fall short' : 'Why you qualify';
+    document.getElementById('ring').style
+      .setProperty('--off', (452 * (1 - (res.score || 0) / 100)).toFixed(1));
+    document.getElementById('scoreNum').textContent = reduce ? (res.score || 0) : 0;
 
-    /* each row shows the comparison the engine actually made, not just a bar */
-    document.getElementById('eligCard').innerHTML = m.rows.map(function(r){
-      return '<div class="row"><span class="lab">' + r.lab +
-             '<em class="why">' + r.evidence + '</em></span>' +
-             '<span class="track"><i style="--w:' + r.w + '%;background:' + r.color + '"></i></span>' +
-             '<span class="pct" style="color:' + r.color + '">' + r.w + '</span></div>';
+    document.getElementById('confN').textContent   = c.decidable;
+    document.getElementById('confD').textContent   = 'of ' + c.total;
+    document.getElementById('confCap').textContent = c.decidable === c.total
+      ? 'every criterion was checkable'
+      : plural(c.total - c.decidable, 'criterion', 'criteria') + ' we could not check';
+
+    /* written only when it is shown — a CSS-hidden sentence is still read out
+       by a screen reader, and this one would contradict the score above it */
+    document.getElementById('tNoScore').textContent = res.score === null
+      ? 'No criterion in this trial’s text could be checked against your data. All ' +
+        plural(c.total, 'criterion', 'criteria') + ' are listed below exactly as published.'
+      : '';
+
+    var tags = [];
+    if(t.status) tags.push(t.status.charAt(0) + t.status.slice(1).toLowerCase().replace(/_/g, ' '));
+    if(t.phase && t.phase !== 'NA') tags.push(t.phase.replace(/^PHASE/, 'Phase '));
+    else if(t.studyType) tags.push(t.studyType.charAt(0) + t.studyType.slice(1).toLowerCase());
+    document.getElementById('tTags').innerHTML =
+      tags.map(function(x){ return '<span class="chip">' + esc(x) + '</span>'; }).join('') +
+      '<span class="chip reg">' + esc(t.nctId) + '</span>';
+
+    document.getElementById('tVerdict').textContent = verdictLine(res);
+
+    /* ---- what rules this trial out, and how narrowly ----
+       A matched exclusion or a failed required inclusion blocks enrolment.
+       A near miss on a REQUIRED inclusion blocks it too — and that pair is the
+       most interesting state the engine can report, because it means ruled out
+       by a known amount rather than ruled out flatly. So the two callouts split
+       on the kind of blocker rather than both describing the same criterion:
+       a hard fail gets the red banner, a narrow one gets the amber callout that
+       carries the number. */
+    var blockers = res.verdicts.filter(function(v){
+      return (v.verdict.status === FAIL || v.verdict.status === NEAR_MISS) &&
+             (v.rule.sense === 'exclusion' || v.rule.required);
+    });
+    var hardBlocks = blockers.filter(function(v){ return v.verdict.status === FAIL; });
+    var nearBlocks = blockers.filter(function(v){ return v.verdict.status === NEAR_MISS; });
+    /* matchScore pushes a near miss into both verdicts[] and nearMisses[] as
+       two separate wrapper objects, so identity on the wrapper matches nothing.
+       The rule is the thing that is actually shared. */
+    var nearOnly = res.nearMisses.filter(function(v){
+      return !blockers.some(function(b){ return b.rule === v.rule; });
+    });
+
+    /* the gap, in the trial's own unit, with the direction named */
+    function gapOf(v){
+      var g = round2(shortfall(v.rule, v.verdict.value));
+      return (v.verdict.margin < 0 ? 'short by ' : 'over by ') + qty(g, v.rule.unit);
+    }
+    function atValue(v){ return qty(v.verdict.value, v.rule.unit); }
+
+    var blockEl = document.getElementById('tBlocked');
+    if(hardBlocks.length){
+      blockEl.innerHTML = I_FAIL + '<span><b>Ruled out by a criterion we could check.</b> ' +
+        hardBlocks.map(function(v){
+          return (v.rule.sense === 'exclusion'
+            ? 'The trial excludes ' + esc(rulePhrase(v.rule)) + ' and you are at ' + esc(atValue(v))
+            : 'It requires ' + esc(rulePhrase(v.rule)) + ' and you are at ' + esc(atValue(v)));
+        }).join('. ') + '.</span>';
+      blockEl.hidden = false;
+    } else {
+      blockEl.hidden = true;
+    }
+
+    var nearEl = document.getElementById('tNear');
+    if(nearBlocks.length || nearOnly.length){
+      nearEl.innerHTML = I_NEAR + '<span>' +
+        nearBlocks.map(function(v){
+          return '<b>Ruled out, but only just.</b> The trial asks for ' +
+                 esc(rulePhrase(v.rule)) + '; you are at ' + esc(atValue(v)) + ', ' +
+                 esc(gapOf(v)) + '. That is the whole of the gap.';
+        }).concat(nearOnly.map(function(v){
+          return '<b>Near miss on ' + esc(rulePhrase(v.rule)) + '.</b> You are at ' +
+                 esc(atValue(v)) + ', ' + esc(gapOf(v)) +
+                 '. Worth asking your doctor whether a re-test is worthwhile.';
+        })).join('<br><br>') + '</span>';
+      nearEl.hidden = false;
+    } else {
+      nearEl.hidden = true;
+    }
+
+    /* ---- the audit table: one row per criterion ---- */
+    var checked = res.verdicts.filter(function(v){ return v.rule.kind !== 'unparsed'; })
+      .slice().sort(function(a, b){
+        return VERDICT_ORDER[a.verdict.status] - VERDICT_ORDER[b.verdict.status];
+      });
+
+    /* The parser's split is three ways, not two: rules it can decide, rules it
+       can only NAME, and text it cannot read at all. This table holds the first
+       two, so it cannot be headed with a count of "checkable" criteria without
+       contradicting the confidence figure directly above it — a trial can show
+       one row here and still be "0 of 10 checkable". The unparsed section
+       carries its own count. */
+    document.getElementById('auditHead').textContent = checked.length
+      ? 'What the trial asks, and what we know'
+      : 'Nothing here could be read as a rule';
+
+    document.getElementById('auditTable').innerHTML = checked.map(function(v){
+      var ch = CHIP[v.verdict.status];
+      return '<div class="arow">' +
+        '<div class="atop">' +
+          '<span class="rule">' + esc(rulePhrase(v.rule)) + '</span>' +
+          '<span class="vchip ' + ch.cls + '">' + ch.icon + ch.word + '</span>' +
+        '</div>' +
+        '<div class="amid">' +
+          '<span class="yours">' + valuePhrase(v.rule, v.verdict) + '</span>' +
+          '<span class="ev">' + esc(marginPhrase(v.rule, v.verdict)) + '</span>' +
+        '</div>' +
+        quote(v.rule) +
+      '</div>';
+    }).join('') || '<p class="empty">Every criterion this trial publishes is below, as written.</p>';
+
+    /* The unknowns need explaining ONCE. Repeating "no condition data on file"
+       on six consecutive rows teaches a reader to skip the column. */
+    var unknowns = checked.filter(function(v){ return v.verdict.status === UNKNOWN; }).length;
+    var noteEl = document.getElementById('auditNote');
+    if(unknowns){
+      noteEl.textContent = plural(unknowns, 'criterion', 'criteria') + ' above came back ' +
+        'Unknown. Your profile holds lab values and watch data, not a medical history, so ' +
+        'anything a trial asks about a condition or a diagnosis cannot be decided here — ' +
+        'and an Unknown is never counted as a pass.';
+      noteEl.hidden = false;
+    } else {
+      noteEl.hidden = true;
+    }
+
+    /* ---- the unparsed bucket: collapsed, never hidden ---- */
+    var un = res.verdicts.filter(function(v){ return v.rule.kind === 'unparsed'; });
+    var unEl = document.getElementById('tUnparsed');
+    if(un.length){
+      unEl.innerHTML =
+        '<summary>' + plural(un.length, 'criterion', 'criteria') +
+        ' we couldn’t check automatically' + CHEV + '</summary>' +
+        '<div class="ubody"><p class="unote">Shown exactly as the registry publishes them. ' +
+        'Nothing here was guessed at and nothing was dropped — a criterion we ' +
+        'cannot read is reported, not discarded.</p>' +
+        un.map(function(v){ return quote(v.rule); }).join('') + '</div>';
+      unEl.hidden = false;
+    } else {
+      unEl.hidden = true;
+    }
+
+    /* ---- trial details, every field straight off the registry record ---- */
+    var det = [
+      ['Sponsor',       t.sponsor],
+      ['Studying',      (t.conditions || []).slice(0, 2).join(' · ')],
+      ['Design',        (t.phase && t.phase !== 'NA' ? t.phase.replace(/^PHASE/, 'Phase ') + ' · ' : '') +
+                        String(t.studyType || '').toLowerCase()],
+      ['Registry',      t.nctId],
+      ['Nearest site',  t.nearestSite + (t.siteDistanceMi === null || t.siteDistanceMi === undefined
+                          ? '' : ' · ' + num(t.siteDistanceMi) + ' mi')],
+      ['Enrolling',     t.enrollment === null || t.enrollment === undefined
+                          ? 'not stated' : num(t.enrollment) + ' participants'],
+      ['Registry ages', [t.minimumAge, t.maximumAge].filter(Boolean).join(' – ') || 'not stated']
+    ];
+    document.getElementById('tSummary').innerHTML = det.map(function(l){
+      return '<div class="line"><span>' + esc(l[0]) + '</span><span>' + esc(l[1] || 'not stated') + '</span></div>';
     }).join('');
 
-    var note = m.protoFailed
-      ? 'You miss ' + m.protoFailed + ' of the ' + m.protoTotal + ' entry criteria. ' + t.noteFail
-      : 'You meet all ' + m.protoTotal + ' entry criteria. ' + t.notePass;
-    document.getElementById('eligNote').innerHTML =
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>' + note;
-
-    document.getElementById('tSummary').innerHTML = t.summary.map(function(l){
-      return '<div class="line"><span>' + l[0] + '</span><span>' + l[1] + '</span></div>';
+    /* ---- every other trial, in engine order, all of them ---- */
+    document.getElementById('tRelatedHead').textContent =
+      'The other ' + (RANKED.length - 1) + ', ranked';
+    document.getElementById('tRelated').innerHTML = RANKED.filter(function(r){
+      return r.trial.nctId !== t.nctId;
+    }).map(function(r){
+      var o = r.trial;
+      return '<button class="row" onclick="openTrial(\'' + o.nctId + '\')">' +
+        '<span class="dot" style="background:' + trialColor(r.result) + '"></span>' +
+        '<span class="who"><span class="nm">' + esc(o.briefTitle) + '</span>' +
+        '<span class="field">' + esc(o.nctId) + ' · ' +
+          esc((o.conditions || [])[0] || '') + '</span></span>' +
+        listChip(r.result) +
+      '</button>';
     }).join('');
-
-
-    /* every other trial, scored ones first and tappable */
-    var rows = '';
-    rankedTrials().forEach(function(k){
-      if(k === id) return;
-      var o = TRIALS[k], om = RESULT[k];
-      rows += '<button class="row" onclick="openTrial(\'' + k + '\')">' +
-              '<span class="dot" style="background:' + (om.tone === 'weak' ? 'var(--warn)' : 'var(--brand)') + '"></span>' +
-              '<span><span class="nm">' + o.name + '</span><span class="field">' + o.field + ' · ' + o.nctId + '</span></span>' +
-              '<span class="score' + (om.tone === 'weak' ? ' weak' : '') + '"><i></i>' + om.score + ' / 100</span>' +
-              '</button>';
-    });
-    SOON.forEach(function(o){
-      rows += '<div class="row"><span class="dot" style="background:var(--ink-3)"></span>' +
-              '<div><div class="nm">' + o.name + '</div><div class="field">' + o.field + ' · ' + o.nctId + '</div></div>' +
-              '<span class="chip" style="margin-left:auto;background:var(--surface-2);color:var(--ink-3)">Starts ' + o.when + '</span></div>';
-    });
-    document.getElementById('tRelated').innerHTML = rows;
   }
 
   window.openTrial = function(id){
@@ -2531,7 +2877,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
       var s = screens[2];
       s.scrollTop = 0;
       s.classList.remove('in');
-      void s.offsetWidth;                              // replay the ring + bars
+      void s.offsetWidth;                              // replay the ring + rows
       s.classList.add('in');
       countScore();
     } else {
@@ -2552,44 +2898,39 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     }
     requestAnimationFrame(step);
   }
-  function countScore(){ countUp(document.getElementById('scoreNum'), RESULT[currentTrial].score); }
+  function countScore(){
+    countUp(document.getElementById('scoreNum'), ROW[currentTrial].result.score || 0);
+  }
 
-  /* The trial feed on Home is built from TRIALS/SOON, not typed into the
-     markup, so a name or a score can never say one thing here and another
-     on screen 3. Scored trials come first, ranked by the engine.          */
+  /* The trial feed on Home is the top of the same ranking screen 3 reads, so a
+     name, a score or a position can never say one thing here and another
+     there. Three rows, because Home is a summary; "See all" opens the list. */
   var EYE = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
-  var PLUS = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
-  var CLOCK = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
-  var CODE_TINT = { iron:['rgba(225,29,116,.12)','var(--iron)'], icov:['rgba(124,77,255,.12)','var(--hgb)'] };
+  /* a chevron, not the old green "+". The row opens the audit; it does not add
+     anything, and a button shaped like an action it cannot perform is exactly
+     what this project deletes rather than polishes. */
+  var GO = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
 
   function renderHomeTrials(){
-    var html = '';
+    document.getElementById('homeTrialCount').textContent =
+      'Ranked against your profile · ' + RANKED.length + ' trials';
 
-    rankedTrials().forEach(function(k){
-      var t = TRIALS[k], m = RESULT[k], tint = CODE_TINT[k] || ['var(--surface-2)','var(--ink-3)'];
-      html +=
-        '<div class="row-item live tappable" role="button" tabindex="0" onclick="openTrial(\'' + k + '\')" onkeydown="keyTrial(event,\'' + k + '\')">' +
-          '<span class="ic" style="background:' + tint[0] + ';color:' + tint[1] + '">' + t.code + '</span>' +
-          '<span class="tx"><b>' + t.name + '</b><small>' + t.field + ' · ' + t.nctId + '</small></span>' +
-          '<span class="add">' + PLUS + '</span>' +
-          '<span class="meta">' +
-            '<span class="score-chip' + (m.tone === 'weak' ? ' weak' : '') + '"><i class="spark"></i>' + m.score + ' / 100 match</span>' +
-            '<span class="hint">' + EYE + 'Tap to view</span>' +
-          '</span>' +
-        '</div>';
-    });
-
-    SOON.forEach(function(o){
-      html +=
-        '<div class="row-item soon">' +
-          '<span class="ic">' + o.code + '</span>' +
-          '<span class="tx"><b>' + o.name + '</b><small>' + o.field + ' · ' + o.nctId + '</small></span>' +
-          '<span class="add ghost">' + CLOCK + '</span>' +
-          '<span class="meta"><span class="chip" style="background:#E4E8E0;color:var(--ink-3)">Starts ' + o.when + '</span></span>' +
-        '</div>';
-    });
-
-    document.getElementById('homeTrials').innerHTML = html;
+    document.getElementById('homeTrials').innerHTML = RANKED.slice(0, 3).map(function(r){
+      var t = r.trial, res = r.result;
+      return '<div class="row-item live tappable" role="button" tabindex="0" ' +
+        'onclick="openTrial(\'' + t.nctId + '\')" onkeydown="keyTrial(event,\'' + t.nctId + '\')">' +
+        '<span class="ic" style="background:var(--surface-2);color:' + trialColor(res) + '">' +
+          esc(trialCode(t)) + '</span>' +
+        /* the NCT id leads: it is the handle a judge pastes into the registry,
+           and it is the half of this line that survives the ellipsis */
+        '<span class="tx"><b>' + esc(t.briefTitle) + '</b><small>' +
+          esc(t.nctId) + ' · ' + esc((t.conditions || [])[0] || '') + '</small></span>' +
+        '<span class="add">' + GO + '</span>' +
+        '<span class="meta">' + listChip(res) +
+          '<span class="hint">' + EYE + 'Tap to view</span>' +
+        '</span>' +
+      '</div>';
+    }).join('');
   }
 
   renderHomeTrials();

@@ -771,7 +771,236 @@ remain anywhere in index.html.
 
 ## Stage 5 Report
 
-_Pending._
+**The old engine is gone and the audit table is on screen.** Screen 3 now renders
+`matchScore(PROFILE, record)` over the 23-record corpus, with one row per criterion, a
+verdict chip carrying an icon and a word, and the trial's own wording quoted verbatim
+beneath every row. `tests.html` — **42 cases, all passing**, unchanged.
+
+### What was deleted
+
+`TRIALS`, `legacyTrialScore()`, `evaluateCriterion()`, `readFact()`, `RESULT`, `scoreAll()`,
+`rankedTrials()`, `SOON` and `CODE_TINT`, plus the dead `.elig` and `.score-chip` CSS. That
+is the last `criteria:[...]` array in the file: **no hand-transcribed criterion survives
+anywhere in `index.html`**, and `grep` for the old symbols returns only the comment that
+records their removal. `SOON` went with them because both of its records (`NCT07225998`,
+`NCT07729332`) are in the corpus and are now ranked like everything else — they land at #14
+and #21.
+
+`num()` and `clamp01()` were pulled back out of the deleted block; `clamp01` is still used by
+`markerCredit()` on the Health Score and deleting it took Home down for one commit's worth of
+work.
+
+### The ranking rule — `HANDOFF-V1.md` §3.1 is superseded
+
+§3.1 locked `score × (decidable / total)` and flagged the problem itself: it pushed
+`NCT06942208` to **ninth**, because that trial publishes 7,789 characters of criteria and
+earns 3 checkable of 52. **`total` is a property of how verbosely a sponsor writes, not of
+how well the patient fits.** Across the corpus it runs from 7 to 52 on the same 1–3 decidable
+criteria, so dividing by it imports the sponsor's prose style into the ranking and penalises a
+trial for being thorough.
+
+Of the three options §3.1 named, decidable **count** (`score × decidable`) fixes the
+verbosity penalty but lets a 50 over twenty criteria outrank a 100 over three on volume alone.
+So the key is the ordinary small-sample correction instead — shrink the score toward an
+uninformative prior in proportion to how little evidence stands behind it:
+
+```
+key = (passW + PRIOR_W × PRIOR_P) / (decidableW + PRIOR_W)      PRIOR_W = 3, PRIOR_P = 0.5
+```
+
+Monotone in both the score and the evidence, bounded in [0,1], and it **never reads `total`**.
+A 100 from three checks lands at .75, a 100 from one at .63, and a 50 from twenty stays at .50
+and cannot buy its way up. The constants are uniform across all 23 records — nothing is
+special-cased, least of all the flagship. `matchScore` now also returns
+`weights:{ pass, decidable }`, the unrounded terms the key needs; no screen shows them.
+
+`NCT06942208` moves **#9 → #3** under that rule. The three trials that beat or tie it do so on
+weighted evidence, not on brevity: the top five are all 3-decidable, and they separate at .850
+/ .833 / .813 because ferritin carries weight 3 and hemoglobin 2 while age carries 1. The two
+clauses the UI still obeys are unchanged: **the two numbers are never merged on screen**, and
+blocked trials sort last. A trial with nothing checkable now sorts below every trial that
+could actually be checked.
+
+### The full ranking, score and confidence apart
+
+```
+ #   NCT ID        score   checkable    key     state
+ 1   NCT07394972    100     3 of 14    0.850
+ 2   NCT06270498    100     3 of 32    0.833
+ 3   NCT06942208    100     3 of 52    0.833     <- the flagship, was #9 under §3.1
+ 4   NCT06851130    100     3 of 14    0.813
+ 5   NCT06894004    100     3 of 16    0.813
+ 6   NCT05759078    100     2 of 20    0.786
+ 7   NCT07546591    100     2 of 32    0.750
+ 8   NCT06990373    100     1 of  8    0.700
+ 9   NCT05462704    100     1 of 11    0.625     pregnancy trial — last of the scored
+10   NCT05614219     --     0 of 10      -       no score
+11   NCT05856838     --     0 of 18      -       no score
+12   NCT06510998     --     0 of 13      -       no score
+13   NCT07014371     --     0 of 16      -       no score
+14   NCT07225998     --     0 of 31      -       no score
+15   NCT07588438     --     0 of 30      -       no score
+16   NCT07775404     --     0 of 12      -       no score
+17   NCT05226169     60     3 of 25    0.563     blocked
+18   NCT04485871     50     2 of 31    0.500     blocked · near miss
+19   NCT06422741     50     2 of 23    0.500     blocked
+20   NCT07502508     33     2 of 13    0.417     blocked · near miss
+21   NCT07729332     33     2 of 23    0.417     blocked
+22   NCT06897475      0     1 of  9    0.300     blocked
+23   NCT07743983      0     1 of  7    0.300     blocked
+```
+
+**The weakest match is `NCT07743983` at 0 / 100 on 1 of 7**, blocked. It is on screen, at the
+bottom of the list, labelled `Not eligible · 1 of 7 checkable` — not filtered out, because a
+ranking that only shows wins is not a ranking.
+
+The seven `no score` rows are the ones the rule was written for. They are not failures and not
+zeroes: the engine read every criterion and could decide none of them. The chip says
+`No score · 0 of 18 checkable`, which is a real count of a real corpus, and they sort below
+everything that could be checked and above everything that was ruled out.
+
+### The audit table — `NCT06942208`, every row
+
+Score **100 / 100**, confidence **3 of 52 criteria checkable**, verdict line
+*"Strong match on the 3 criteria we could check"*. The phrase never appears without its
+denominator; that is the whole point of the screen.
+
+```
+RULE                        YOUR VALUE      DISTANCE                          VERDICT
+Age 16–35 years             34 years        1 year inside what the trial asks  ✓ PASS
+  INCLUSION  "Age 16-35"
+Ferritin ≤ 50 ng/mL         8 ng/mL         42 ng/mL inside what it asks       ✓ PASS
+  INCLUSION  "Suboptimal ferritin levels (≤50 mcg/L)"
+Hemoglobin < 12 g/dL        13.1 g/dL       1.1 g/dL clear of the exclusion    ✓ PASS
+  EXCLUSION  "Anemic (hemoglobin <120g/L)"
+Smoking                     Not on file                                        ? UNKNOWN
+  EXCLUSION  "Are a smoker or use tobacco products"
+Diabetes                    Not on file                                        ? UNKNOWN
+  EXCLUSION  "Have any of the following conditions: renal or gastrointestinal
+              disorders, autoimmune disease, metabolic disease, heart disease, …"
+Diabetes                    Not on file                                        ? UNKNOWN
+  EXCLUSION  "Self-identifying with any kidney or gastrointestinal issues, …"
+Pregnancy                   Not on file                                        ? UNKNOWN
+  EXCLUSION  "Currently pregnant, planning to become pregnant, or breastfeeding"
+No cancer history           Not on file                                        ? UNKNOWN
+  EXCLUSION  "Have had a cancer diagnosis or treatment within the past year …"
+No pregnancy                Not on file                                        ? UNKNOWN
+  EXCLUSION  "Females of childbearing potential will be asked about their
+              likelihood of being pregnant, based on factors such as …"
+
+  note: 6 criteria above came back Unknown. Your profile holds lab values and
+        watch data, not a medical history, so anything a trial asks about a
+        condition or a diagnosis cannot be decided here — and an Unknown is
+        never counted as a pass.
+
+▸ 43 criteria we couldn't check automatically          [collapsed, present, never hidden]
+```
+
+Three decisions inside that table are worth naming:
+
+- **The third cell is the only new information.** The rule cell states the threshold and the
+  value cell states the value, so the first draft's evidence line said the same thing a third
+  time (`34 years meets age 16–35 years`). It now carries the **distance** — `1 year inside
+  what the trial asks`, `2.6 kg/m2 short of it`, `1.1 g/dL clear of the exclusion` — which is
+  what "shows the actual numbers" was supposed to mean.
+- **An UNKNOWN never renders as a zero, a dash or an empty cell.** It says `No HbA1c on file`
+  or `Not on file`, in words.
+- **The unknowns are explained once, under the table, not once per row.** Six consecutive
+  repetitions of "no condition data on file" teaches a reader to skip the column.
+
+Rows are grouped near-miss → fail → pass → unknown, source order preserved inside each group
+(`Array#sort` is stable), so a row can still be traced to the registry text it came from.
+
+### The near-miss callout, and the state it exposed
+
+`NCT07502508`, the icovamenib trial:
+
+> **Ruled out, but only just.** The trial asks for BMI 25–40 kg/m2; you are at 22.4 kg/m2,
+> short by 2.6 kg/m2. That is the whole of the gap.
+
+The first version printed a red "not eligible" banner *and* an amber "near miss" callout, both
+about the same BMI criterion, because **a near miss on a required inclusion blocks the trial**
+— and that turns out to be the most interesting state the engine can produce: ruled out by a
+known amount rather than ruled out flatly. The two callouts now split on the kind of blocker.
+A hard fail gets the red banner (`NCT06897475`: *"It requires BMI ≥ 27 kg/m2 and you are at
+22.4 kg/m2"*); a narrow one gets the amber callout that carries the number. Near misses that
+are not blockers keep the plain "worth asking your doctor whether a re-test is worthwhile"
+wording.
+
+The Garmin trend the spec wants paired into this callout is **V2** and is not faked here.
+
+### Two numbers, side by side
+
+The hero is a ring and a block, next to each other, in two different shapes: `MATCH SCORE`
+with the counted-up figure in the ring, `CONFIDENCE` reading `3` / `of 52` with the caption
+`49 criteria we could not check`. Two shapes is the cheapest way to stop a glance reading them
+as one number. The same pair rides in a single `.vscore` chip on Home and in the ranked list —
+one component, so the two lists cannot drift apart — with the score on the headline and
+`3 of 14 checkable` on the line beneath. **The product of the two is never rendered anywhere.**
+
+When nothing is checkable the ring is removed rather than drawn at zero, and the hero reads
+*"No criterion in this trial's text could be checked against your data. All 10 criteria are
+listed below exactly as published."*
+
+### Four things found by reading real audit output
+
+These are the Stage 5 equivalent of Stage 4's backwards exclusion wording. None was caught by
+a test.
+
+1. **`NCT04485871` printed a threshold the trial never published.** `"body mass index (BMI=
+   25-40 kg/m2)"` reads as one comparison, `= 25`, because the upper bound sits behind a hyphen
+   where the unit was expected — so the audit row said **`BMI = 25 kg/m2`** directly above a
+   quote that plainly says `25-40`. Fixed in the parser: an equality whose value *opens* a bare
+   range is the range being stated. Narrowed to `=` on purpose, and the range has to start at
+   the equality's own value, so `">= 25-40"` stays unparsed where it belongs. The verdict was
+   already right either way (22.4 is outside both readings); the displayed rule was not.
+2. **`tNoScore` was written into the DOM on every trial** and merely hidden by CSS. A screen
+   reader would have read a sentence saying nothing was checkable directly after announcing a
+   score of 100. It is now written only when it is shown.
+3. **`res.nearMisses` and `res.verdicts` hold different wrapper objects** for the same near
+   miss, so the "is this near miss also the blocker?" test by object identity matched nothing
+   and printed the callout twice. Compares by `rule` now.
+4. **The green `+` button on each Home trial row did nothing.** It is a chevron now. A button
+   shaped like an action it cannot perform is the thing this project deletes rather than
+   polishes.
+
+### Verification
+
+```
+tests.html                     all 42 passed      (headless Chromium, served over http)
+console on index.html          no errors
+grep: TRIALS / legacyTrialScore / evaluateCriterion / readFact / SOON / criteria:[
+                               0 hits outside the comment recording their removal
+grep: <input / <select / placeholder= / search
+                               0 hits — no search bar and no condition picker anywhere
+grep: 87/100 / 79/100 / CGX / Jordan Reyes / smarthealthit / send to doctor
+                               0 hits
+index.html                     193 KB, one file, no build step
+```
+
+### Named rather than rounded up to done
+
+- **`NCT05226169` shows `Hemoglobin < 11 g/dL` where the trial asks `Hb 8 to <11 g/dL`.** The
+  parser reads the ceiling and drops the floor, because `"8 to <11"` is a bare range whose
+  upper bound is behind a comparator — a different shape from the `BMI= 25-40` case fixed
+  above. The verdict is correct (13.1 fails either reading) and the quote beneath the row
+  shows the full text, but the rule cell understates what the trial asks. A parser change, not
+  a re-wire change; it belongs with the §4.4 granularity work, not here.
+- **Google Fonts is still a live network call** (`index.html` lines 5–7, three third-party
+  requests confirmed in the network log). Unchanged from `HANDOFF-V1.md` §4.1 and still
+  Stage 7's decision.
+- **Home still carries `Records synced 18 new`, `Providers connected 5 of 5`, `Insurance`,
+  `Balance due` and the bell's `18 new updates`.** V2 owns that screen; the trial feed on it
+  is now entirely engine output.
+- **The "Download prep sheet" bottom action from spec screen 7 is deliberately absent.** The
+  prep sheet is V2. A button that downloads nothing is exactly what the standard deletes.
+- The flagship's five-way near-tie at the top (.850/.833/.833/.813/.813) is real and is left
+  alone. Two of the four trials tied with or above it are iron-deficiency-without-anemia
+  studies — the same substantive match — so the top of the list reads correctly without any
+  thumb on the scale.
+
+Not filed as tickets: all five fail the filing test's three clauses or are already owned by a
+later stage. They are on the record here instead.
 
 ---
 
