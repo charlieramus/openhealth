@@ -211,16 +211,20 @@ which loses no functionality at all.
 
 ### The screen spec — and why Figma Make is not on this calendar
 
-Design work is **not** a line item above, because the design question is already answered.
-`Screenshot 2026-10-06 153715.png` settles the visual language for the home screen, and
-[`FIGMA-MAKE-PROMPT.md`](FIGMA-MAKE-PROMPT.md) is a complete 10-screen specification —
-layout, the colour token per biomarker, and the six rules that apply everywhere (no search
-bar, unknown is never a zero or a dash, score and confidence never merge, nothing is sent
-anywhere, verdicts legible without colour, every number a placeholder).
+**Reopened 2026-10-07.** This section used to say the design question was already answered.
+It is not. The visual execution was rejected wholesale, every committed palette and typeface
+was stripped out of these docs, and `Screenshot 2026-10-06 153715.png` no longer settles
+anything — it is a historical artifact, not a reference. Design is now a real line item and
+needs a slot on the calendar above.
 
-**Keep that doc. Build from it directly.** A second pass through Figma Make is off the plan
-for three reasons: the visual language it would resolve is already resolved; its output is
-React + Tailwind, which this project cannot consume (see [`STACK.md`](STACK.md) §4 — what
+What survives from [`FIGMA-MAKE-PROMPT.md`](FIGMA-MAKE-PROMPT.md) is its **structure**: the
+10-screen inventory and the six rules that apply everywhere (no search bar, unknown is never
+a zero or a dash, score and confidence never merge, nothing is sent anywhere, verdicts
+legible without colour, every number engine output). Its *visual direction* section is gone.
+
+**Build from that doc's structure, not its looks.** A pass through Figma Make is still off
+the plan for two reasons that did not depend on the visual language being settled: its
+output is React + Tailwind, which this project cannot consume (see [`STACK.md`](STACK.md) §4 — what
 makes handoff cheap here is the token layer in [`DESIGN.md`](DESIGN.md), not a framework);
 and the two screens the prompt itself calls the ones to get right — **3, extraction review,
 and 7, the trial audit** — are precisely the screens whose layout is driven by engine output,

@@ -31,31 +31,22 @@ to it. If a layout decision trades away clarity on screen 7, make the other choi
 
 ## Visual direction
 
-From the attached screenshot — carry this across every screen:
+**Stripped 2026-10-07.** Every specific colour, typeface, radius and shadow that used to be
+pinned here is gone, along with "carry the attached screenshot across every screen" — the old
+look was rejected and nothing about it should be inherited by accident. Visual direction is
+owned by [`DESIGN.md`](DESIGN.md).
 
-- **Light, warm-neutral canvas** (#E6EAE5), cards in pure white (#FFFFFF) with generous
-  rounded corners (22px; 14px for small chips) and a soft low shadow
-- **Heavy black display type** for numbers and headings — tight, confident, almost editorial.
-  Big numerals are the main visual event. Body text is a clean neutral sans
-- **Chunky, friendly, tappable.** Large hit targets, pill-shaped buttons, nothing hairline
-- iPhone proportions, ~390pt wide, with a status bar and a home indicator
+What survives is not aesthetic, it is functional, and it binds any direction:
 
-**Colors — each biomarker always keeps its own color, on every screen:**
-
-| Token | Hex | Use |
-|---|---|---|
-| Iron / Ferritin | `#E11D74` | magenta |
-| Hemoglobin | `#7C4DFF` | purple |
-| SpO2 | `#12B3A6` | teal |
-| LDL | `#2F80ED` | blue |
-| Score ring | amber → orange gradient | the home hero ring only |
-| Pass / good | `#12B76A` | |
-| Near-miss / caution | `#F5A524` | |
-| Fail | a muted red, not alarming | |
-| Ink | `#131A16` / `#59645C` / `#95A099` | primary / secondary / tertiary text |
-
-Verdicts must be distinguishable **without relying on color alone** — pair every color with
-an icon and a word.
+- **Mobile-first**, one phone-width column, comfortable hit targets.
+- **One accent per biomarker, used consistently** wherever that marker appears, so a colour
+  always means the same marker. *Which* accents is `DESIGN.md`'s call.
+- **Verdicts must be legible without colour** — pair every verdict with an icon and a word.
+  `PASS` / `FAIL` / `UNKNOWN` / `NEAR MISS` must survive greyscale and colour-blindness.
+- **The audit table is the hero.** Numbers are the main visual event; nothing may out-shout
+  the per-criterion result.
+- **Text contrast ≥ 4.5:1**, and the layout must hold at phone width with no horizontal
+  scroll.
 
 ---
 
@@ -66,8 +57,8 @@ an icon and a word.
 Rebuild the attached screenshot, with these changes:
 
 - Header: "OpenHealth" wordmark left; profile avatar pill and a notification bell right
-- **Health Score ring** — the hero. Large concentric amber/orange ring, big black numeral in
-  the middle, "Health Score" beneath it. **Add a small confidence line directly under the
+- **Health Score** — the hero. Form and colour are open (`DESIGN.md` §4 flags ring-plus-big-
+  numeral as the generic default treatment). **A confidence line sits directly with the
   number: "6 of 8 markers".** This is non-negotiable — the score is only computed from
   markers that have values, and the app always says how many it had
 - **Three biomarker bars** under the ring (Iron, Hemoglobin, SPo2) — each a slim horizontal

@@ -65,6 +65,22 @@ Key routing rules:
 - Code review → invoke /review
 - Ship / publish → invoke /ship
 
+**Design skills, installed into this repo 2026-10-07** (`.claude/skills/`, committed so a
+collaborator gets them too). The UI was rejected wholesale on 2026-10-07 and is being
+rebuilt; these are the tools for that, and they take precedence over improvising:
+
+| Skill | Use it for |
+|---|---|
+| `frontend-design` | Aesthetic direction, typography, and the anti-AI-slop calibration. **Read before touching any visual decision.** |
+| `ui-ux-pro-max` | Searchable local DB — 79 styles, 192 product palettes, 74 font pairings, 119 UX rules. `python .claude/skills/ui-ux-pro-max/scripts/search.py "<query>" --design-system` |
+| `theme-factory` | 10 ready palette/font themes + `theme-showcase.pdf`, for comparing directions fast |
+| `design-system` | Three-layer token architecture (primitive → semantic → component) |
+| `webapp-testing` | Playwright verification of the rebuilt UI |
+
+Not installed on purpose: `web-artifacts-builder` and `ui-styling` (React + Tailwind +
+shadcn + a build step — incompatible with this stack), `canvas-design`, `brand-guidelines`.
+See [`docs/DESIGN.md`](docs/DESIGN.md) §6.
+
 ## Commit & push communication rule
 
 This is a co-shared repo. Every commit and push must include a brief plain-English message explaining:
@@ -86,7 +102,11 @@ This applies to every commit — no silent one-liner pushes.
 
 - The design doc at `~/.gstack/projects/openhealth/` is discoverable by all plan-review skills automatically
 - Layout reference is now `Screenshot 2026-10-06 153715.png` (the homepage design) — it supersedes the hand-drawn mockups (IMG_0631-0634.JPG) for the home screen
-- Color palette: pink/magenta, purple, teal/green, blue, plus the amber/orange Health Score ring — use these for the biomarker bars
+- **There is no committed colour palette, typeface or visual style as of 2026-10-07.** The old
+  one was rejected wholesale. [`docs/DESIGN.md`](docs/DESIGN.md) is the only place a visual
+  decision may live, and it is currently an open brief, not an answer. Do not reinstate the
+  pink/purple/teal/blue + amber-ring palette, the green-forward light theme, or the
+  warm-cream-and-serif draft — all three are retired
 - **Never quote a match score or a Health Score as a constant.** Both are engine output and change with the profile. "87/100", "89", "79/100" and "CGX Trial #4" are all retired — `NCT06942208` and `NCT07502508` are real trials and may be named, their scores may not
 - **No condition input anywhere in the app.** No search box, no condition dropdown. The app reads your data and ranks every trial it knows about. See [`docs/SIMPLIFY.md`](docs/SIMPLIFY.md) §2
 - **A1c is deliberately absent** — it's the UNKNOWN test case, and the engine must not treat a missing value as a pass

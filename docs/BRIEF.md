@@ -164,19 +164,21 @@ presentational "18 updates from 5 providers", the insurance balance, and the 9 d
 care team. All of it described things the app did not do.
 
 The profile is built at runtime from whatever the two rails actually extracted. The only
-fixtures that remain are the **reference ranges** and the **marker colors**:
+fixtures that remain are the **reference ranges** (the marker accents moved to
+[`DESIGN.md`](DESIGN.md), 2026-10-07):
 
-| Marker | Reference range | Color |
-|---|---|---|
-| Iron (Ferritin) | 12–150 ng/mL | magenta |
-| Hemoglobin | 12–16 g/dL | purple |
-| Oxygen saturation | 95–100 % | teal |
-| LDL cholesterol | target < 100 mg/dL | blue |
+| Marker | Reference range |
+|---|---|
+| Iron (Ferritin) | 12–150 ng/mL |
+| Hemoglobin | 12–16 g/dL |
+| Oxygen saturation | 95–100 % |
+| LDL cholesterol | target < 100 mg/dL |
 | **A1c** | **Expected to be absent.** A routine panel often omits it. This is the UNKNOWN case, and the engine has to cope rather than assume a pass. Worth 15 seconds of the video | — |
 
-Colors are straight from the marker colors in the hand-drawn mockups and are used everywhere.
-The Health Score ring on the home screen is amber/orange and is **computed** — see
-[`SIMPLIFY.md`](SIMPLIFY.md) §6 for the formula.
+Each marker keeps one consistent accent everywhere it appears, so a colour always means the
+same marker. *Which* accents, and whether the Health Score stays a ring at all, is open —
+see [`DESIGN.md`](DESIGN.md). The score itself is **computed**; the formula is in
+[`SIMPLIFY.md`](SIMPLIFY.md) §6.
 
 ### Known stale values — fix before the video
 

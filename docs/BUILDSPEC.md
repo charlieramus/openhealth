@@ -44,20 +44,15 @@ Design doc: `C:\Users\jason\.gstack\projects\openhealth\jason-master-design-2026
 - **Network:** **zero runtime calls.** The trial corpus and `garmin.json` are committed data
 - **Keys:** none, ever — including one we already have. [`STACK.md`](STACK.md) §6b
 - **Layout:** Mobile-first, ~390px wide (iPhone), centered on desktop
-- **Style:** Card-based layout, health app aesthetic
+- **Style:** deliberately unspecified here — the visual direction is being redecided (2026-10-07) — see [`DESIGN.md`](DESIGN.md)
 
 **Off to the side, never deployed:** `scripts/sync_garmin.py` uses `python-garminconnect` to
 write `garmin.json` every few days. A build-time pipeline, not a backend — nothing listens on
 a port and no credential is ever shipped to the client. [`SIMPLIFY.md`](SIMPLIFY.md) §5.2.
 
-**Color palette (from hand-drawn mockups):**
-- Pink/magenta `#E91E8C` — Iron (Ferritin) bar, low result
-- Purple `#9C27B0` — Hemoglobin bar, average result
-- Teal/green `#26A69A` — Oxygen Saturation bar, steady result
-- Blue `#2196F3` — LDL Cholesterol bar, optimal
-- Accent/score `#4CAF50` — health score green
-- Background `#0D1117` or `#1A1A2E`
-- Card bg `#1E2A3A` or similar dark card
+**Color palette:** removed 2026-10-07. This block specified a *dark* theme that the app
+never shipped, and it contradicted `DESIGN.md`'s light theme for months. Palette is owned by
+[`DESIGN.md`](DESIGN.md) and nowhere else.
 
 ---
 
@@ -67,8 +62,10 @@ a port and no credential is ever shipped to the client. [`SIMPLIFY.md`](SIMPLIFY
 
 **Header:** "OpenHealth" wordmark left; profile pill and notification bell right.
 
-**Health Score ring** — the hero. A large amber/orange concentric ring with the **computed**
-score at its centre and the confidence line (`n of N markers`) beneath it. The formula is in
+**Health Score** — carries the **computed** score and the confidence line. Whether it stays a
+ring, and in what colour, is open (`DESIGN.md` §4 flags the ring-plus-gradient hero as the
+generic default). What is fixed is that the score and its confidence line
+(`n of N markers`) are shown together. The formula is in
 [`SIMPLIFY.md`](SIMPLIFY.md) §6: the weighted share of tracked biomarkers inside their
 reference range, with partial credit for near-range values. **A marker with no value is
 excluded from the score and lowers the confidence — it never counts as a pass.** Never a
@@ -104,8 +101,8 @@ markup, so a name or score can never disagree between screens:
   sponsors, not scored, because the registry says they aren't recruiting yet
 
 **Your Bloodwork section** (label: "Your Bloodwork"):
-- Iron (Ferritin) — "Below Avg" — pink/magenta short bar
-- Hemoglobin — "Steady" — purple medium bar
+- Iron (Ferritin) — status and bar length both derived from the value against its range
+- Hemoglobin — same. Each marker keeps one consistent accent; which accent is `DESIGN.md`'s call
 - CTA button: "View Details →" → navigates to Screen 2
 
 **Insurance row:** "Full Coverage ✓" — green check
@@ -121,12 +118,15 @@ markup, so a name or score can never disagree between screens:
 **Gauge meter:** Semicircle gauge, arrow pointing to "OK" zone
 
 **Colored bars** (horizontal, show value vs. normal range):
-| Marker | Color | Status | Fake value |
-|---|---|---|---|
-| Iron (Ferritin) | Pink `#E91E8C` | Too Low | 8 ng/mL (normal: 12–150) |
-| Hemoglobin | Purple `#9C27B0` | Average | 13.1 g/dL (normal: 12–16) |
-| Oxygen Saturation (SpO2) | Teal `#26A69A` | Steady | 97% (normal: 95–100%) |
-| LDL Cholesterol | Blue `#2196F3` | Optimal | 95 mg/dL (normal: <100) |
+| Marker | Reference range |
+|---|---|
+| Iron (Ferritin) | 12–150 ng/mL |
+| Hemoglobin | 12–16 g/dL |
+| Oxygen Saturation (SpO2) | 95–100 % |
+| LDL Cholesterol | target < 100 mg/dL |
+
+Each marker carries one consistent accent everywhere it appears; which accents is
+[`DESIGN.md`](DESIGN.md)'s call. Values are read from the user's own documents, never fixtures.
 
 **Recommendations panel:**
 1. "Increase iron intake — consider iron-rich foods or supplements"

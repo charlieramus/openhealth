@@ -2,79 +2,128 @@
 <title>OpenHealth</title>
 <meta name="description" content="OpenHealth — interactive three-screen prototype: your whole health picture in one app, with clinical-trial matching.">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<!-- No font requests. The three Google Fonts calls that used to sit here were
+     the only thing breaking the zero-network-calls rule (HANDOFF-V1.md 4.1);
+     the "Tolerance" system runs on a system sans + system mono stack, and the
+     IBM Plex Mono subset gets embedded as base64 when it lands.
+     docs/DESIGN.md 7.3 -->
 
 <style>
-/* ============================================================
-   OpenHealth — interactive prototype
-   One phone, three screens on a sliding track, persistent tabs.
+/* ======================================================================
+   OpenHealth — "Tolerance"
+   The design system is specified in docs/DESIGN.md §7. Read that before
+   changing a token here.
 
-   Visual language: a green gradient hero owns the brand and the
-   one number that matters; everything else is white cards on a
-   soft light canvas. The four-colour biomarker spectrum survives
-   only where colour carries meaning — lab bars and eligibility.
-   ============================================================ */
+   The one rule the whole sheet obeys:
+     YOUR VALUE IS INK. THE REQUIREMENT IS A TINT. THE GAP IS THE ONLY
+     THING IN SIGNAL COLOUR.
+   Colour never carries a verdict — mark, word and tick position do. That
+   is why this interface passes greyscale without a special pass.
+
+   Replaced the green-forward theme wholesale on 2026-10-07. The 193-class
+   selector contract is kept intact so the render functions in <script>
+   keep working untouched.
+   ====================================================================== */
 :root{
   color-scheme: light;
 
-  /* Neutrals — very slightly warm-green so white cards sit calm */
-  --canvas:#E6EAE5;
-  --screen:#F3F5F1;
-  --surface:#FFFFFF;
-  --surface-2:#F0F3EC;
-  --ink:#131A16;
-  --ink-2:#59645C;
-  --ink-3:#95A099;
-  --line:#E9ECE6;
-  --line-2:#DCE1D7;
+  /* ---- base palette (docs/DESIGN.md §7.2) ---- */
+  --paper:#E7ECEE;      /* canvas behind the device */
+  --sheet:#F7F9FA;      /* app background */
+  --card:#FFFFFF;       /* raised surface, used sparingly */
+  --ink:#17212A;        /* graphite — text AND every value tick */
+  --ink-2:#53646F;
+  --ink-3:#8698A3;      /* tick labels, captions */
+  --rule:#C9D5DB;       /* scale axes, threshold edges, card borders */
+  --band:#DCE6EA;       /* neutral required-range fill */
+  --inset:#EEF2F4;      /* bar tracks, insets */
 
-  /* Brand — the green that runs the hero, the CTAs, the tabs */
-  --brand:#46BC5C;
-  --brand-d:#2C9F45;
-  --lime:#B6E354;
-  --soft:#E9F6D5;
+  /* ---- THE signal. Near-miss only. Nothing else, ever. ---- */
+  --gap:#B81D40;
 
-  /* Biomarker spectrum — each colour always means the same marker */
-  --iron:#E11D74;
-  --hgb:#7C4DFF;
-  --o2:#12B3A6;
-  --ldl:#2F80ED;
+  /* ---- marker identity: low chroma, lightness spread for greyscale ---- */
+  --m-fe:#8C3C62;
+  --m-hgb:#3F4A86;
+  --m-o2:#1F6B64;
+  --m-ldl:#4A6B8A;
 
-  --good:#12B76A;
-  --warn:#F5A524;
+  /* ---- type ---- */
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,
+         Helvetica,Arial,sans-serif;
 
-  --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
-  --body:'Inter',system-ui,-apple-system,sans-serif;
+  --t-quant-xl:2.25rem;
+  --t-h1:1.375rem;
+  --t-h2:1.0625rem;
+  --t-quant:1rem;
+  --t-body:.9375rem;
+  --t-small:.8125rem;
+  --t-tick:.6875rem;
 
-  --r:22px;
-  --r-sm:14px;
-  --pad:18px;
-  --shadow:0 1px 2px rgba(19,26,22,.04),0 10px 26px -14px rgba(19,26,22,.18);
+  /* ---- radius encodes hierarchy; nothing is uniformly rounded ---- */
+  --r-sheet:16px;
+  --r-card:10px;
+  --r-chip:3px;
+
+  --pad:20px;
+
+  /* ---- ALIASES ------------------------------------------------------
+     These eleven tokens are referenced from the static markup and from
+     the render functions (t.color), so they must stay defined. They now
+     point into the system above instead of the retired green theme.
+     Do not reintroduce a green: --brand* deliberately resolves to ink.
+     ------------------------------------------------------------------ */
+  --iron:var(--m-fe);
+  --hgb:var(--m-hgb);
+  --o2:var(--m-o2);
+  --ldl:var(--m-ldl);
+  --brand:var(--ink);
+  --brand-d:var(--ink);
+  --good:var(--ink-2);
+  --warn:var(--gap);
+  --line:var(--rule);
+  --line-2:var(--rule);
+  --surface:var(--card);
+  --surface-2:var(--inset);
+  --screen:var(--sheet);
+  --canvas:var(--paper);
+  --display:var(--sans);
+  --body:var(--sans);
+  --r:var(--r-card);
+  --r-sm:var(--r-chip);
+  --shadow:none;
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{
-  font-family:var(--body);
+  font-family:var(--sans);
+  font-size:var(--t-body);
   color:var(--ink);
-  background:radial-gradient(120% 60% at 50% -10%,#EDF0EA 0%,var(--canvas) 60%);
+  background:var(--paper);
   -webkit-font-smoothing:antialiased;
-  /* BOTH tracks are minmax(0,1fr). The rows one was always here; without the
-     columns one the single auto column sized to .phone's 404px max-width —
-     place-items:center stops the item stretching, so the track took its
-     max-content — and the whole page scrolled sideways on any viewport
-     narrower than 404 (iPhone SE and mini, most Androids at 360). */
+  /* BOTH tracks stay minmax(0,1fr) — load-bearing, see docs/DESIGN.md §7.5.
+     Without the columns one the page scrolls sideways under 404px. */
   display:grid;grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr);
   place-items:center;
 }
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+/* Load-bearing: the render functions show and hide with the hidden attribute,
+   and almost every component here sets an explicit display. Without this the
+   first-run button, the empty callouts and the OCR panel all render. */
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:2px}
+
+/* quantities are mono + tabular so they align against scale ticks */
+.n,.v,.val,.num,.xval,.unit,.u,.ev,.big .n,.conf,.vscore,.sh,
+.scale-legend,.tick,.gap-lab,.src{font-variant-numeric:tabular-nums}
 
 /* ============================ device shell ============================ */
 .stage{
   width:100%;height:100%;min-height:0;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
 }
 .stage-caption{display:none}
 
@@ -82,41 +131,37 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   position:relative;
   width:100%;max-width:404px;
   flex:1 1 auto;min-height:0;
-  background:var(--screen);
+  background:var(--sheet);
   display:flex;flex-direction:column;
   overflow:hidden;
 }
-/* the gradient lives on the shell, so the white sheet scrolls over it */
-.phone::before{
-  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
-  background:linear-gradient(174deg,
-    #2FCB6E 0%,
-    #63D562 17%,
-    #A8DF6E 31%,
-    #D9EBA6 42%,
-    #EDF2D8 50%,
-    var(--screen) 60%);
-  opacity:0;transition:opacity .5s ease;
-}
-.phone.hero::before{opacity:1}
+/* the green→lime gradient is DELETED (docs/DESIGN.md §7.5). No washes. */
+.phone::before{content:none}
 
 @media (min-width:520px) and (min-height:720px){
   .stage{padding:26px 20px}
   .stage-caption{
-    display:flex;align-items:center;gap:10px;
-    font-family:var(--display);font-weight:700;font-size:.9rem;
+    display:flex;align-items:baseline;gap:9px;
+    font-weight:650;font-size:var(--t-small);
     color:var(--ink-2);letter-spacing:-.01em;
   }
+  /* was a 4-colour gradient chip; now the four marker ticks, which is what
+     the app actually is — a scale with marks on it */
   .stage-caption .spectrum{
-    width:34px;height:8px;border-radius:6px;
-    background:linear-gradient(90deg,var(--iron),var(--hgb),var(--o2),var(--ldl));
+    width:32px;height:9px;align-self:center;
+    background:
+      linear-gradient(var(--m-fe),var(--m-fe)) 2px 0/2px 100% no-repeat,
+      linear-gradient(var(--m-hgb),var(--m-hgb)) 11px 0/2px 100% no-repeat,
+      linear-gradient(var(--m-o2),var(--m-o2)) 20px 0/2px 100% no-repeat,
+      linear-gradient(var(--m-ldl),var(--m-ldl)) 29px 0/2px 100% no-repeat,
+      linear-gradient(var(--rule),var(--rule)) 0 100%/100% 1px no-repeat;
   }
-  .stage-caption small{font-family:var(--body);font-weight:500;color:var(--ink-3)}
+  .stage-caption small{font-weight:400;color:var(--ink-3)}
   .phone{
-    /* iPhone 17 proportions — 402×874pt ≈ 2.174:1, a touch longer than before */
     max-height:878px;
-    border-radius:46px;
-    box-shadow:0 0 0 11px #0B0E0C,0 0 0 12px #262C27,0 40px 80px -28px rgba(19,26,22,.5);
+    border-radius:44px;
+    /* the one shadow in the system */
+    box-shadow:0 0 0 10px #0E1419,0 0 0 11px #2A343B,0 30px 70px -30px rgba(23,33,42,.45);
   }
 }
 
@@ -124,816 +169,765 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .statusbar{
   position:relative;z-index:20;flex:0 0 auto;
   display:flex;align-items:center;justify-content:space-between;
-  padding:calc(env(safe-area-inset-top,0px) + 12px) 26px 4px;
-  font-family:var(--display);font-weight:700;font-size:.82rem;
+  padding:calc(env(safe-area-inset-top,0px) + 12px) 24px 6px;
+  font-family:var(--mono);font-weight:600;font-size:.75rem;
+  color:var(--ink);
 }
-.statusbar .icons{display:flex;align-items:center;gap:6px}
+.statusbar .icons{display:flex;align-items:center;gap:6px;color:var(--ink)}
 .statusbar svg{display:block}
 
 /* ============================ screen track ============================ */
 .viewport{position:relative;z-index:1;flex:1 1 auto;min-height:0;overflow:hidden}
-.track{display:flex;width:500%;height:100%;transition:transform .48s cubic-bezier(.4,.9,.25,1)}
-.screen{
-  width:20%;height:100%;
-  overflow-y:auto;overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
+.viewport>.track{display:flex;width:500%;height:100%;
+  transition:transform .42s cubic-bezier(.4,.9,.25,1)}
+.screen{width:20%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.screen-inner{
+  display:flex;flex-direction:column;gap:22px;
+  padding:14px var(--pad) calc(26px + env(safe-area-inset-bottom,0px));
 }
-.screen::-webkit-scrollbar{display:none}
-#s1,#s2,#s3,#s4{background:var(--screen)}
-.screen-inner{display:flex;flex-direction:column;padding:0 0 26px}
-#s1 .screen-inner,#s2 .screen-inner,#s3 .screen-inner,#s4 .screen-inner{gap:18px;padding:6px var(--pad) 26px}
 
-/* staggered entrance — replayed each time a screen becomes active */
-.reveal{opacity:0;transform:translateY(14px)}
-.screen.in .reveal{animation:rise .55s cubic-bezier(.2,.8,.3,1) forwards}
-.screen.in .reveal:nth-child(1){animation-delay:.02s}
-.screen.in .reveal:nth-child(2){animation-delay:.07s}
-.screen.in .reveal:nth-child(3){animation-delay:.12s}
-.screen.in .reveal:nth-child(4){animation-delay:.17s}
-.screen.in .reveal:nth-child(5){animation-delay:.22s}
-.screen.in .reveal:nth-child(6){animation-delay:.27s}
-.screen.in .reveal:nth-child(7){animation-delay:.32s}
-.screen.in .reveal:nth-child(8){animation-delay:.37s}
-@keyframes rise{to{opacity:1;transform:none}}
+/* .reveal is a NO-OP. The class stays for the JS contract, but the
+   fade-and-slide-up entrance on every section is gone — docs/DESIGN.md §7.6
+   keeps exactly one orchestrated moment and this was not it. */
+.reveal{}
 
-/* ============================ shared bits ============================ */
+/* ============================ shared primitives ============================ */
+h1{font-size:var(--t-h1);font-weight:650;letter-spacing:-.02em;line-height:1.25;
+   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+h2{font-size:var(--t-h2);font-weight:650;letter-spacing:-.01em;line-height:1.25}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--rule);
+  border-radius:var(--r-card);
+  padding:16px;
+}
+
+/* .eyebrow — the eleven all-caps labels are retired. The class survives so
+   nothing explodes, but it renders as a plain sentence-case heading, NOT
+   tracked-out caps (docs/DESIGN.md §7.3). */
 .eyebrow{
-  font-family:var(--display);font-weight:700;font-size:.82rem;
-  letter-spacing:.01em;color:var(--ink-2);margin-bottom:9px;
+  font-size:var(--t-h2);font-weight:650;letter-spacing:-.01em;
+  text-transform:none;color:var(--ink);margin-bottom:8px;
 }
-.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px}
-.section-head .eyebrow{margin:0}
-.sub-line{font-size:.71rem;font-weight:600;color:var(--ink-3);margin-top:2px}
-.link{font-family:var(--display);font-weight:700;font-size:.78rem;color:var(--brand-d)}
-.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:9px}
+.section-head .eyebrow{margin-bottom:0}
+.sub-line{font-size:var(--t-small);color:var(--ink-2);margin-top:1px}
+.link{font-weight:600;font-size:var(--t-small);color:var(--ink);text-decoration:underline;
+      text-decoration-color:var(--rule);text-underline-offset:3px}
+.link:hover{text-decoration-color:var(--ink)}
+
+.btn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:9px;
+  padding:14px 18px;border-radius:var(--r-card);
+  background:var(--ink);color:var(--sheet);
+  font-weight:650;font-size:var(--t-body);letter-spacing:-.01em;
+}
+.btn:hover{background:#0E1720}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{background:var(--inset);color:var(--ink-3);cursor:default;transform:none}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--rule)}
+.btn svg{display:block}
+
 .chip{
   display:inline-flex;align-items:center;gap:5px;
-  padding:4px 9px;border-radius:999px;
-  font-size:.7rem;font-weight:700;letter-spacing:.01em;white-space:nowrap;
+  padding:4px 8px;border-radius:var(--r-chip);
+  background:var(--inset);border:1px solid var(--rule);
+  font-size:var(--t-small);font-weight:600;color:var(--ink-2);
 }
-.btn{
-  display:flex;align-items:center;justify-content:center;gap:9px;
-  width:100%;padding:16px;border-radius:18px;
-  background:var(--brand);color:#fff;
-  font-family:var(--display);font-weight:700;font-size:.98rem;
-  box-shadow:0 10px 22px -12px rgba(44,159,69,.9);
-  transition:transform .15s ease;
+.dot{width:7px;height:7px;border-radius:0;flex:0 0 auto;display:inline-block}
+.empty{font-size:var(--t-small);color:var(--ink-2);padding:14px 0;line-height:1.5}
+.hint,.mnote,.unote,.cnote,.foods-note,.audit-note,.doc-note,.gauge-note{
+  font-size:var(--t-small);color:var(--ink-2);line-height:1.5;
 }
-.btn:active{transform:scale(.98)}
-.btn:disabled{background:var(--soft);color:var(--brand-d);box-shadow:none;cursor:default}
-.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.err{font-size:var(--t-small);color:var(--gap);font-weight:600;margin-top:6px}
 
-/* ============================ screen 1 · hero ============================ */
-.hero-top{padding:8px var(--pad) 0;display:flex;align-items:center;justify-content:space-between}
+.topbar{display:flex;align-items:flex-start;gap:12px;padding:4px 0 2px}
+.topbar .mid{flex:1 1 auto;min-width:0}
+.topbar .sub{font-size:var(--t-small);color:var(--ink-2);margin-top:2px}
+.back,.more,.bell,.go{
+  flex:0 0 auto;display:grid;place-items:center;
+  width:40px;height:40px;border-radius:var(--r-card);color:var(--ink);
+}
+.back{border:1px solid var(--rule);background:var(--card)}
+.back:hover{background:var(--inset)}
+.more{color:var(--ink-3)}
+.go{width:auto;height:auto;color:var(--ink-3)}
+
+.disclaimer{
+  display:flex;gap:9px;align-items:flex-start;
+  padding:13px 14px;border-radius:var(--r-card);
+  background:var(--inset);border:1px solid var(--rule);
+  font-size:var(--t-small);color:var(--ink-2);line-height:1.5;
+}
+.disclaimer svg{flex:0 0 auto;margin-top:2px;color:var(--ink-3)}
+
+/* =======================================================================
+   THE TOLERANCE SCALE — the signature primitive (docs/DESIGN.md §7.4)
+
+   Markup already emitted by renderMarkerCard():
+     .scale > .band + .pin        (and .scale.none for unknown)
+   A hairline in this system marks a value or a boundary. Never decoration.
+   ======================================================================= */
+.scale{
+  position:relative;
+  height:34px;
+  margin:10px 0 0;
+  /* the axis: one 1px rule along the baseline */
+  background:linear-gradient(var(--rule),var(--rule)) 0 100%/100% 1px no-repeat;
+}
+
+/* the required range. Tint = which marker. Solid 1px edges = the thresholds,
+   because the thresholds are the numbers that decide the verdict. */
+.scale .band{
+  position:absolute;top:6px;bottom:1px;
+  /* alpha lives in the colour, NOT in opacity — an opacity here would clamp
+     the threshold edges below, and the edges are the numbers that decide */
+  background:color-mix(in srgb,var(--c,var(--ink-2)) 20%,transparent);
+}
+.scale .band::before,.scale .band::after{
+  content:'';position:absolute;top:0;bottom:0;width:1px;
+  background:var(--c,var(--ink-2));
+}
+.scale .band::before{left:0}
+.scale .band::after{right:0}
+
+/* YOUR VALUE. The highest-contrast mark on the scale, and always ink —
+   never the marker tint, never a verdict colour. */
+.scale .pin{
+  position:absolute;top:0;bottom:1px;width:2px;
+  background:var(--ink)!important;   /* beats the inline marker colour */
+  transform:translateX(-1px);
+  z-index:2;
+}
+.scale .pin::after{
+  content:'';position:absolute;left:-2px;bottom:-1px;width:6px;height:6px;
+  background:var(--ink);
+  clip-path:polygon(50% 0,100% 100%,0 100%);
+}
+
+/* THE GAP — the one high-chroma thing in the interface. Near-miss only.
+   Spans the tick to the threshold it missed. */
+.scale .gap{
+  position:absolute;bottom:1px;height:9px;
+  border:1px solid var(--gap);border-top:0;
+  z-index:1;
+}
+.gap-lab{
+  font-family:var(--mono);font-size:var(--t-tick);font-weight:600;
+  color:var(--gap);
+}
+
+/* UNKNOWN — axis drawn, band drawn as a dashed outline, NO tick.
+   Unknown is drawn, not omitted, and it is not quieter than a fail. */
+.scale.none{}
+.scale.none::before{
+  content:'';position:absolute;left:18%;right:18%;top:6px;bottom:1px;
+  border:1px dashed var(--rule);
+  background:repeating-linear-gradient(135deg,transparent 0 5px,var(--inset) 5px 10px);
+}
+.scale.none::after{
+  content:'not read';
+  position:absolute;left:0;right:0;top:11px;
+  text-align:center;
+  font-family:var(--sans);font-size:var(--t-tick);font-weight:600;
+  color:var(--ink-2);letter-spacing:0;
+}
+
+.scale-legend{
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  margin-top:5px;
+  font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-3);
+}
+.scale-legend b{font-family:var(--sans);font-weight:650;color:var(--ink);font-size:var(--t-small)}
+
+/* ============================ HOME ============================ */
+.hero-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .wordmark{
-  font-family:var(--display);font-weight:800;font-size:1.46rem;letter-spacing:-.035em;
-  color:#0E2A17;display:flex;align-items:center;gap:7px;
+  display:flex;align-items:center;gap:8px;
+  font-size:var(--t-h1);font-weight:650;letter-spacing:-.03em;color:var(--ink);
 }
+/* the mark: a tick on an axis */
 .wordmark i{
-  width:9px;height:9px;border-radius:50%;background:#0E2A17;
-  box-shadow:0 0 0 4px rgba(255,255,255,.45);
+  width:16px;height:16px;flex:0 0 auto;
+  background:
+    linear-gradient(var(--ink),var(--ink)) 6px 0/2px 11px no-repeat,
+    linear-gradient(var(--rule),var(--rule)) 0 100%/100% 1px no-repeat;
 }
-.hero-top .right{display:flex;align-items:center;gap:9px}
-.bell{
-  position:relative;width:38px;height:38px;border-radius:50%;
-  background:rgba(255,255,255,.62);display:grid;place-items:center;
-}
-.bell::after{
-  content:'';position:absolute;top:8px;right:9px;
-  width:8px;height:8px;border-radius:50%;background:var(--iron);
-  box-shadow:0 0 0 2px rgba(255,255,255,.85);
-}
+.hero-top .right{display:flex;align-items:center;gap:6px}
 
-.score{display:flex;flex-direction:column;align-items:center;padding:6px var(--pad) 0}
-.ring-wrap{position:relative;width:216px;height:216px;display:grid;place-items:center}
-.ring-wrap svg{position:absolute;inset:0}
-.ring-prog{stroke-dasharray:534;stroke-dashoffset:534}
-.screen.in .ring-prog{animation:draw 1.5s cubic-bezier(.2,.8,.3,1) .25s forwards}
-@keyframes draw{to{stroke-dashoffset:var(--off)}}
-.ring-center{display:flex;flex-direction:column;align-items:center;line-height:1}
-.ring-center .n{
-  font-family:var(--display);font-weight:800;font-size:4rem;
-  letter-spacing:-.05em;color:#0E2A17;
+/* The score is NOT the hero any more. It is a summary of the scales below
+   it, so it is set small, in mono, with its confidence line attached.
+   The 216px ring + gradient wash is retired (docs/DESIGN.md §7.1). */
+.score{display:flex;flex-direction:column;gap:14px}
+.score .ring-wrap{
+  display:flex;align-items:baseline;gap:10px;
 }
-.ring-center .d{
-  font-family:var(--display);font-weight:700;font-size:1rem;
-  color:#164326;opacity:.78;margin-top:7px;
+.score .ring-wrap svg{display:none}          /* the ring itself is gone */
+.score .ring-center{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.score .ring-center .n{
+  font-family:var(--mono);font-weight:600;font-size:var(--t-quant-xl);
+  letter-spacing:-.03em;line-height:1;color:var(--ink);
 }
-/* The confidence line, directly beneath the number: how much of the picture
-   the score was actually computed from. It sits with the number rather than
-   somewhere further down the screen, because a score shown without its
-   denominator is the dishonest output this project exists to avoid. */
-.ring-center .conf{
-  font-size:.71rem;font-weight:600;letter-spacing:.01em;
-  color:#164326;opacity:.6;margin-top:6px;
+.score .ring-center .d{font-size:var(--t-small);color:var(--ink-2);font-weight:600}
+.score .ring-center .conf{
+  font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-3);
+  width:100%;
 }
-.delta{
-  display:inline-flex;align-items:center;gap:6px;margin-top:12px;
-  padding:6px 13px;border-radius:999px;background:rgba(255,255,255,.55);
-  font-size:.74rem;font-weight:600;color:#12401F;
-}
+.delta{font-size:var(--t-small);color:var(--ink-2);line-height:1.5}
+.delta b{font-weight:650;color:var(--ink)}
 
-/* the three biomarker bars that stand in for the macro bars */
-.macros{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:14px var(--pad) 0;width:100%}
-.macro{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
-.macro .lab{font-family:var(--display);font-weight:700;font-size:.79rem;color:#12301C}
-.macro .track{width:100%;height:7px;border-radius:999px;background:rgba(255,255,255,.6);overflow:hidden}
-.macro .track i{display:block;height:100%;border-radius:999px;width:0;transition:width 1.1s cubic-bezier(.2,.8,.3,1) .4s}
-.screen.in .macro .track i{width:var(--w)}
-.macro .v{font-size:.72rem;font-weight:600;color:#16351F;opacity:.72;white-space:nowrap}
-.macro .v b{font-weight:700;opacity:1}
-
-/* the number is a word on first run, and a 4rem word overruns the ring */
-.ring-center .n.none{font-size:1.42rem;letter-spacing:-.02em;text-align:center}
-
-/* one action, and the only one that can change the state it is explaining */
-.first-run{
-  align-self:center;margin:20px auto 4px;
-  display:flex;align-items:center;gap:8px;
-  padding:13px 22px;border-radius:999px;background:var(--brand-d);color:#fff;
-  font-family:var(--display);font-weight:700;font-size:.9rem;
-  box-shadow:0 8px 20px -10px rgba(14,42,23,.6);
-  transition:transform .15s ease;
+/* the three biomarker scales — the actual hero of the home screen */
+/* The three biomarker scales. THIS is the home hero — the stack of
+   tolerances, not a score ring (docs/DESIGN.md 7.1). renderMacros() emits
+   .macro > .lab + .track > i + .v, so .track here is the axis and i is the
+   value mark. */
+.macros{display:flex;flex-direction:column;gap:17px}
+.macro{display:grid;grid-template-columns:1fr auto;gap:0 10px;align-items:baseline}
+.macro .lab{font-size:var(--t-body);font-weight:650;color:var(--ink);letter-spacing:-.01em}
+.macro .v{
+  font-family:var(--mono);font-weight:400;font-size:var(--t-tick);
+  color:var(--ink-3);text-align:right;white-space:nowrap;
 }
-.first-run:active{transform:scale(.97)}
+.macro .v b{font-weight:600;font-size:var(--t-quant);color:var(--ink);margin-right:2px}
+.macro .scale{grid-column:1/-1}
+.macro .scale-legend{grid-column:1/-1}
 
-/* ---- Records captured: the one full-width panel on the Today card ---- */
-.captured{
-  background:var(--surface);border:1px solid var(--line);
-  border-radius:20px;padding:14px;
-  display:flex;flex-direction:column;gap:12px;
+.first-run,.see{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  align-self:flex-start;
+  padding:11px 15px;border-radius:var(--r-card);
+  font-weight:650;font-size:var(--t-small);
 }
-.cap-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-.cap-strip{display:flex;gap:9px;overflow-x:auto;scrollbar-width:none}
-.cap-strip::-webkit-scrollbar{display:none}
+.first-run{background:var(--ink);color:var(--sheet)}
+.see{border:1px solid var(--rule);background:var(--card);color:var(--ink)}
+.see:hover{background:var(--inset)}
+.see svg,.first-run svg{display:block}
+
+/* the white sheet that used to scroll over a gradient is now just the page */
+.sheet{display:flex;flex-direction:column;gap:22px}
+.sheet-head{display:flex;align-items:center;gap:10px}
+.sheet-head h2{flex:1 1 auto;min-width:0}
+.sheet-head .cal{display:grid;place-items:center;width:30px;height:30px;
+  border:1px solid var(--rule);border-radius:var(--r-chip);color:var(--ink-2)}
+
+.captured{border:1px solid var(--rule);border-radius:var(--r-card);background:var(--card);padding:14px}
+.cap-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:11px}
+.cap-strip{display:flex;gap:9px;overflow-x:auto;padding-bottom:3px}
 .cap-item{
-  flex:0 0 auto;width:58px;display:flex;flex-direction:column;align-items:center;gap:5px;
+  flex:0 0 auto;width:74px;
+  display:flex;flex-direction:column;gap:5px;
+  text-align:left;color:var(--ink);
 }
-.cap-item .sh{
-  width:58px;height:72px;border-radius:12px;background:var(--surface-2);
-  border:1px solid var(--line);overflow:hidden;display:grid;place-items:center;
+.cap-item .thumb,.cap-item .sh{
+  width:74px;height:74px;border-radius:var(--r-chip);
+  border:1px solid var(--rule);background:var(--inset);
+  display:grid;place-items:center;overflow:hidden;
 }
-.cap-item .sh img{width:100%;height:100%;object-fit:cover;display:block}
-.cap-item .cl{
-  font-size:.62rem;font-weight:600;color:var(--ink-3);
-  max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-}
-button.cap-item{cursor:pointer;transition:transform .15s ease}
-button.cap-item:active{transform:scale(.96)}
-button.cap-item .sh{border-style:dashed;color:var(--brand-d)}
+.cap-item .thumb img,.cap-item img{width:100%;height:100%;object-fit:cover;display:block}
+button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
+.cap-item .cap{font-size:var(--t-tick);color:var(--ink-2);line-height:1.35}
+.cap-item .sh{font-family:var(--mono);font-size:var(--t-tick)}
 
-.see{
-  align-self:center;margin:18px auto 22px;
-  display:flex;align-items:center;gap:8px;
-  padding:12px 20px;border-radius:999px;
-  background:rgba(255,255,255,.85);
-  font-family:var(--display);font-weight:700;font-size:.87rem;color:#12301C;
-  box-shadow:0 6px 18px -10px rgba(19,26,22,.45);
-  transition:transform .15s ease;
+/* ============================ trial rows (home + related) ============================ */
+.row,.row-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:13px 0;border-top:1px solid var(--rule);
+  text-align:left;width:100%;color:var(--ink);
 }
-.see:active{transform:scale(.97)}
+.row:first-child,.row-item:first-child{border-top:0}
+.row .tx,.row-item .tx{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+.row .nm,.row-item .nm,.row .name{font-weight:650;font-size:var(--t-body);letter-spacing:-.01em;line-height:1.3}
+.row .meta,.row-item .meta{font-size:var(--t-small);color:var(--ink-2);line-height:1.45}
+.row .src,.src{font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-3)}
+.tappable:hover{background:var(--inset)}
 
-/* ---- the white sheet that slides up over the gradient ---- */
-.sheet{
-  background:var(--surface);
-  border-radius:30px 30px 0 0;
-  box-shadow:0 -10px 34px -18px rgba(19,26,22,.35);
-  padding:6px var(--pad) 22px;
-  display:flex;flex-direction:column;gap:16px;
-  min-height:340px;
-}
-.sheet-head{
-  display:flex;align-items:center;gap:10px;
-  padding:14px 2px 2px;
-}
-.sheet-head .cal{
-  width:34px;height:34px;border-radius:11px;background:var(--soft);
-  /* BOTH tracks are minmax(0,1fr). The rows one was always here; without the
-     columns one the single auto column sized to .phone's 404px max-width —
-     place-items:center stops the item stretching, so the track took its
-     max-content — and the whole page scrolled sideways on any viewport
-     narrower than 404 (iPhone SE and mini, most Androids at 360). */
-  display:grid;grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr);
-  place-items:center;
-}
-.sheet-head h2{font-family:var(--display);font-weight:800;font-size:1.12rem;letter-spacing:-.025em}
-.sheet-head .go{margin-left:auto;color:var(--ink-3)}
-
-/* a list row — the food row from the reference, carrying a trial instead */
+/* Home's ranked rows are a grid, not a flex line: the condition-code badge spans
+   both rows, the title and the chevron share the top one, the tally and the two
+   hints sit beneath. Dropping grid-area drops the badge letters out of their box
+   and wraps the hint row onto three lines, so these areas are load-bearing. */
 .row-item{
   display:grid;
   grid-template-columns:auto 1fr auto;
   grid-template-areas:'ic tx add' 'ic meta meta';
-  align-items:center;column-gap:12px;row-gap:9px;
-  padding:14px;border-radius:20px;background:var(--surface);
-  border:1px solid var(--line);
-  transition:transform .15s ease,box-shadow .2s ease;
+  align-items:center;column-gap:12px;row-gap:8px;
+  padding:13px 0;border-top:1px solid var(--rule);
 }
-.row-item.tappable{cursor:pointer}
-.row-item.tappable:active{transform:scale(.985)}
-.row-item.live{border-color:transparent;box-shadow:var(--shadow)}
 .row-item .ic{
-  grid-area:ic;width:50px;height:50px;border-radius:16px;
-  display:grid;place-items:center;font-family:var(--display);font-weight:800;
-  font-size:.84rem;letter-spacing:-.02em;
+  grid-area:ic;align-self:start;width:38px;height:38px;
+  display:grid;place-items:center;
+  border:1px solid var(--rule);border-radius:var(--r-chip);
+  font-family:var(--mono);font-weight:600;font-size:var(--t-tick);
 }
-.row-item .tx{grid-area:tx;min-width:0}
+.row-item .tx{grid-area:tx;display:block;min-width:0}
 /* registry titles run to ninety characters. Two lines, then stop — the full
    title is the heading of the screen this row opens. */
 .row-item .tx b{
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-  font-family:var(--display);font-weight:700;font-size:.95rem;line-height:1.25;
-  letter-spacing:-.02em;margin-bottom:3px;
+  font-weight:650;font-size:var(--t-small);line-height:1.3;letter-spacing:-.01em;
 }
 .row-item .tx small{
-  display:block;font-size:.8rem;color:var(--ink-2);
+  display:block;margin-top:2px;font-size:var(--t-tick);color:var(--ink-2);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 /* a navigation affordance, not an action button: the row opens the audit */
-.row-item .add{
-  grid-area:add;width:34px;height:34px;border-radius:50%;
-  background:var(--surface-2);color:var(--ink-2);display:grid;place-items:center;
-}
-.row-item .add.ghost{background:var(--surface-2);color:var(--ink-3);box-shadow:none}
+.row-item .add{grid-area:add;align-self:start;display:grid;place-items:center;color:var(--ink-3)}
 .row-item .meta{
-  grid-area:meta;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  grid-area:meta;min-width:0;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
 }
+.row-item .meta .hint{
+  display:inline-flex;align-items:center;gap:5px;min-width:0;
+  font-size:var(--t-tick);color:var(--ink-3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.row-item .meta .hint svg{flex:0 0 auto}
+.row-item .vscore{text-align:left}
 
-/* THE SCORE+CONFIDENCE CHIP. One component, used on Home and on the audit
-   screen's ranked list, so the two can never show a trial differently. The two
-   numbers share a pill but not a line: the headline is the score out of 100,
-   the line under it is how much of the trial that score was computed from.
-   Neither is the other's denominator and the chip never prints their product. */
+/* the per-trial tally, set in mono so the columns line up down the list */
 .vscore{
-  display:inline-flex;flex-direction:column;align-items:flex-end;gap:1px;
-  background:var(--ink);color:#fff;border-radius:14px;
-  padding:6px 11px;white-space:nowrap;
+  flex:0 0 auto;font-family:var(--mono);font-size:var(--t-tick);
+  color:var(--ink-2);text-align:right;line-height:1.5;
 }
-.vscore b{font-family:var(--display);font-weight:800;font-size:.78rem;letter-spacing:-.015em}
-.vscore small{font-size:.59rem;font-weight:600;opacity:.74;letter-spacing:.02em}
-.vscore.weak{background:var(--warn);color:#38230A}
-.vscore.weak small{opacity:.8}
-/* blocked, or nothing checkable: no score is claimed at all */
-.vscore.none{background:var(--surface-2);color:var(--ink-2)}
-.vscore.none small{opacity:.9;color:var(--ink-3)}
-.row-item .hint{
-  display:flex;align-items:center;gap:5px;
-  font-size:.74rem;font-weight:600;color:var(--ink-3);
-}
-.row-item.soon{background:var(--surface-2);border-color:transparent}
-.row-item.soon .tx b,.row-item.soon .tx small{color:var(--ink-3)}
-.row-item.soon .ic{background:#E4E8E0;color:var(--ink-3)}
+/* two stacked lines, never one run-on: listChip emits <b>score</b><small>cover</small>
+   and both are inline elements, so the block is not optional. */
+.vscore b{display:block;font-weight:600;color:var(--ink);font-size:var(--t-small)}
+.vscore small{display:block;font-size:var(--t-tick);color:var(--ink-3)}
+/* a trial the engine could not score says so in words — no colour carries it (§7.2) */
+.vscore.none b{color:var(--ink-2)}
+.vscore .low{color:var(--ink-3)}
+.vscore .near{color:var(--gap)}
 
-/* 2-up stat tiles (the "step to walk / drink water" pattern) */
-.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.tile{
-  background:var(--surface);border:1px solid var(--line);
-  border-radius:20px;padding:14px;
-  display:flex;flex-direction:column;gap:10px;
+/* registry state. A word, not a colour. */
+.reg,.gov,.live,.soon,.sense{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:var(--t-tick);font-weight:600;color:var(--ink-2);
 }
-.tile .top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
-.tile .k{font-family:var(--display);font-weight:700;font-size:.82rem;color:var(--ink-2);line-height:1.25}
-.tile .ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto}
-.tile .v{font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.04em}
-.tile .v .u{font-family:var(--body);font-size:.78rem;font-weight:600;color:var(--ink-3);margin-left:4px}
-.tile .v.ok{color:var(--brand-d)}
-button.tile{text-align:left;cursor:pointer;transition:transform .15s ease}
-button.tile:active{transform:scale(.98)}
+.soon{color:var(--ink-3)}
 
-/* ============================ screen 2 · labs ============================ */
-.topbar{display:flex;align-items:flex-start;gap:12px;padding:6px 0 2px}
-.topbar .back,.topbar .more{
-  width:38px;height:38px;border-radius:50%;background:var(--surface);
-  display:grid;place-items:center;color:var(--ink);box-shadow:var(--shadow);flex:0 0 auto;
-}
-/* a registry briefTitle can run past ninety characters: three lines, then
-   stop. The NCT id in the tag row is the unambiguous handle. */
-.topbar h1{
-  font-family:var(--display);font-weight:800;font-size:.98rem;line-height:1.25;
-  letter-spacing:-.025em;
-  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
-}
-.topbar .back,.topbar .more{margin-top:2px}
-.topbar .sub{font-size:.76rem;color:var(--ink-3);margin-top:1px}
-.topbar .mid{flex:1;min-width:0}
-
-/* marker switcher */
-.switch{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
-.switch::-webkit-scrollbar{display:none}
+/* ============================ METRICS ============================ */
+.switch{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
 .switch button{
-  display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;
-  padding:9px 14px;border-radius:999px;background:var(--surface);
-  border:1px solid var(--line);
-  font-family:var(--display);font-weight:700;font-size:.8rem;color:var(--ink-2);
-  transition:background .2s ease,color .2s ease,border-color .2s ease;
+  flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;
+  padding:8px 11px;border-radius:var(--r-chip);
+  border:1px solid var(--rule);background:var(--card);
+  font-size:var(--t-small);font-weight:600;color:var(--ink-2);
 }
-.switch button .dot{width:8px;height:8px}
-.switch button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.switch button.on{background:var(--ink);border-color:var(--ink);color:var(--sheet)}
+.switch button.on .dot{box-shadow:0 0 0 1px var(--sheet)}
 
-/* big number + chart card */
-.chart-card{display:flex;flex-direction:column;gap:2px;padding:18px 16px 12px}
-.chart-card .name{font-family:var(--display);font-weight:700;font-size:.92rem;color:var(--ink-2)}
-.chart-card .big{display:flex;align-items:baseline;gap:8px;margin-top:2px}
+.chart-card .name{font-size:var(--t-h2);font-weight:650;letter-spacing:-.01em}
+.chart-card .big{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
 .chart-card .big .n{
-  font-family:var(--display);font-weight:800;font-size:2.7rem;letter-spacing:-.045em;
-  line-height:1.05;transition:color .3s ease;
+  font-family:var(--mono);font-weight:600;font-size:var(--t-quant-xl);
+  letter-spacing:-.03em;line-height:1;
+  /* beats renderChart()'s inline m.color — your value is ink, always */
+  color:var(--ink)!important;
 }
-.chart-card .big .unit{font-family:var(--body);font-size:.95rem;font-weight:700;color:var(--ink-3)}
-.chart-card .big .target{margin-left:auto;font-size:.78rem;color:var(--ink-3);font-weight:600;text-align:right}
-.chart-card .big .target b{color:var(--ink);font-weight:700}
+.chart-card .big .unit{font-family:var(--mono);font-size:var(--t-small);color:var(--ink-3)}
+.chart-card .big .target{
+  margin-left:auto;text-align:right;
+  font-size:var(--t-tick);color:var(--ink-3);line-height:1.5;
+}
+.chart-card .big .target b{font-family:var(--mono);font-weight:600;color:var(--ink-2);font-size:var(--t-small)}
 
-.chart{position:relative;z-index:0;height:168px;margin-top:18px;display:flex;align-items:flex-end;gap:0}
-.chart .limit{
-  position:absolute;left:0;right:0;height:0;
-  border-top:1.5px dashed var(--line-2);
-  transition:bottom .5s cubic-bezier(.2,.8,.3,1);
-}
-.chart .limit span{
-  position:absolute;left:0;top:-9px;background:var(--surface);
-  padding:0 6px 0 0;font-size:.64rem;font-weight:700;color:var(--ink-3);
+/* the seven draws. Columns on an axis, with the reference floor ruled across. */
+.chart{
+  position:relative;height:160px;margin:16px 0 8px;padding-bottom:18px;
+  display:flex;align-items:flex-end;gap:7px;
+  background:linear-gradient(var(--rule),var(--rule)) 0 calc(100% - 18px)/100% 1px no-repeat;
 }
 .bar-col{
-  flex:1;height:100%;display:flex;flex-direction:column;
-  align-items:center;justify-content:flex-end;gap:7px;position:relative;
+  flex:1 1 0;min-width:0;align-self:stretch;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  gap:3px;position:relative;
 }
 .bar-col .cap{
-  font-size:.63rem;font-weight:700;color:var(--ink-3);
-  opacity:0;transition:opacity .35s ease .45s;
+  font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-3);
+  order:1;
 }
-.bar-col.now .cap{opacity:1;color:var(--ink)}
 .bar-col .bar{
-  width:15px;border-radius:999px;height:0;
-  transition:height .7s cubic-bezier(.2,.8,.3,1),background .3s ease;
+  display:block;width:100%;height:0;order:2;
+  background:var(--ink)!important;opacity:.22;
+  transition:height .3s ease;
 }
-.bar-col .x{font-size:.66rem;line-height:14px;height:14px;font-weight:600;color:var(--ink-3);margin-top:2px}
-.bar-col.now .x{color:var(--ink);font-weight:700}
-.bar-col.now::before{
-  content:'';position:absolute;inset:0;
-  border-radius:12px;background:var(--surface-2);z-index:-1;
+.bar-col .x{
+  font-family:var(--sans);font-size:var(--t-tick);font-weight:600;
+  color:var(--ink-3);order:3;padding-top:4px;
 }
+/* only the latest draw is at full weight — it is the value being judged */
+.bar-col.now .bar{opacity:1}
+.bar-col.now .cap{color:var(--ink);font-weight:600}
+.chart .limit{
+  position:absolute;left:0;right:0;
+  border-top:1px dashed var(--gap);
+  pointer-events:none;
+}
+.chart .limit span{
+  /* on the LEFT: the right-hand end of this line is where the latest draw
+     sits, and its value label was landing on top of this one */
+  position:absolute;left:0;top:-7px;
+  font-family:var(--mono);font-size:var(--t-tick);font-weight:600;color:var(--gap);
+  background:var(--card);padding:0 4px 0 0;
+}
+.verdict{display:flex;gap:9px;align-items:flex-start;padding-top:12px;border-top:1px solid var(--rule)}
+.verdict .dot{margin-top:6px}
+.verdict .tx{flex:1 1 auto;font-size:var(--t-small);color:var(--ink-2);line-height:1.55}
+.verdict .tx b{font-weight:650;color:var(--ink)}
 
-.verdict{
-  display:flex;align-items:center;gap:9px;margin-top:14px;
-  padding:11px 12px;border-radius:14px;background:var(--surface-2);
-}
-.verdict .tx{font-size:.78rem;color:var(--ink-2);line-height:1.4}
-.verdict .tx b{color:var(--ink);font-weight:700}
+/* the four vitals tiles. NOTE: the values in these are hard-coded in the
+   static markup and are NOT read from garmin.json — flagged in
+   docs/DESIGN.md §7.9 as something to delete, not polish. */
+.vitals{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vital{border:1px solid var(--rule);border-radius:var(--r-card);background:var(--card);padding:12px}
+.vital .k{display:flex;align-items:center;gap:7px;font-size:var(--t-tick);font-weight:650;color:var(--ink-2)}
+.vital .ic{display:grid;place-items:center;width:22px;height:22px;border-radius:var(--r-chip)}
+.vital .g{display:flex;align-items:flex-end;gap:3px;height:34px;margin:9px 0 6px}
+.vital .g i{flex:1 1 0;display:block}
+.vital .v{font-family:var(--mono);font-weight:600;font-size:1.25rem;letter-spacing:-.02em;color:var(--ink)}
+.vital .u{font-family:var(--mono);font-weight:400;font-size:var(--t-tick);color:var(--ink-3);margin-left:3px}
 
-/* vitals tiles with mini-graphics */
-.vitals{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.vital{
-  background:var(--surface);border-radius:20px;box-shadow:var(--shadow);
-  padding:14px;display:flex;flex-direction:column;gap:8px;
-}
-.vital .k{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:.82rem;color:var(--ink-2)}
-.vital .k .ic{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto}
-.vital .g{height:34px;display:flex;align-items:flex-end;justify-content:space-between;gap:5px}
-.vital .g i{flex:1;max-width:12px;border-radius:3px;background:var(--surface-2)}
-.vital .v{font-family:var(--display);font-weight:800;font-size:1.44rem;letter-spacing:-.04em}
-.vital .v .u{font-family:var(--body);font-size:.74rem;font-weight:600;color:var(--ink-3);margin-left:4px}
+/* the gauge needle is retired — a dial is not a measurement against a
+   tolerance, and it duplicated what the scales already say. */
+.gauge-wrap{display:flex;flex-direction:column;gap:7px}
+.gauge-wrap svg{display:none}
+.gauge-status{font-size:var(--t-h2);font-weight:650;letter-spacing:-.01em;color:var(--ink)}
 
-/* overall gauge */
-.gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
-.gauge-wrap svg{display:block}
-.needle{transform-origin:115px 118px;transform:rotate(var(--ang,0deg))}
-.screen.in .needle{animation:swing 1.5s cubic-bezier(.3,1.4,.4,1) .35s forwards}
-@keyframes swing{0%{transform:rotate(-78deg)}60%{transform:rotate(calc(var(--ang,0deg) + 10deg))}100%{transform:rotate(var(--ang,0deg))}}
-.gauge-status{font-family:var(--display);font-weight:800;font-size:1.22rem;letter-spacing:-.03em;margin-top:6px}
-.gauge-note{font-size:.76rem;color:var(--ink-3);text-align:center}
-
-/* the four range rows straight out of the sketches */
-.markers{display:flex;flex-direction:column;gap:0}
-.marker{padding:15px 0;border-bottom:1px solid var(--line)}
-.marker:last-child{border-bottom:0;padding-bottom:2px}
-.marker .head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px}
-.marker .nm{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:.9rem}
-.marker .val{font-family:var(--display);font-weight:800;font-size:1.02rem;letter-spacing:-.03em}
-.marker .val .u{font-family:var(--body);font-size:.7rem;font-weight:600;color:var(--ink-3);margin-left:4px}
-.scale{position:relative;height:9px;border-radius:999px;background:var(--surface-2)}
-.scale.none{
-  background:repeating-linear-gradient(135deg,
-    var(--surface-2) 0 5px, transparent 5px 10px);
-  box-shadow:inset 0 0 0 1.5px var(--line-2);
-}
-.scale .band{position:absolute;top:0;bottom:0;border-radius:999px;opacity:.2}
-.scale .pin{
-  position:absolute;top:50%;width:15px;height:15px;border-radius:50%;
-  border:3px solid var(--surface);transform:translate(-50%,-50%) scale(0);
-  box-shadow:0 2px 6px rgba(19,26,22,.28);
-}
-.screen.in .scale .pin{animation:pop .5s cubic-bezier(.3,1.5,.5,1) .5s forwards}
-@keyframes pop{to{transform:translate(-50%,-50%) scale(1)}}
-.scale-legend{display:flex;justify-content:space-between;margin-top:8px;font-size:.71rem;color:var(--ink-3);font-weight:600}
-.scale-legend b{font-weight:700}
+/* every marker against its range — a stack of tolerance scales */
+.markers{display:flex;flex-direction:column}
+.marker{padding:15px 0;border-top:1px solid var(--rule)}
+.marker:first-child{border-top:0}
+.marker .head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.marker .nm{display:flex;align-items:center;gap:7px;font-weight:650;font-size:var(--t-body);letter-spacing:-.01em}
+.marker .val{font-family:var(--mono);font-weight:600;font-size:var(--t-quant);color:var(--ink)!important}
+.marker .val .u{font-family:var(--mono);font-weight:400;font-size:var(--t-tick);color:var(--ink-3);margin-left:3px}
 
 /* recommendations */
-.recs{display:flex;flex-direction:column;gap:2px;padding:4px 16px}
-.rec[hidden],.rec-group[hidden]{display:none}
-.rec{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}
-.rec:last-child{border-bottom:0}
-.rec .ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:0 0 auto}
-.rec .tx b{display:block;font-family:var(--display);font-weight:700;font-size:.9rem;margin-bottom:2px}
-.rec .tx small{display:block;font-size:.78rem;color:var(--ink-2);line-height:1.45}
+.recs{display:flex;flex-direction:column;padding:0}
+.rec,.rec-toggle{
+  display:flex;align-items:flex-start;gap:11px;width:100%;text-align:left;
+  padding:14px 16px;border-top:1px solid var(--rule);color:var(--ink);
+}
+.recs>:first-child .rec,.recs>.rec:first-child,.rec-group:first-child .rec-toggle{border-top:0}
+.rec .ic,.rec-toggle .ic{flex:0 0 auto;display:grid;place-items:center;width:28px;height:28px;border-radius:var(--r-chip)}
+.rec .tx,.rec-toggle .tx{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+.rec b,.rec-toggle b{font-weight:650;font-size:var(--t-body);letter-spacing:-.01em}
+.rec small,.rec-toggle small{font-size:var(--t-small);color:var(--ink-2);line-height:1.5}
+.chev{flex:0 0 auto;color:var(--ink-3);transition:transform .2s ease}
+[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.foods{display:none;padding:0 16px 14px}
+.rec-group.open .foods,.foods[data-open="1"]{display:block}
+.foods-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.food{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  padding:8px 10px;border:1px solid var(--rule);border-radius:var(--r-chip);background:var(--inset)}
+.food b{font-weight:600;font-size:var(--t-small)}
+.food small{font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-2)}
+.foods-note{display:flex;gap:7px;align-items:flex-start}
+.foods-note svg{flex:0 0 auto;margin-top:2px;color:var(--ink-3)}
 
-/* the "Raise your iron" row expands into a list of iron-rich foods */
-.rec-group{display:flex;flex-direction:column;border-bottom:1px solid var(--line)}
-.rec-group:last-child{border-bottom:0}
-.rec-group .rec{border-bottom:0}
-.rec-toggle{width:100%;text-align:left;align-items:center;transition:opacity .15s ease}
-.rec-toggle:active{opacity:.6}
-.rec-toggle .tx{flex:1;min-width:0}
-.rec-toggle .chev{
-  flex:0 0 auto;width:26px;height:26px;border-radius:50%;
-  display:grid;place-items:center;background:var(--surface-2);color:var(--ink-2);
-  transition:transform .3s cubic-bezier(.2,.8,.3,1),background .2s ease,color .2s ease;
+/* ============================ TRIALS ============================ */
+/* The two numbers stay two numbers, side by side, and neither is a ring. */
+.match-hero{display:flex;flex-direction:column;gap:14px}
+.hero-pair{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  border:1px solid var(--rule);border-radius:var(--r-card);background:var(--card);
+  padding:14px;
 }
-.rec-group.open .rec-toggle .chev{transform:rotate(180deg);background:var(--soft);color:var(--brand-d)}
-.foods{
-  overflow:hidden;max-height:0;opacity:0;
-  transition:max-height .4s cubic-bezier(.2,.8,.3,1),opacity .3s ease;
+.num-cell{display:flex;flex-direction:column;gap:4px;min-width:0}
+.num-cell+.num-cell{border-left:1px solid var(--rule);padding-left:12px}
+.num-cell .k{font-size:var(--t-tick);font-weight:650;color:var(--ink-2)}
+.num-cell .ring-wrap svg{display:none}
+.num-cell .ring-center{display:flex;align-items:baseline;gap:4px}
+.num-cell .ring-center .n,.num-cell .v{
+  font-family:var(--mono);font-weight:600;font-size:1.875rem;
+  letter-spacing:-.03em;line-height:1.05;color:var(--ink);
 }
-.rec-group.open .foods{max-height:360px;opacity:1}
-.foods-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:2px 0 10px}
-.food{
-  display:flex;align-items:baseline;justify-content:space-between;gap:8px;
-  padding:10px 12px;border-radius:13px;background:var(--surface-2);
+.num-cell .ring-center .d,.num-cell .v small{
+  font-family:var(--mono);font-weight:400;font-size:var(--t-small);color:var(--ink-3);
+  margin-left:5px;
 }
-.food b{font-family:var(--display);font-weight:700;font-size:.82rem;color:var(--ink)}
-.food small{font-family:var(--display);font-weight:700;font-size:.76rem;color:var(--iron);white-space:nowrap}
-.foods-note{
-  display:flex;align-items:center;gap:7px;
-  font-size:.74rem;color:var(--ink-3);line-height:1.4;padding:0 2px 8px;
-}
-.foods-note svg{flex:0 0 auto;color:var(--brand-d)}
+.num-cell .c{font-size:var(--t-tick);color:var(--ink-2);line-height:1.45}
+.noscore-note{font-size:var(--t-small);color:var(--ink-2);line-height:1.55}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
 
-/* ============================ screen 3 · trials ============================ */
-.match-hero{
-  border-radius:26px;padding:22px 18px 20px;
-  background:linear-gradient(160deg,#34CC71 0%,#7BDA62 44%,#C3E585 100%);
-  display:flex;flex-direction:column;align-items:center;
-  box-shadow:0 18px 34px -22px rgba(44,159,69,.9);
+.callout{
+  display:flex;gap:9px;align-items:flex-start;
+  padding:13px 14px;border-radius:var(--r-card);
+  font-size:var(--t-small);line-height:1.55;
+  border:1px solid var(--rule);background:var(--inset);color:var(--ink-2);
 }
-.match-hero .ring-wrap{width:186px;height:186px}
-.match-hero .ring-center .n{font-size:3.5rem}
-.match-hero h2{
-  font-family:var(--display);font-weight:800;font-size:1.32rem;letter-spacing:-.03em;
-  color:#0E2A17;margin-top:10px;
-}
-.match-hero .tags{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap;justify-content:center}
-.match-hero .tags .chip{background:rgba(255,255,255,.72);color:#12301C}
-/* the ClinicalTrials.gov ID — monospaced so it reads as a record, not a label */
-.match-hero .tags .chip.reg{
-  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  font-size:.66rem;letter-spacing:.02em;background:rgba(255,255,255,.52);
-}
+.callout b{font-weight:650;color:var(--ink)}
+.callout svg{flex:0 0 auto;margin-top:2px}
+/* ruled out: heavier left rule, ink. Not red — colour is not a verdict. */
+.callout.block{border-left:3px solid var(--ink)}
+/* near miss: the one place the signal colour appears outside a scale */
+.callout.near{border-left:3px solid var(--gap);background:#FDF4F6;border-color:#F0D3DA;color:var(--ink)}
+.callout.near b{color:var(--gap)}
 
-/* the same hero, warmed over, when the match is a poor one */
-.match-hero.weak{
-  background:linear-gradient(160deg,#F2994A 0%,#F5B461 46%,#F7D9A6 100%);
-  box-shadow:0 18px 34px -22px rgba(186,118,24,.9);
+/* ---- THE AUDIT TABLE. The reason the app exists. ---- */
+.audit{display:flex;flex-direction:column;padding:0}
+.arow{padding:15px 16px;border-top:1px solid var(--rule)}
+.arow:first-child{border-top:0}
+.atop{display:flex;align-items:flex-start;justify-content:space-between;gap:11px}
+.arow .rule{
+  flex:1 1 auto;min-width:0;
+  font-size:var(--t-body);font-weight:600;line-height:1.45;letter-spacing:-.01em;
 }
-.match-hero.weak h2,
-.match-hero.weak .ring-center .n{color:#3B2408}
-.match-hero.weak .ring-center .d{color:#5A3A11}
-.match-hero.weak .tags .chip{color:#3B2408}
+.amid{
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  margin-top:7px;
+}
+.arow .yours{font-family:var(--mono);font-weight:600;font-size:var(--t-small);color:var(--ink)}
+.arow .ev{font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-2);text-align:right}
+.arow .scale{margin-top:11px}
+/* the audit row's own tolerance scale, written by auditScale() */
+.arow .scale .band{color:var(--ink-2)}
+/* an EXCLUSION band is the disqualifying zone, not the required one. Hatched,
+   so "my tick is outside the shading" cannot be misread as a miss. */
+.scale.excl .band{
+  background:
+    repeating-linear-gradient(45deg,
+      transparent 0 3px,
+      color-mix(in srgb,var(--c,var(--ink-2)) 42%,transparent) 3px 5px);
+}
+.scale.excl .band::before,.scale.excl .band::after{
+  background:var(--c,var(--ink-2));opacity:.55;
+}
+.ascale-lab{
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  margin-top:4px;
+  font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-3);
+}
+.ascale-lab .you{color:var(--ink);font-weight:600}
+.ascale-lab .miss{color:var(--gap);font-weight:600}
+/* the margin number is the gap bracket's label, so it carries the same
+   colour — and it is the ONLY text in the app allowed to */
+.arow.miss .ev{color:var(--gap);font-weight:600}
 
-/* ================= screen 3 · the trial audit =================
-   THE TWO NUMBERS SIT SIDE BY SIDE AND LOOK NOTHING ALIKE. The score is a ring
-   with a counted-up figure; the confidence is a flat block with its own label
-   and its own caption. docs/FIGMA-MAKE-PROMPT.md rule 3 says they must never
-   read as one number, and two different shapes is the cheapest way to make a
-   glance get that right.                                                     */
-.hero-pair{display:flex;align-items:stretch;gap:12px;width:100%}
-.num-cell{display:flex;flex-direction:column;gap:7px;min-width:0}
-.num-cell .k{
-  font-family:var(--display);font-weight:800;font-size:.6rem;
-  letter-spacing:.11em;text-transform:uppercase;color:#1B4A2B;opacity:.74;
-}
-.match-hero .num-cell:first-child{flex:0 0 auto;align-items:center}
-.match-hero .ring-wrap{width:150px;height:150px}
-.match-hero .ring-center .n{font-size:2.85rem}
-.match-hero .ring-center .d{font-size:.84rem;margin-top:5px}
-
-.conf-block{
-  flex:1 1 auto;justify-content:center;text-align:left;
-  background:rgba(255,255,255,.6);border-radius:18px;padding:13px 14px;
-}
-.conf-block .v{
-  font-family:var(--display);font-weight:800;font-size:1.9rem;line-height:1;
-  letter-spacing:-.035em;color:#0E2A17;margin-top:1px;
-}
-.conf-block .v small{
-  font-family:var(--display);font-size:.82rem;font-weight:700;
-  margin-left:6px;opacity:.68;letter-spacing:-.01em;
-}
-.conf-block .c{font-size:.68rem;font-weight:600;line-height:1.35;color:#1B4A2B;opacity:.8}
-
-/* nothing was checkable: a ring at zero is a score pretending to exist */
-.noscore-note{display:none}
-.match-hero.noscore .hero-pair .num-cell:first-child{display:none}
-.match-hero.noscore .noscore-note{
-  display:block;margin-top:12px;font-size:.78rem;line-height:1.45;
-  font-weight:600;color:#3B2408;text-align:left;
-}
-
-/* ---- the audit table: one row per criterion ---- */
-.audit{padding:2px 16px}
-.audit .empty{padding:12px 0;font-size:.8rem;color:var(--ink-3)}
-.arow{padding:14px 0;border-bottom:1px solid var(--line)}
-.arow:last-child{border-bottom:0}
-.atop{display:flex;align-items:flex-start;gap:9px}
-.atop .rule{
-  flex:1;min-width:0;font-family:var(--display);font-weight:700;
-  font-size:.88rem;line-height:1.3;letter-spacing:-.015em;
-}
-/* an icon AND a word, so a verdict survives being printed in greyscale */
+/* verdict chips: mark + word carry it. Shape differs per state so the four
+   are distinguishable with no colour at all. */
 .vchip{
   flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;
-  padding:4px 9px 4px 7px;border-radius:999px;border:1.5px solid currentColor;
-  font-family:var(--display);font-weight:800;font-size:.58rem;
-  letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;
+  padding:4px 8px;border-radius:var(--r-chip);
+  font-size:var(--t-tick);font-weight:650;letter-spacing:0;
+  border:1px solid var(--rule);background:var(--card);color:var(--ink-2);
+  white-space:nowrap;
 }
-.vchip.pass{color:#0B7A47;background:rgba(18,183,106,.12)}
-.vchip.fail{color:#A1125A;background:rgba(225,29,116,.11)}
-.vchip.near{color:#8A5A04;background:rgba(245,165,36,.17)}
-.vchip.unk {color:var(--ink-2);background:var(--surface-2)}
-.amid{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-top:8px}
-.amid .yours{
-  flex:0 0 auto;font-family:var(--display);font-weight:800;font-size:.86rem;
-  padding:3px 9px;border-radius:9px;background:var(--surface-2);letter-spacing:-.01em;
-}
-/* a missing value says so in words -- never a zero, a dash or an empty bar */
-.amid .yours em{font-style:normal;font-weight:700;font-size:.74rem;color:var(--ink-3)}
-.amid .ev{flex:1;min-width:0;font-size:.73rem;line-height:1.4;color:var(--ink-2)}
+.vchip svg{display:block;flex:0 0 auto}
+.vchip.pass{border-color:var(--ink);color:var(--ink)}
+.vchip.fail{border-color:var(--ink);background:var(--ink);color:var(--sheet)}
+.vchip.near{border-color:var(--gap);color:var(--gap);background:#FDF4F6}
+.vchip.unk{border-style:dashed;border-color:var(--ink-2);color:var(--ink-2)}
+.vchip.weak{color:var(--ink-3)}
 
-/* the trial's own wording, quoted verbatim beneath every row */
-.src{
-  margin-top:9px;padding-left:10px;border-left:2px solid var(--line);
-  font-size:.71rem;line-height:1.5;color:var(--ink-3);
+/* the trial's own sentence, always reachable */
+/* the trial's own sentence, always reachable. quote() emits
+   <blockquote class="src"><span class="sense">Inclusion</span>…  */
+.arow .why,.arow .raw,.quote,blockquote.src{
+  display:block;margin-top:9px;padding-left:10px;
+  border-left:2px solid var(--rule);
+  font-family:var(--sans);font-size:var(--t-tick);color:var(--ink-3);line-height:1.55;
 }
-.src .sense{
-  font-family:var(--display);font-weight:800;font-size:.57rem;
-  letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin-right:6px;
+.sense{
+  display:inline-block;margin-right:7px;padding:1px 5px;
+  border:1px solid var(--rule);border-radius:var(--r-chip);
+  font-size:var(--t-tick);font-weight:650;color:var(--ink-2);
+  vertical-align:1px;
 }
 
-/* ---- callouts ---- */
-.callout{display:flex;gap:10px;padding:13px 14px;border-radius:18px;font-size:.79rem;line-height:1.5}
-.callout[hidden]{display:none}
-.callout svg{flex:0 0 auto;margin-top:3px}
-.callout b{font-weight:800}
-.callout.near {background:rgba(245,165,36,.17);border:1.5px solid rgba(245,165,36,.52);color:#53350F}
-.callout.block{background:rgba(225,29,116,.10);border:1.5px solid rgba(225,29,116,.36);color:#7E0E45}
+.unparsed{border:1px solid var(--rule);border-radius:var(--r-card);background:var(--card);overflow:hidden}
+.unparsed summary{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:13px 15px;cursor:pointer;
+  font-size:var(--t-small);font-weight:650;color:var(--ink);
+}
+.unparsed summary::-webkit-details-marker{display:none}
+.unparsed[open] summary{border-bottom:1px solid var(--rule)}
+.unparsed .raw,.raw-pre{
+  padding:13px 15px;
+  font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-2);
+  line-height:1.6;white-space:pre-wrap;word-break:break-word;
+}
+.unparsed .ubody{padding:0}
 
-/* ---- the criteria we could not read: collapsed, present, never hidden ---- */
-.unparsed{
-  background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;
+.summary{display:flex;flex-direction:column;padding:0}
+.summary .line,.summary>div{
+  display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+  padding:11px 16px;border-top:1px solid var(--rule);
+  font-size:var(--t-small);
 }
-.unparsed[hidden]{display:none}
-.unparsed>summary{
-  list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;
-  padding:14px 16px;font-family:var(--display);font-weight:700;font-size:.84rem;color:var(--ink-2);
+.summary>div:first-child{border-top:0}
+.summary .k{color:var(--ink-2);flex:0 0 auto}
+.summary .v{text-align:right;color:var(--ink);font-weight:600}
+/* The ranked remainder. Same row grammar as .doc-list below: a hairline
+   between rows, one flexing text column that is allowed to truncate, and the
+   tally pinned right so the mono columns line up down the whole list.
+   .nm and .field MUST stay block + nowrap — they are spans, and without it the
+   title and the NCT number run together on one line. */
+.related{display:flex;flex-direction:column;padding:0 16px}
+.related .row{
+  display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  padding:13px 0;border:0;border-top:1px solid var(--rule);
+  background:none;color:inherit;font:inherit;cursor:pointer;
 }
-.unparsed>summary::-webkit-details-marker{display:none}
-.unparsed>summary svg{margin-left:auto;color:var(--ink-3);transition:transform .2s ease}
-.unparsed[open]>summary svg{transform:rotate(180deg)}
-.unparsed .ubody{padding:0 16px 16px}
-.unparsed .unote{font-size:.72rem;line-height:1.5;color:var(--ink-3)}
-.unparsed .src{margin-top:11px}
+.related .row:first-child{border-top:0}
+.related .row:active{background:var(--inset)}
+.related .who{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.related .nm{
+  display:block;font-weight:650;font-size:var(--t-small);letter-spacing:-.01em;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.related .field{
+  display:block;font-size:var(--t-tick);color:var(--ink-2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.related .vscore{margin-left:auto}
 
-.audit-note{
-  margin-top:9px;padding:0 4px;font-size:.71rem;line-height:1.55;color:var(--ink-3);
+/* ============================ ADD RECORDS ============================ */
+.doc-opt{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:15px;border:1px solid var(--rule);border-radius:var(--r-card);
+  background:var(--card);cursor:pointer;
 }
-.audit-note[hidden]{display:none}
+.doc-opt:hover{background:var(--inset)}
+.doc-opt input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.doc-opt .ic{flex:0 0 auto;display:grid;place-items:center;width:40px;height:40px;
+  border:1px solid var(--rule);border-radius:var(--r-chip);color:var(--ink)}
+.doc-opt .tx{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+.doc-opt b{font-weight:650;font-size:var(--t-body);letter-spacing:-.01em}
+.doc-opt small{font-size:var(--t-small);color:var(--ink-2);line-height:1.5}
+.doc-opt .chev{margin-top:9px}
+.doc-note{display:flex;gap:9px;align-items:flex-start}
+.doc-note svg{flex:0 0 auto;margin-top:2px;color:var(--ink-3)}
 
-.disclaimer{
-  display:flex;gap:9px;padding:0 2px;font-size:.71rem;line-height:1.5;color:var(--ink-3);
+.manual .lead{font-size:var(--t-small);color:var(--ink-2);line-height:1.55;margin-bottom:12px}
+.achips,.units{display:flex;flex-wrap:wrap;gap:6px}
+.achip,.units button{
+  padding:8px 11px;border-radius:var(--r-chip);
+  border:1px solid var(--rule);background:var(--card);
+  font-size:var(--t-small);font-weight:600;color:var(--ink-2);
 }
-.disclaimer svg{flex:0 0 auto;margin-top:3px}
+.achip.on,.units button.on{background:var(--ink);border-color:var(--ink);color:var(--sheet)}
+.mlab{font-size:var(--t-tick);font-weight:650;color:var(--ink-2);margin:14px 0 7px}
+.mrow{display:flex;gap:9px;align-items:flex-start;flex-wrap:wrap}
+.mrow .num,input.num{
+  flex:1 1 120px;min-width:0;
+  padding:11px 12px;border:1px solid var(--rule);border-radius:var(--r-chip);
+  background:var(--card);color:var(--ink);
+  font-family:var(--mono);font-weight:600;font-size:var(--t-quant);
+}
+.mrow .num:focus{outline:2px solid var(--ink);outline-offset:-1px;border-color:var(--ink)}
+.manual .btn{margin-top:14px}
 
-.summary{padding:4px 16px}
-.summary .line{display:flex;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);font-size:.84rem}
-.summary .line:last-child{border-bottom:0}
-.summary .line span:first-child{color:var(--ink-2)}
-.summary .line span:last-child{font-weight:600;text-align:right}
+.doc-list{display:flex;flex-direction:column;padding:0 16px}
+.doc-row{display:flex;align-items:center;gap:11px;padding:12px 0;border-top:1px solid var(--rule)}
+.doc-row:first-child{border-top:0}
+.doc-row .thumb{width:40px;height:40px;flex:0 0 auto;border:1px solid var(--rule);
+  border-radius:var(--r-chip);overflow:hidden;background:var(--inset)}
+.doc-row .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.doc-row .tx{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.doc-row b{font-weight:600;font-size:var(--t-small)}
+.doc-row .when,.doc-row small{font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-3)}
 
-.related{padding:4px 16px}
-.related .row{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line);width:100%;text-align:left}
-.related .who{flex:1;min-width:0}
-.related .row:last-child{border-bottom:0}
-.related .nm{display:block;font-family:var(--display);font-weight:700;font-size:.88rem;color:var(--ink-2)}
-.related .field{display:block;font-size:.74rem;color:var(--ink-3)}
-.related button.row{cursor:pointer;transition:opacity .15s ease}
-.related button.row:active{opacity:.6}
-.related button.row .nm{color:var(--ink)}
-.related .score{
-  margin-left:auto;display:inline-flex;align-items:center;gap:6px;
-  background:var(--ink);color:#fff;border-radius:999px;
-  padding:5px 10px;font-size:.71rem;font-weight:700;white-space:nowrap;
+/* ============================ EXTRACTION REVIEW ============================ */
+.ocr .st{font-size:var(--t-h2);font-weight:650;letter-spacing:-.01em}
+.ocr .bar{height:3px;background:var(--inset);margin:12px 0 10px;overflow:hidden}
+.ocr .bar i{display:block;height:100%;width:0;background:var(--ink);transition:width .25s linear}
+.ocr .sub{font-size:var(--t-small);color:var(--ink-2);line-height:1.5}
+.ocr .btn{margin-top:13px}
+
+.shot{display:flex;align-items:center;gap:12px}
+.shot img{width:58px;height:58px;flex:0 0 auto;object-fit:cover;
+  border:1px solid var(--rule);border-radius:var(--r-chip);display:block}
+.shot .tx{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+.shot b{font-weight:650;font-size:var(--t-body)}
+.shot span{font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-3)}
+
+.xrows{display:flex;flex-direction:column;padding:0}
+.xrow{padding:14px 16px;border-top:1px solid var(--rule)}
+.xrow:first-child{border-top:0}
+.xhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.xrow .nm,.xhead b{font-weight:650;font-size:var(--t-body);letter-spacing:-.01em}
+.xval{font-family:var(--mono);font-weight:600;font-size:var(--t-quant);color:var(--ink)}
+.xval .u{font-family:var(--mono);font-weight:400;font-size:var(--t-tick);color:var(--ink-3);margin-left:3px}
+.xref{font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-3);margin-top:3px}
+.xwhy{
+  margin-top:8px;padding-left:10px;border-left:2px solid var(--rule);
+  font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-3);line-height:1.5;
 }
-.related .score i{
-  width:6px;height:6px;border-radius:50%;background:var(--lime);
-  box-shadow:0 0 0 3px rgba(182,227,84,.25);
-}
-.related .score.weak i{background:var(--warn);box-shadow:0 0 0 3px rgba(245,165,36,.28)}
-.related .vscore{margin-left:auto;flex:0 0 auto}
-.related .nm{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.related .field{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xrow .fix,.xrow .field{display:flex;gap:7px;align-items:center;margin-top:9px;flex-wrap:wrap}
+.xrow .field input{flex:1 1 100px;min-width:0;padding:9px 10px;
+  border:1px solid var(--rule);border-radius:var(--r-chip);background:var(--card);
+  font-family:var(--mono);font-size:var(--t-small);color:var(--ink)}
+
+/* what the parser refused. Shown, never hidden. */
+.cantread{border:1px solid var(--rule);border-left:3px solid var(--gap);
+  border-radius:var(--r-card);background:var(--card);overflow:hidden}
+.cantread .ch{display:flex;align-items:center;gap:8px;padding:13px 15px;
+  font-size:var(--t-small);font-weight:650;color:var(--gap);border-bottom:1px solid var(--rule)}
+.cantread .cb{padding:13px 15px}
+.cbad{font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-2);
+  line-height:1.6;white-space:pre-wrap;word-break:break-word;
+  padding:9px 11px;background:var(--inset);border-radius:var(--r-chip);margin-top:9px}
 
 /* ============================ tab bar ============================ */
 .tabbar{
   position:relative;z-index:20;flex:0 0 auto;
   display:grid;grid-template-columns:repeat(3,1fr);
-  background:rgba(255,255,255,.92);
-  backdrop-filter:blur(14px);
-  border-top:1px solid var(--line);
-  padding:9px 8px calc(env(safe-area-inset-bottom,0px) + 11px);
+  border-top:1px solid var(--rule);background:var(--card);
+  padding-bottom:env(safe-area-inset-bottom,0px);
 }
 .tab{
-  display:flex;flex-direction:column;align-items:center;gap:5px;
-  font-family:var(--display);font-weight:700;font-size:.69rem;
-  color:var(--ink-3);transition:color .22s ease;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:10px 4px 9px;
+  font-size:var(--t-tick);font-weight:650;color:var(--ink-3);
+  min-height:52px;
 }
-.tab .badge{
-  position:relative;
-  width:50px;height:31px;border-radius:999px;
-  display:grid;place-items:center;
-  transition:background .25s ease;
-}
-.tab.active{color:var(--brand-d)}
-.tab.active .badge{background:var(--soft)}
+.tab .badge{display:grid;place-items:center;position:relative}
+.tab.active{color:var(--ink)}
+/* the active tab is marked on the axis, like everything else in this app */
+.tab.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:26px;height:2px;background:var(--ink)}
 .tab.has-badge .badge::after{
-  content:'';position:absolute;top:2px;right:11px;
-  width:7px;height:7px;border-radius:50%;background:var(--iron);
-  box-shadow:0 0 0 2px #fff;
+  content:'';position:absolute;top:-1px;right:-3px;width:5px;height:5px;background:var(--ink);
 }
 
-[hidden]{display:none !important}
+/* ============================ the one orchestrated moment ============================
+   The audit resolving: ticks travel from the axis origin to position, and
+   the gap brackets draw. Nothing else in the app animates on its own.
+   docs/DESIGN.md §7.6 */
+.screen.in .arow .pin,.screen.in .marker .pin{
+  animation:tick-to-place .26s cubic-bezier(.2,.8,.3,1) both;
+}
+.screen.in .arow:nth-child(2) .pin{animation-delay:.04s}
+.screen.in .arow:nth-child(3) .pin{animation-delay:.08s}
+.screen.in .arow:nth-child(4) .pin{animation-delay:.12s}
+.screen.in .arow:nth-child(5) .pin{animation-delay:.16s}
+.screen.in .arow:nth-child(n+6) .pin{animation-delay:.2s}
+@keyframes tick-to-place{
+  from{left:0;opacity:0}
+  to{opacity:1}
+}
+.screen.in .arow .gap{animation:gap-draw .3s ease .18s both}
+@keyframes gap-draw{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
 
-@media (prefers-reduced-motion: reduce){
-  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
-  .reveal{opacity:1;transform:none}
-}
+/* the retired animations: ring draw, bar grow, needle swing, range-pin
+   spring, and the per-section reveal. All removed, not disabled. */
+.ring-prog{display:none}
 
-
-/* ======================= the document rail · screens 4 and 5 =======================
-   Screen 4 takes a document in. Screen 5 shows what came out of it, including
-   everything that did not. The review screen gives the lines it FAILED on more
-   room than the ones it read, because that is the half a reader cannot verify
-   any other way. Nothing on either screen is typed: every row is
-   parseLabDocument() output. */
-
-/* ---- the two big stacked capture targets ---- */
-.doc-opt{
-  display:flex;align-items:center;gap:13px;width:100%;text-align:left;
-  background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);
-  padding:16px;cursor:pointer;transition:transform .15s ease;
-}
-.doc-opt:active{transform:scale(.99)}
-.doc-opt .ic{
-  flex:0 0 auto;width:50px;height:50px;border-radius:16px;
-  display:grid;place-items:center;background:var(--soft);color:var(--brand-d);
-}
-.doc-opt .tx{flex:1;min-width:0}
-.doc-opt .tx b{
-  display:block;font-family:var(--display);font-weight:700;font-size:.95rem;
-  letter-spacing:-.015em;
-}
-.doc-opt .tx small{display:block;font-size:.73rem;line-height:1.45;color:var(--ink-2);margin-top:2px}
-.doc-opt .chev{flex:0 0 auto;color:var(--ink-3)}
-.doc-opt input[type=file]{display:none}
-
-/* the plain line about where the document goes, which is nowhere */
-.doc-note{
-  display:flex;gap:9px;padding:0 2px;font-size:.73rem;line-height:1.5;color:var(--ink-2);
-}
-.doc-note svg{flex:0 0 auto;margin-top:3px;color:var(--brand-d)}
-.doc-note b{font-weight:700;color:var(--ink)}
-
-/* ---- manual entry: the correction path and the offline path ---- */
-.manual{padding:14px 16px 16px}
-.manual .lead{font-size:.74rem;line-height:1.5;color:var(--ink-2);margin-bottom:11px}
-.manual .mlab{
-  font-family:var(--display);font-weight:700;font-size:.73rem;
-  color:var(--ink-2);margin-bottom:8px;
-}
-.manual .mnote{margin-top:9px;font-size:.71rem;color:var(--ink-3)}
-.achips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
-.achip{
-  display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;
-  background:var(--surface-2);color:var(--ink-2);
-  font-family:var(--display);font-weight:700;font-size:.74rem;letter-spacing:-.01em;
-  border:1.5px solid transparent;
-}
-.achip .dot{width:7px;height:7px}
-.achip.on{background:#fff;border-color:var(--ink);color:var(--ink)}
-.mrow{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.mrow .num{
-  width:108px;padding:12px 13px;border-radius:14px;
-  border:1.5px solid var(--line-2);background:#fff;
-  font-family:var(--display);font-weight:800;font-size:1.05rem;color:var(--ink);
-  letter-spacing:-.02em;-moz-appearance:textfield;
-}
-.mrow .num::-webkit-outer-spin-button,.mrow .num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.mrow .num:focus{outline:none;border-color:var(--brand)}
-.units{display:flex;gap:6px;flex-wrap:wrap}
-.units .achip{font-size:.7rem;padding:6px 10px}
-.manual .err{
-  margin-top:10px;font-size:.73rem;line-height:1.45;color:#A1125A;font-weight:600;
-}
-.manual .err.ok{color:var(--brand-d)}
-.manual .err[hidden]{display:none}
-.manual .btn{margin-top:13px;padding:13px}
-
-/* ---- the documents this session actually holds ---- */
-.doc-list{padding:2px 16px}
-.doc-list .empty{padding:13px 0;font-size:.76rem;line-height:1.5;color:var(--ink-3)}
-.doc-row{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line)}
-.doc-row:last-child{border-bottom:0}
-.doc-row .thumb{
-  flex:0 0 auto;width:40px;height:50px;border-radius:9px;object-fit:cover;
-  background:var(--surface-2);border:1px solid var(--line-2);
-}
-.doc-row .tx{flex:1;min-width:0}
-.doc-row .tx b{display:block;font-size:.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.doc-row .tx small{display:block;font-size:.7rem;color:var(--ink-3);margin-top:2px}
-
-/* ---- screen 5 · OCR progress. A real percentage from the OCR logger ---- */
-.ocr{padding:18px 16px}
-.ocr .st{font-family:var(--display);font-weight:700;font-size:.86rem;margin-bottom:11px}
-.ocr .bar{height:9px;border-radius:999px;background:var(--surface-2);overflow:hidden}
-.ocr .bar i{display:block;height:100%;width:0;border-radius:999px;background:var(--brand);transition:width .3s ease}
-.ocr .sub{margin-top:10px;font-size:.72rem;line-height:1.5;color:var(--ink-3)}
-.ocr .btn{margin-top:14px;padding:12px}
-
-/* ---- the document itself, shown so a reader can check the rows against it ---- */
-.shot{display:flex;gap:13px;padding:14px 16px;align-items:flex-start}
-.shot img{
-  flex:0 0 auto;width:84px;max-height:112px;object-fit:cover;object-position:top;
-  border-radius:12px;border:1px solid var(--line-2);background:var(--surface-2);
-}
-.shot .tx{flex:1;min-width:0;font-size:.74rem;line-height:1.5;color:var(--ink-2)}
-.shot .tx b{display:block;font-family:var(--display);font-size:.88rem;color:var(--ink);margin-bottom:3px}
-
-/* ---- the extracted rows. Editable in place: the input IS the value ---- */
-.xrows{padding:2px 16px}
-.xrow{padding:13px 0;border-bottom:1px solid var(--line)}
-.xrow:last-child{border-bottom:0}
-.xrow.low{
-  margin:9px -10px;padding:13px 10px;border-bottom:0;
-  background:rgba(245,165,36,.10);border-radius:14px;
-  box-shadow:inset 0 0 0 1.5px rgba(245,165,36,.42);
-}
-.xhead{display:flex;align-items:center;gap:9px}
-.xhead .nm{
-  flex:1;min-width:0;display:flex;align-items:center;gap:7px;
-  font-family:var(--display);font-weight:700;font-size:.88rem;letter-spacing:-.015em;
-}
-.xval{display:flex;align-items:center;gap:7px;margin-top:9px}
-.xval input{
-  width:92px;padding:9px 10px;border-radius:12px;
-  border:1.5px solid var(--line-2);background:#fff;
-  font-family:var(--display);font-weight:800;font-size:1rem;letter-spacing:-.02em;color:var(--ink);
-  -moz-appearance:textfield;
-}
-.xval input::-webkit-outer-spin-button,.xval input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.xval input:focus{outline:none;border-color:var(--brand)}
-.xval .u{font-family:var(--display);font-weight:700;font-size:.8rem;color:var(--ink-2)}
-.xval .when{margin-left:auto;font-size:.71rem;color:var(--ink-3);text-align:right}
-.xval .when em{font-style:normal;color:#8A5A04;font-weight:700}
-.xwhy{margin-top:8px;font-size:.72rem;line-height:1.45;color:#53350F}
-.xref{margin-top:7px;font-size:.71rem;color:var(--ink-3)}
-
-/* ---- the lines we could not read. Raw text, verbatim, never hidden ---- */
-.cantread{
-  background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);
-  overflow:hidden;border:1.5px solid rgba(225,29,116,.28);
-}
-.cantread .ch{
-  display:flex;align-items:center;gap:9px;padding:15px 16px 0;
-  font-family:var(--display);font-weight:700;font-size:.88rem;color:#A1125A;
-}
-.cantread .cb{padding:4px 16px 16px}
-.cantread .cnote{font-size:.72rem;line-height:1.5;color:var(--ink-2);margin:8px 0 2px}
-.cbad{padding:12px 0;border-bottom:1px solid var(--line)}
-.cbad:last-child{border-bottom:0}
-.cbad .raw{
-  padding-left:10px;border-left:2px solid rgba(225,29,116,.4);
-  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  font-size:.71rem;line-height:1.5;color:var(--ink-2);white-space:pre-wrap;word-break:break-word;
-}
-.cbad .why{margin-top:7px;font-size:.71rem;line-height:1.45;color:var(--ink-3)}
-.cbad .fix{
-  margin-top:8px;display:inline-flex;align-items:center;gap:6px;
-  font-family:var(--display);font-weight:700;font-size:.73rem;color:var(--brand-d);
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .viewport>.track{transition:none!important}
 }
 
-/* the whole OCR text, and the FHIR resources — collapsed, present, checkable */
-.raw-pre{
-  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  font-size:.68rem;line-height:1.55;color:var(--ink-2);
-  white-space:pre-wrap;word-break:break-word;
-  max-height:260px;overflow:auto;
+/* ============================ print: the prep sheet ============================ */
+@media print{
+  body{background:#fff;display:block;place-items:initial}
+  .stage,.phone{max-width:none;max-height:none;box-shadow:none;border-radius:0}
+  .statusbar,.tabbar,.more,.back{display:none}
+  .screen{overflow:visible;height:auto;width:100%}
+  .track{width:100%;display:block;transform:none!important}
+  .screen:not(.in){display:none}
 }
 </style>
 
@@ -1612,22 +1606,39 @@ button.tile:active{transform:scale(.98)}
      "no data" — ferritin 8 against a 150 ceiling really is almost nothing.  */
   var MACRO_LAB = { ferritin:'Iron', hemoglobin:'Hemoglobin', spo2:'SpO₂', ldl:'LDL' };
 
+  /* The home hero: three tolerance scales, the same primitive the Metrics
+     tab and the audit table use (docs/DESIGN.md 7.4). It used to be a bar
+     filled 0 -> value as a fraction of refHigh, which drew an iron of 8 as
+     a nearly-empty tank rather than as a value sitting below its floor.
+     A fraction of the ceiling is not a verdict; distance from the band is. */
   function renderMacros(){
-    document.getElementById('macros').innerHTML = MARKERS.slice(0, 3).map(function(m){
-      var v  = m.values[m.values.length - 1];
-      /* no value is "Not measured", never an empty track that reads as a floor */
-      if(v === undefined || v === null)
+    document.getElementById('macros').innerHTML = labStates().slice(0, 3).map(function(st){
+      var t = st.t, ax = axisOf(st);
+      var word = st.where === 'low'  ? 'Below the range'
+               : st.where === 'high' ? 'Above the range'
+               : st.where === 'in'   ? 'In range' : 'Never drawn';
+
+      if(st.v === null)
         return '<div class="macro">' +
-                 '<span class="lab">' + MACRO_LAB[m.key] + '</span>' +
-                 '<span class="track"></span>' +
+                 '<span class="lab">' + esc(t.name) + '</span>' +
                  '<span class="v">Not measured</span>' +
+                 '<div class="scale none"></div>' +
+                 '<div class="scale-legend"><span><b>' + word + '</b></span>' +
+                   '<span>' + esc(rangeWords(t)) + '</span></div>' +
                '</div>';
-      var hi = m.refHigh === null ? m.max : m.refHigh;
-      var w  = Math.max(3, Math.min(100, 100 * v / hi));
+
+      var bandL = t.refLow  === null ? 0 : axisPct(t.refLow, ax);
+      var bandR = t.refHigh === null ? 0 : 100 - axisPct(t.refHigh, ax);
       return '<div class="macro">' +
-               '<span class="lab">' + MACRO_LAB[m.key] + '</span>' +
-               '<span class="track"><i style="--w:' + w.toFixed(0) + '%;background:' + m.color + '"></i></span>' +
-               '<span class="v"><b>' + v + '</b> / ' + rangeLabel(m).replace(' ' + m.unit, '') + '</span>' +
+               '<span class="lab">' + esc(t.name) + '</span>' +
+               '<span class="v"><b>' + st.v + '</b> ' + esc(t.unit) + '</span>' +
+               '<div class="scale">' +
+                 '<span class="band" style="left:' + bandL.toFixed(1) +
+                   '%;right:' + bandR.toFixed(1) + '%;--c:' + t.color + '"></span>' +
+                 '<span class="pin" style="left:' + axisPct(st.v, ax).toFixed(1) + '%"></span>' +
+               '</div>' +
+               '<div class="scale-legend"><span><b>' + word + '</b></span>' +
+                 '<span>' + esc(rangeWords(t)) + '</span></div>' +
              '</div>';
     }).join('');
   }
@@ -3336,6 +3347,68 @@ button.tile:active{transform:scale(.98)}
      the rule cell states the threshold, the value cell states the value, so
      this one states the DISTANCE between them. Without it the row says the
      same thing three times, which is how a table stops being read. */
+  /* ------------------------------------------------------------------
+     THE TOLERANCE SCALE on an audit row — docs/DESIGN.md 7.4.
+
+     A criterion is a required band; your value is a tick; the distance
+     between them is the gap, and the gap is the only thing in the whole
+     interface drawn in the signal colour.
+
+     Only numeric and range rules have an axis. A diagnosis or a yes/no
+     has no distance to draw, so it gets nothing rather than a decorative
+     bar that implies a measurement nobody made.
+     ------------------------------------------------------------------ */
+  function auditScale(rule, v){
+    if(rule.kind !== 'numeric' && rule.kind !== 'range') return '';
+    if(v.value === null || v.value === undefined) return '';
+    /* An exclusion rule inverts the band's meaning: the shaded region is the
+       DISQUALIFYING zone, and being outside it is the good outcome. Drawing
+       it the same as an inclusion band would tell a reader that sitting
+       outside the shading is a miss, which on an exclusion is the opposite
+       of the truth. */
+    var excl = rule.sense === 'exclusion';
+    /* the gap is a MISS, so it follows the verdict, not predicateHolds() —
+       on an exclusion, not holding the predicate is how you pass */
+    var missed = v.status === FAIL || v.status === NEAR_MISS;
+
+    var lo = null, hi = null;
+    if(rule.kind === 'range'){ lo = rule.min; hi = rule.max; }
+    else if(rule.op === '>' || rule.op === '>='){ lo = rule.threshold; }
+    else if(rule.op === '<' || rule.op === '<='){ hi = rule.threshold; }
+    else { lo = hi = rule.threshold; }
+
+    /* the window: every number that matters, padded so nothing sits on the
+       edge of the axis where it cannot be read */
+    var pts = [v.value];
+    if(lo !== null) pts.push(lo);
+    if(hi !== null) pts.push(hi);
+    var aLo = Math.min.apply(null, pts), aHi = Math.max.apply(null, pts);
+    var span = aHi - aLo;
+    if(!(span > 0)) span = Math.abs(aHi) || 1;
+    aLo -= span * 0.35; aHi += span * 0.35;
+    function pct(x){ return Math.max(0, Math.min(100, 100 * (x - aLo) / (aHi - aLo))); }
+
+    var you   = pct(v.value);
+    var bandL = lo === null ? 0   : pct(lo);
+    var bandR = hi === null ? 100 : pct(hi);
+
+    var gapEl = '';
+    if(missed){
+      /* the distance that decided it: tick to the threshold it fell on the
+         wrong side of */
+      var edge = (lo !== null && v.value < lo) ? pct(lo) : pct(hi);
+      var g0 = Math.min(you, edge), g1 = Math.max(you, edge);
+      gapEl = '<span class="gap" style="left:' + g0.toFixed(1) +
+              '%;width:' + Math.max(0.6, g1 - g0).toFixed(1) + '%"></span>';
+    }
+    return '<div class="scale' + (excl ? ' excl' : '') + '">' +
+             '<span class="band" style="left:' + bandL.toFixed(1) +
+               '%;right:' + (100 - bandR).toFixed(1) + '%"></span>' +
+             gapEl +
+             '<span class="pin" style="left:' + you.toFixed(1) + '%"></span>' +
+           '</div>';
+  }
+
   function marginPhrase(rule, v){
     if(v.value === null || v.value === undefined) return '';
     if(rule.kind !== 'numeric' && rule.kind !== 'range') return '';
@@ -3517,11 +3590,15 @@ button.tile:active{transform:scale(.98)}
 
     document.getElementById('auditTable').innerHTML = checked.map(function(v){
       var ch = CHIP[v.verdict.status];
-      return '<div class="arow">' +
+      /* a row is "missed" when the rule could be checked and did not hold —
+         that is what ties the carmine gap bracket to its number below it */
+      var missed = v.verdict.status === FAIL || v.verdict.status === NEAR_MISS;
+      return '<div class="arow' + (missed ? ' miss' : '') + '">' +
         '<div class="atop">' +
           '<span class="rule">' + esc(rulePhrase(v.rule)) + '</span>' +
           '<span class="vchip ' + ch.cls + '">' + ch.icon + ch.word + '</span>' +
         '</div>' +
+        auditScale(v.rule, v.verdict) +
         '<div class="amid">' +
           '<span class="yours">' + valuePhrase(v.rule, v.verdict) + '</span>' +
           '<span class="ev">' + esc(marginPhrase(v.rule, v.verdict)) + '</span>' +
@@ -3731,18 +3808,18 @@ button.tile:active{transform:scale(.98)}
       var hot   = st.where === 'low' || st.where === 'high';
       var val   = st.v === null
         ? '<span class="val" style="color:var(--ink-3);font-size:.78rem">No value on file</span>'
-        : '<span class="val" style="color:' + t.color + '">' + st.v +
+        : '<span class="val">' + st.v +
           '<span class="u">' + t.unit + '</span></span>';
+      /* the pin carries NO colour: your value is ink everywhere (DESIGN.md 7.2) */
       var pin = st.v === null ? ''
-        : '<span class="pin" style="left:' + axisPct(st.v, ax).toFixed(1) +
-          '%;background:' + t.color + '"></span>';
+        : '<span class="pin" style="left:' + axisPct(st.v, ax).toFixed(1) + '%"></span>';
       return '<div class="marker">' +
           '<div class="head"><span class="nm"><span class="dot" style="background:' +
             t.color + '"></span>' + esc(t.name) + '</span>' + val + '</div>' +
           (st.v === null
             ? '<div class="scale none"></div>'
             : '<div class="scale"><span class="band" style="left:' + bandL.toFixed(1) +
-              '%;right:' + bandR.toFixed(1) + '%;background:' + t.color + '"></span>' + pin + '</div>') +
+              '%;right:' + bandR.toFixed(1) + '%;--c:' + t.color + '"></span>' + pin + '</div>') +
           '<div class="scale-legend"><span' + (hot ? ' style="color:' + t.color + '"' : '') +
             '><b>' + word + '</b></span><span>' + rangeWords(t) + '</span></div>' +
         '</div>';
