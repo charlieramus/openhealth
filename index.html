@@ -1291,7 +1291,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
   /* all criteria -> a 0-100 score. The bar widths ARE the per-criterion credit,
      so the chart is a picture of the same numbers that produced the score.   */
-  function matchScore(trial){
+  /* SUPERSEDED by matchScore(profile, trial) below. Still drives screen 3
+     until Stage 5 re-wires the UI and deletes the hand-written criteria. */
+  function legacyTrialScore(trial){
     var total = 0, weight = 0, rows = [], failed = 0, blocked = false;
     /* the protocol's own criteria are counted apart from our travel filter —
        missing a preference is not the same as missing an entry criterion  */
@@ -2146,6 +2148,197 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     return rules;
   }
 
+  /* ================= the evaluator =================
+     docs/ARCHITECTURE.md §4a, second half of the contract:
+
+         evaluateRule(profile, rule)  -> Verdict
+         matchScore(profile, trial)   -> { score, confidence, verdicts,
+                                           blocked, unparsedCount }
+
+     SCORE AND CONFIDENCE ARE TWO NUMBERS, ALWAYS. Conflating them is the single
+     most common bug in this class of tool, and it is the bug this whole project
+     exists to not commit:
+
+         score      = weighted PASS / weighted DECIDABLE
+         confidence = decidable rules / total rules      ("n of N checkable")
+
+     An unknown lowers CONFIDENCE. It can never raise the SCORE, because it never
+     enters the score's denominator at all. A missing analyte is UNKNOWN and is
+     never a pass — a1c is deliberately absent from the profile as the standing
+     test case for exactly that. */
+
+  var PASS = 'PASS', FAIL = 'FAIL', UNKNOWN = 'UNKNOWN', NEAR_MISS = 'NEAR_MISS';
+
+  /* the patient's value for an analyte, in the canonical unit, or null.
+     null means "no value on file" and must never be read as a zero. */
+  function readValue(profile, analyte){
+    if(!profile) return null;
+    if(profile.labs && profile.labs[analyte] &&
+       profile.labs[analyte].value !== null && profile.labs[analyte].value !== undefined){
+      return profile.labs[analyte].value;
+    }
+    if(profile.facts && profile.facts[analyte] !== undefined && profile.facts[analyte] !== null){
+      return profile.facts[analyte];
+    }
+    return null;
+  }
+
+  /* does the rule's predicate hold for this value? */
+  function predicateHolds(rule, v){
+    if(rule.kind === 'range') return v >= rule.min && v <= rule.max;
+    switch(rule.op){
+      case '<=': return v <= rule.threshold;
+      case '<':  return v <  rule.threshold;
+      case '>=': return v >= rule.threshold;
+      case '>':  return v >  rule.threshold;
+      case '=':  return v === rule.threshold;
+    }
+    return null;
+  }
+
+  /* signed distance from the bound the rule is about. Negative = below it. */
+  function signedMargin(rule, v){
+    if(rule.kind === 'range'){
+      if(v < rule.min) return round2(v - rule.min);
+      if(v > rule.max) return round2(v - rule.max);
+      return 0;
+    }
+    return round2(v - rule.threshold);
+  }
+
+  /* how far the value would have to move to satisfy the predicate. 0 if it
+     already does. This is what `band` is compared against. */
+  function shortfall(rule, v){
+    if(predicateHolds(rule, v)) return 0;
+    if(rule.kind === 'range'){
+      return v < rule.min ? rule.min - v : v - rule.max;
+    }
+    return Math.abs(v - rule.threshold);
+  }
+
+  function readable(rule){
+    if(rule.kind === 'range') return rule.analyte + ' ' + rule.min + '–' + rule.max + ' ' + rule.unit;
+    return rule.analyte + ' ' + rule.op + ' ' + rule.threshold + ' ' + rule.unit;
+  }
+
+  /* one rule against the profile -> a Verdict.
+       unparsed / presence / negation -> UNKNOWN (we cannot check it)
+       analyte missing from profile   -> UNKNOWN, NEVER a pass
+       inclusion: predicate holds     -> PASS, else FAIL
+       exclusion: predicate MATCHES the patient -> FAIL (they are excluded)
+       a FAIL within `band` of flipping -> NEAR_MISS, carrying a signed margin */
+  function evaluateRule(profile, rule){
+    if(rule.kind === 'unparsed'){
+      return { status:UNKNOWN, value:null, margin:null,
+               evidence:'Not checked automatically — shown as written' };
+    }
+    if(rule.kind === 'presence' || rule.kind === 'negation'){
+      return { status:UNKNOWN, value:null, margin:null,
+               evidence:'No ' + rule.analyte + ' information on file' };
+    }
+
+    var v = readValue(profile, rule.analyte);
+    if(v === null){
+      return { status:UNKNOWN, value:null, margin:null,
+               evidence:'No ' + rule.analyte + ' on file' };
+    }
+
+    var holds  = predicateHolds(rule, v);
+    var margin = signedMargin(rule, v);
+    /* an exclusion the patient MATCHES is a failure; an inclusion they match is a pass */
+    var ok     = (rule.sense === 'exclusion') ? !holds : holds;
+    var shown  = v + ' ' + rule.unit + (ok ? ' meets ' : ' misses ') + readable(rule);
+
+    if(ok) return { status:PASS, value:v, margin:margin, evidence:shown };
+
+    /* only an inclusion can be a near miss: being just inside an exclusion
+       is still being excluded, not nearly eligible */
+    var gap = shortfall(rule, v);
+    if(rule.sense === 'inclusion' && rule.band !== null && gap > 0 && gap <= rule.band){
+      return { status:NEAR_MISS, value:v, margin:margin,
+               evidence:shown + ' — short by ' + round2(gap) + ' ' + rule.unit };
+    }
+    return { status:FAIL, value:v, margin:margin, evidence:shown };
+  }
+
+  /* a Verdict we were able to decide one way or the other. UNKNOWN is not one. */
+  function isDecidable(status){
+    return status === PASS || status === FAIL || status === NEAR_MISS;
+  }
+
+  var _ruleCache = {};
+  function rulesFor(trial){
+    if(trial.rules) return trial.rules;                 /* tests pass rules directly */
+    var id = trial.nctId;
+    if(!_ruleCache[id]) _ruleCache[id] = parseCriteria(trial.eligibilityCriteria || '');
+    return _ruleCache[id];
+  }
+
+  /* every rule of one trial -> the two numbers, the verdicts, and whether the
+     trial is blocked outright.
+
+     BLOCKED is not the same as a low score. A matched exclusion or a failed
+     required inclusion means this person cannot enrol, however well they do on
+     everything else, so the trial is dropped rather than scored down. An UNKNOWN
+     never blocks: not knowing is not the same as failing. */
+  function matchScore(profile, trial){
+    var rules = rulesFor(trial);
+    var verdicts = [], passW = 0, decidableW = 0, decidableN = 0;
+    var blocked = false, unparsedCount = 0, nearMisses = [];
+
+    rules.forEach(function(rule){
+      var v = evaluateRule(profile, rule);
+      verdicts.push({ rule:rule, verdict:v });
+
+      if(rule.kind === 'unparsed') unparsedCount++;
+
+      if(isDecidable(v.status)){
+        var w = rule.weight || 1;
+        decidableW += w;
+        decidableN++;
+        if(v.status === PASS) passW += w;
+        if(v.status === NEAR_MISS) nearMisses.push({ rule:rule, verdict:v });
+        if(v.status === FAIL || v.status === NEAR_MISS){
+          if(rule.sense === 'exclusion') blocked = true;        /* matched exclusion */
+          else if(rule.required)         blocked = true;        /* failed required inclusion */
+        }
+      }
+    });
+
+    return {
+      score:         decidableW ? Math.round(100 * passW / decidableW) : null,
+      confidence:    { decidable:decidableN, total:rules.length },
+      verdicts:      verdicts,
+      blocked:       blocked,
+      unparsedCount: unparsedCount,
+      nearMisses:    nearMisses
+    };
+  }
+
+  /* rank every trial in the corpus. No search, no filter, no condition question:
+     the app reads the profile and scores everything it knows about. */
+  function rankCorpus(profile, corpus){
+    return corpus.map(function(t){
+      return { trial:t, result:matchScore(profile, t) };
+    }).sort(function(a, b){
+      if(a.result.blocked !== b.result.blocked) return a.result.blocked ? 1 : -1;
+      return (b.result.score || 0) - (a.result.score || 0);
+    });
+  }
+
+  /* exposed so tests.html can drive the SHIPPED engine instead of a copy of it */
+  window.OpenHealthEngine = {
+    parseCriteria: parseCriteria,
+    evaluateRule:  evaluateRule,
+    matchScore:    matchScore,
+    rankCorpus:    rankCorpus,
+    healthScore:   healthScore,
+    ANALYTES:      ANALYTES,
+    CORPUS:        CORPUS,
+    PROFILE:       PROFILE,
+    statuses:      { PASS:PASS, FAIL:FAIL, UNKNOWN:UNKNOWN, NEAR_MISS:NEAR_MISS }
+  };
+
   /* ================= the trials themselves =================
      THE PATIENT ABOVE IS INVENTED. THE TRIALS BELOW ARE NOT.
 
@@ -2232,7 +2425,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
   /* score every trial once at load; re-read anywhere the old literals were */
   var RESULT = {};
-  function scoreAll(){ Object.keys(TRIALS).forEach(function(k){ RESULT[k] = matchScore(TRIALS[k]); }); }
+  function scoreAll(){ Object.keys(TRIALS).forEach(function(k){ RESULT[k] = legacyTrialScore(TRIALS[k]); }); }
   scoreAll();
 
   /* trial ids best-first — the order on screen is an output of the engine */

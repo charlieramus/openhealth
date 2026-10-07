@@ -581,7 +581,159 @@ the failures are named and explained. Do not weaken an assertion to make it pass
 
 ## Stage 4 Report
 
-_Pending._
+**`tests.html` — 42 cases, all passing.** Standalone page, no framework, no build step, no
+dependencies. Open it and it runs.
+
+### The one thing worth knowing about the harness
+
+**It contains no copy of the engine.** It loads `index.html` in a hidden iframe and drives
+the functions the published page actually ships, reached through a new
+`window.OpenHealthEngine` handle. A test asserting against a duplicate of the code proves
+nothing about the code, and a parser whose regressions are caught only by a stale copy is
+worse than untested.
+
+The cost is that it needs the directory served over http rather than opened as `file://`
+(browsers refuse cross-document access on `file://`). If it can't reach the app it says so
+in plain language with the exact command, rather than reporting a false pass:
+
+```
+python -m http.server 8731
+http://127.0.0.1:8731/tests.html
+```
+
+### Deviation from the stage order — please read
+
+**Stage 4 could not be written without building the §4a evaluator**, so it does. The stage
+asks for cases asserting `UNKNOWN`, `NEAR_MISS`, `blocked`, `unparsedCount` and the
+score/confidence split — none of which can be expressed against the old
+`evaluateCriterion(trial, c)` / `matchScore(trial)`, which have different signatures and no
+concept of any of them. A harness asserting against functions that do not exist is not a
+deliverable; it is 42 failures.
+
+So this stage adds, as pure logic with no UI:
+
+- `evaluateRule(profile, rule) → Verdict`
+- `matchScore(profile, trial) → { score, confidence, verdicts, blocked, unparsedCount, nearMisses }`
+- `rankCorpus(profile, corpus)`
+
+The old scorer is **renamed `legacyTrialScore()` and still drives screen 3 unchanged**, so
+the UI is untouched and the two engines cannot disagree on screen. That leaves Stage 5
+exactly its stated job: pointing the UI at the new engine, deleting the hand-transcribed
+`TRIALS` criteria, building the per-criterion audit table and the near-miss callout. Stage
+5's item 1 ("rename/retarget to the §4a contract") is the only part now already done.
+
+### The cases
+
+```
+all 42 passed
+
+BOUNDARIES (5)
+  value exactly at a >= threshold passes                         margin 0
+  value exactly at a <= threshold passes                         margin 0
+  value one step below a >= threshold does NOT pass              margin -0.1
+  strict > rejects the boundary value itself
+  range includes both of its endpoints
+
+UNKNOWN IS NEVER A PASS (6)
+  missing analyte -> UNKNOWN, never PASS (a1c)
+  a1c really is absent from the shipped profile
+  missing analyte stays UNKNOWN even when the rule would be trivially true
+  unparsed criterion -> UNKNOWN
+  presence/negation -> UNKNOWN (no condition data on file)
+  a value of 0 is a real value, not a missing one
+
+NEAR MISS (5)
+  within band of failing -> NEAR_MISS with correct signed margin  ferritin 8 vs >=10, margin -2
+  outside band -> plain FAIL, not NEAR_MISS                       margin -8
+  margin above a threshold is positive                            +10
+  range near-miss measures from the nearest bound                 BMI 22.4 vs 25-40, margin -2.6
+  being just inside an exclusion is still excluded, not a near miss
+
+EXCLUSION POLARITY (2)
+  exclusion the patient does NOT match -> PASS
+  exclusion the patient DOES match -> FAIL
+
+BLOCKING (4)
+  a matched exclusion blocks the trial, not merely scores it down
+  a failed REQUIRED inclusion blocks the trial
+  a failed NON-required inclusion does not block
+  UNKNOWN never blocks — not knowing is not failing
+
+THE TWO-NUMBER INVARIANT (6)
+  score is computed over DECIDABLE rules only                     1 pass of 2 decidable = 50, not 1 of 3
+  adding an unparsed criterion lowers confidence, score UNCHANGED score 50 -> 50, conf 2/2 -> 2/3
+  an unknown can never raise the score                            0 -> 0
+  weights apply to the score, not to the confidence count         3/4 = 75, confidence still 2
+  an all-fail profile scores 0 with full confidence
+  confidence is reported as decidable-of-total, never merged
+
+PARSER FIXTURES (10)
+  NCT06942208 "Suboptimal ferritin levels (≤50 mcg/L)" -> ferritin <= 50 ng/mL, inclusion, required
+  NCT06942208 "Age 16-35"                              -> range 16–35 years
+  NCT06942208 "Anemic (hemoglobin \<120g/L)"           -> EXCLUSION hemoglobin < 12 g/dL
+  NCT06942208 "BMI \<16 but \>30" is UNPARSED, min/max/threshold all still null
+  NCT07394972 European decimals + g/L normalize        -> BMI 18.5–24.9, Hb 12 g/dL
+  NCT05614219 unitless "Hba1C \< 48" refused as implausible
+  NCT07743983 indented real criteria promoted, A1c gate survives  7.5–10.5 %
+  every rule from every record carries verbatim source            460 rules across 23 records
+  no unparsed rule anywhere carries a threshold, min or max
+  every decidable rule is in its analyte canonical unit
+
+HEALTH SCORE (1)
+  markers with no value are excluded, not scored as zero          99 from 4 of 5 markers
+
+END TO END (3)
+  every corpus record scores without throwing                     23 records scored
+  ranking is ordered and puts blocked trials last                 23 trials ranked
+  no trial reports a score without also reporting confidence
+```
+
+The assertions do not soften: `eq` compares with `===`, `near` takes an explicit tolerance,
+and the fixture tests assert exact `op` / `threshold` / `min` / `max` / `unit` / `sense` /
+`required` values rather than "something numeric came back". Nothing was weakened to make it
+pass.
+
+### A bug this stage caught in its own setup
+
+My first splice of the evaluator into `index.html` computed the insertion offset **before**
+two string replacements that shifted it, so the block landed mid-statement inside
+`parseCriteria`, truncating `splitBullets(block.lines).forEach(…)` to
+`splitBullets(block.lines).f`. The page still *rendered* — the Health Score, the macros and
+the trial feed all drew correctly — so a screenshot would have passed it. What gave it away
+was `window.OpenHealthEngine` coming back `undefined` in the harness. Restored `index.html`
+from the stage-3 commit and redid the splice computing offsets after the rewrites, with
+assertions that `parseCriteria` is still intact. **The harness earned its keep before it
+finished being written.**
+
+### Something the end-to-end tests surfaced for Stage 5
+
+Ranking the real corpus against the real profile produces this at the top:
+
+```
+NCT05462704  score 100   confidence  1/11   unparsed 5
+NCT05759078  score 100   confidence  2/20   unparsed 14
+NCT06270498  score 100   confidence  3/32   unparsed 24
+```
+
+Those are **100s built on one or two checkable criteria out of eleven or thirty-two** — and
+`NCT05462704` is a pregnancy trial, `NCT05759078` is post-myocardial-infarction. The engine
+is behaving exactly as specified: it scores only what it can decide, and it reports loudly
+how little that is. But **ranking by score alone puts the least-known trials first**, which
+is the "confident-looking 87 built on 4 of 11 criteria" that `docs/ARCHITECTURE.md` §4a
+names as the output this design exists to prevent — reappearing as a sort order rather than
+as a number.
+
+This is a real design question for **Stage 5 item 5**, not a bug in the invariants, and all
+six two-number assertions pass. Ranking needs to weigh confidence alongside score, or the
+list has to show both so prominently that the order cannot mislead. Flagging it here rather
+than quietly changing the ranking rule, because `docs/SIMPLIFY.md` has no decision on it.
+
+### Verify
+
+Opened `http://127.0.0.1:8731/tests.html`: **42 of 42 pass, 0 failures.** Then drove the app
+itself through Home → Labs → Trials → switch trial → Home with the new engine present:
+**zero runtime errors**, Health Score still reads "4 of 5 markers", screen 3 still renders
+its 5 legacy criterion rows from `legacyTrialScore()`.
 
 ---
 

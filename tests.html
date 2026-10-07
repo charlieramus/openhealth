@@ -1,0 +1,556 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>OpenHealth — engine tests</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<!--
+  OpenHealth test harness.
+
+  No framework, no build step, no dependencies. Open it and it runs.
+
+  It does NOT contain a copy of the engine. It loads index.html in a hidden
+  iframe and drives the functions the published page actually ships, reached
+  through window.OpenHealthEngine. A test that asserts against a copy of the
+  code proves nothing about the code, and a parser whose regressions are caught
+  by a stale duplicate is worse than untested.
+
+  Because it loads index.html, it needs the directory served over http rather
+  than opened as file:// (browsers refuse cross-document access on file://):
+
+      python -m http.server 8731
+      open http://127.0.0.1:8731/tests.html
+-->
+
+<style>
+  :root{
+    color-scheme: light;
+    --ink:#131A16; --ink-2:#59645C; --ink-3:#95A099;
+    --canvas:#E6EAE5; --surface:#fff; --line:#DDE3DB;
+    --pass:#12B76A; --fail:#E11D74; --warn:#F5A524;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--canvas); color:var(--ink);
+    font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    padding:28px 20px 60px;
+  }
+  .wrap{max-width:1000px;margin:0 auto}
+  h1{font-size:1.5rem;letter-spacing:-.02em;margin-bottom:4px}
+  .sub{color:var(--ink-2);margin-bottom:22px}
+  #summary{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:16px 18px;margin-bottom:22px;font-size:1.05rem;font-weight:700;
+  }
+  #summary.ok{border-color:var(--pass);color:#0B7A47}
+  #summary.bad{border-color:var(--fail);color:#A1125A}
+  .grp{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:6px 18px 14px;margin-bottom:16px;
+  }
+  .grp h2{
+    font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--ink-3);margin:14px 0 8px;
+  }
+  .case{padding:5px 0;border-bottom:1px dashed var(--line);display:flex;gap:10px;align-items:flex-start}
+  .case:last-child{border-bottom:0}
+  .tag{flex:0 0 auto;font-weight:700;width:46px}
+  .tag.pass{color:var(--pass)} .tag.fail{color:var(--fail)}
+  .name{flex:1;min-width:0}
+  .why{display:block;color:var(--fail);white-space:pre-wrap;margin-top:3px}
+  .note{display:block;color:var(--ink-3);margin-top:2px}
+  .err{background:#FDE7F1;border:1px solid var(--fail);border-radius:12px;padding:16px;color:#A1125A}
+</style>
+
+<div class="wrap">
+  <h1>OpenHealth — engine tests</h1>
+  <div class="sub">Runs the engine shipped in <code>index.html</code>. No copies, no mocks.</div>
+  <div id="summary">loading index.html…</div>
+  <div id="out"></div>
+</div>
+
+<iframe id="app" src="index.html" style="display:none" title="app under test"></iframe>
+
+<script>
+(function(){
+  var out = document.getElementById('out');
+  var summary = document.getElementById('summary');
+  var groups = {}, total = 0, failed = 0;
+
+  function group(name){
+    if(groups[name]) return groups[name];
+    var g = document.createElement('div');
+    g.className = 'grp';
+    g.innerHTML = '<h2>' + name + '</h2>';
+    out.appendChild(g);
+    groups[name] = g;
+    return g;
+  }
+
+  function record(name, grp, ok, why, note){
+    total++; if(!ok) failed++;
+    var el = document.createElement('div');
+    el.className = 'case';
+    el.innerHTML =
+      '<span class="tag ' + (ok ? 'pass' : 'fail') + '">' + (ok ? 'PASS' : 'FAIL') + '</span>' +
+      '<span class="name">' + name +
+        (note ? '<span class="note">' + note + '</span>' : '') +
+        (!ok && why ? '<span class="why">' + why + '</span>' : '') +
+      '</span>';
+    group(grp).appendChild(el);
+  }
+
+  /* assertion helpers. They never weaken: eq compares with ===, and deep
+     compares structure, so a test cannot quietly pass on a near-match. */
+  function test(grp, name, fn){
+    try {
+      var note = fn();
+      record(name, grp, true, '', typeof note === 'string' ? note : '');
+    } catch(e){
+      record(name, grp, false, String(e && e.message || e));
+    }
+  }
+  function eq(actual, expected, what){
+    if(actual !== expected){
+      throw new Error('expected ' + what + ' to be ' + JSON.stringify(expected) +
+                      ', got ' + JSON.stringify(actual));
+    }
+  }
+  function near(actual, expected, tol, what){
+    if(typeof actual !== 'number' || Math.abs(actual - expected) > tol){
+      throw new Error('expected ' + what + ' ≈ ' + expected + ' (±' + tol + '), got ' + JSON.stringify(actual));
+    }
+  }
+  function ok(cond, msg){ if(!cond) throw new Error(msg); }
+
+  function run(E){
+    var S = E.statuses;
+
+    /* ---- fixtures ------------------------------------------------------ */
+
+    /* a rule as the parser emits one, built explicitly so evaluator tests do
+       not depend on the parser being right */
+    function rule(o){
+      var r = { kind:'numeric', sense:'inclusion', analyte:'ferritin', op:'>=',
+                threshold:null, min:null, max:null, unit:'ng/mL', band:10,
+                weight:1, required:false, source:'(fixture)', note:null };
+      for(var k in o) r[k] = o[k];
+      return r;
+    }
+    function profile(labs, facts){
+      var p = { labs:{}, facts:facts || {} };
+      for(var k in labs) p.labs[k] = { analyte:k, value:labs[k].value !== undefined ? labs[k].value : labs[k], unit:labs[k].unit || '' };
+      return p;
+    }
+
+    var P_REAL = E.PROFILE;                                  /* the shipped profile */
+    var P_EMPTY = profile({}, {});
+
+    /* ================= boundary conditions ================= */
+
+    test('boundaries', 'value exactly at a >= threshold passes', function(){
+      var v = E.evaluateRule(profile({ferritin:15}), rule({op:'>=', threshold:15}));
+      eq(v.status, S.PASS, 'status');
+      eq(v.margin, 0, 'margin at the boundary');
+    });
+
+    test('boundaries', 'value exactly at a <= threshold passes', function(){
+      var v = E.evaluateRule(profile({ferritin:50}), rule({op:'<=', threshold:50}));
+      eq(v.status, S.PASS, 'status');
+      eq(v.margin, 0, 'margin');
+    });
+
+    test('boundaries', 'value one step below a >= threshold does NOT pass', function(){
+      var v = E.evaluateRule(profile({ferritin:14.9}), rule({op:'>=', threshold:15, band:0}));
+      ok(v.status !== S.PASS, 'expected not PASS, got ' + v.status);
+      near(v.margin, -0.1, 0.001, 'signed margin');
+    });
+
+    test('boundaries', 'strict > rejects the boundary value itself', function(){
+      var v = E.evaluateRule(profile({ferritin:15}), rule({op:'>', threshold:15, band:0}));
+      ok(v.status !== S.PASS, 'expected not PASS at the boundary of a strict >');
+    });
+
+    test('boundaries', 'range includes both of its endpoints', function(){
+      var lo = E.evaluateRule(profile({}, {age:16}), rule({kind:'range', op:'range', analyte:'age', min:16, max:35, unit:'years'}));
+      var hi = E.evaluateRule(profile({}, {age:35}), rule({kind:'range', op:'range', analyte:'age', min:16, max:35, unit:'years'}));
+      eq(lo.status, S.PASS, 'low endpoint');
+      eq(hi.status, S.PASS, 'high endpoint');
+    });
+
+    /* ================= UNKNOWN is never a pass ================= */
+
+    test('unknown', 'missing analyte -> UNKNOWN, never PASS (a1c)', function(){
+      var r = rule({kind:'range', op:'range', analyte:'a1c', min:7.5, max:10.5, unit:'%'});
+      var v = E.evaluateRule(P_REAL, r);
+      eq(v.status, S.UNKNOWN, 'status');
+      eq(v.value, null, 'value');
+      return 'a1c is deliberately absent from the shipped profile';
+    });
+
+    test('unknown', 'a1c really is absent from the shipped profile', function(){
+      ok(!P_REAL.labs.a1c, 'a1c must not be on the profile — it is the standing UNKNOWN case');
+    });
+
+    test('unknown', 'missing analyte stays UNKNOWN even when the rule would be trivially true', function(){
+      var v = E.evaluateRule(P_REAL, rule({analyte:'a1c', op:'<=', threshold:99, unit:'%'}));
+      eq(v.status, S.UNKNOWN, 'status');
+    });
+
+    test('unknown', 'unparsed criterion -> UNKNOWN', function(){
+      var v = E.evaluateRule(P_REAL, rule({kind:'unparsed', analyte:null, op:null, threshold:null}));
+      eq(v.status, S.UNKNOWN, 'status');
+    });
+
+    test('unknown', 'presence/negation -> UNKNOWN (no condition data on file)', function(){
+      eq(E.evaluateRule(P_REAL, rule({kind:'presence', analyte:'pregnancy'})).status, S.UNKNOWN, 'presence');
+      eq(E.evaluateRule(P_REAL, rule({kind:'negation', analyte:'smoking'})).status, S.UNKNOWN, 'negation');
+    });
+
+    test('unknown', 'a value of 0 is a real value, not a missing one', function(){
+      var v = E.evaluateRule(profile({ferritin:0}), rule({op:'>=', threshold:15, band:0}));
+      eq(v.status, S.FAIL, 'zero must be evaluated, not treated as absent');
+      eq(v.value, 0, 'value');
+    });
+
+    /* ================= near miss ================= */
+
+    test('near-miss', 'within band of failing -> NEAR_MISS with correct signed margin', function(){
+      var v = E.evaluateRule(profile({ferritin:8}), rule({op:'>=', threshold:10, band:5}));
+      eq(v.status, S.NEAR_MISS, 'status');
+      eq(v.margin, -2, 'signed margin (2 short of 10)');
+      ok(/short by 2/.test(v.evidence), 'evidence should name the exact gap, got: ' + v.evidence);
+    });
+
+    test('near-miss', 'outside band -> plain FAIL, not NEAR_MISS', function(){
+      var v = E.evaluateRule(profile({ferritin:2}), rule({op:'>=', threshold:10, band:5}));
+      eq(v.status, S.FAIL, 'status');
+      eq(v.margin, -8, 'signed margin');
+    });
+
+    test('near-miss', 'margin above a threshold is positive', function(){
+      var v = E.evaluateRule(profile({ferritin:60}), rule({op:'<=', threshold:50, band:20}));
+      eq(v.margin, 10, 'signed margin');
+      eq(v.status, S.NEAR_MISS, 'status');
+    });
+
+    test('near-miss', 'range near-miss measures from the nearest bound', function(){
+      var r = rule({kind:'range', op:'range', analyte:'bmi', min:25, max:40, unit:'kg/m2', band:4});
+      var v = E.evaluateRule(profile({}, {bmi:22.4}), r);
+      eq(v.status, S.NEAR_MISS, 'status');
+      near(v.margin, -2.6, 0.001, 'signed margin below min');
+    });
+
+    test('near-miss', 'being just inside an exclusion is still excluded, not a near miss', function(){
+      var v = E.evaluateRule(profile({hemoglobin:11.9}),
+                rule({analyte:'hemoglobin', sense:'exclusion', op:'<', threshold:12, unit:'g/dL', band:3}));
+      eq(v.status, S.FAIL, 'a matched exclusion must be FAIL, never NEAR_MISS');
+    });
+
+    /* ================= exclusion polarity ================= */
+
+    test('polarity', 'exclusion the patient does NOT match -> PASS', function(){
+      var v = E.evaluateRule(profile({hemoglobin:13.1}),
+                rule({analyte:'hemoglobin', sense:'exclusion', op:'<', threshold:12, unit:'g/dL'}));
+      eq(v.status, S.PASS, 'not anemic, so not excluded');
+    });
+
+    test('polarity', 'exclusion the patient DOES match -> FAIL', function(){
+      var v = E.evaluateRule(profile({hemoglobin:10}),
+                rule({analyte:'hemoglobin', sense:'exclusion', op:'<', threshold:12, unit:'g/dL'}));
+      eq(v.status, S.FAIL, 'anemic, so excluded');
+    });
+
+    /* ================= blocking ================= */
+
+    test('blocking', 'a matched exclusion blocks the trial, not merely scores it down', function(){
+      var t = { rules:[
+        rule({op:'<=', threshold:50, weight:1, required:true}),                       /* passes */
+        rule({analyte:'hemoglobin', sense:'exclusion', op:'<', threshold:12, unit:'g/dL'}) /* matched */
+      ]};
+      var r = E.matchScore(profile({ferritin:8, hemoglobin:10}), t);
+      eq(r.blocked, true, 'blocked');
+    });
+
+    test('blocking', 'a failed REQUIRED inclusion blocks the trial', function(){
+      var t = { rules:[ rule({op:'>=', threshold:100, band:0, required:true}) ] };
+      var r = E.matchScore(profile({ferritin:8}), t);
+      eq(r.blocked, true, 'blocked');
+    });
+
+    test('blocking', 'a failed NON-required inclusion does not block', function(){
+      var t = { rules:[ rule({op:'>=', threshold:100, band:0, required:false}) ] };
+      eq(E.matchScore(profile({ferritin:8}), t).blocked, false, 'blocked');
+    });
+
+    test('blocking', 'UNKNOWN never blocks — not knowing is not failing', function(){
+      var t = { rules:[
+        rule({analyte:'a1c', op:'>=', threshold:7.5, unit:'%', required:true}),
+        rule({kind:'unparsed', required:true})
+      ]};
+      var r = E.matchScore(P_REAL, t);
+      eq(r.blocked, false, 'blocked');
+      eq(r.score, null, 'score with nothing decidable');
+    });
+
+    /* ================= the two-number invariant ================= */
+
+    test('two numbers', 'score is computed over DECIDABLE rules only', function(){
+      var t = { rules:[
+        rule({op:'<=', threshold:50, weight:1}),                       /* PASS */
+        rule({op:'>=', threshold:900, band:0, weight:1}),              /* FAIL */
+        rule({analyte:'a1c', op:'>=', threshold:7, unit:'%', weight:1})/* UNKNOWN */
+      ]};
+      var r = E.matchScore(profile({ferritin:8}), t);
+      eq(r.score, 50, 'score should be 1 pass of 2 decidable, not 1 of 3');
+      eq(r.confidence.decidable, 2, 'decidable');
+      eq(r.confidence.total, 3, 'total');
+    });
+
+    test('two numbers', 'adding an unparsed criterion lowers confidence and leaves score UNCHANGED', function(){
+      var base = [ rule({op:'<=', threshold:50}), rule({op:'>=', threshold:900, band:0}) ];
+      var before = E.matchScore(profile({ferritin:8}), { rules:base });
+      var after  = E.matchScore(profile({ferritin:8}), { rules:base.concat([rule({kind:'unparsed'})]) });
+
+      eq(after.score, before.score, 'score must not move');
+      eq(after.confidence.decidable, before.confidence.decidable, 'decidable count must not move');
+      eq(after.confidence.total, before.confidence.total + 1, 'total must grow');
+      ok(after.confidence.decidable / after.confidence.total <
+         before.confidence.decidable / before.confidence.total, 'confidence must fall');
+      eq(after.unparsedCount, 1, 'unparsedCount');
+      return 'score ' + before.score + ' -> ' + after.score +
+             ', confidence ' + before.confidence.decidable + '/' + before.confidence.total +
+             ' -> ' + after.confidence.decidable + '/' + after.confidence.total;
+    });
+
+    test('two numbers', 'an unknown can never raise the score', function(){
+      var base = [ rule({op:'>=', threshold:900, band:0}) ];                    /* all fail */
+      var before = E.matchScore(profile({ferritin:8}), { rules:base });
+      var after  = E.matchScore(profile({ferritin:8}),
+                     { rules:base.concat([rule({analyte:'a1c', op:'<=', threshold:99, unit:'%'})]) });
+      eq(before.score, 0, 'score before');
+      eq(after.score, 0, 'score after — the unknown must not lift it');
+    });
+
+    test('two numbers', 'weights apply to the score, not to the confidence count', function(){
+      var t = { rules:[
+        rule({op:'<=', threshold:50, weight:3}),            /* PASS, weight 3 */
+        rule({op:'>=', threshold:900, band:0, weight:1})    /* FAIL, weight 1 */
+      ]};
+      var r = E.matchScore(profile({ferritin:8}), t);
+      eq(r.score, 75, 'weighted score = 3/4');
+      eq(r.confidence.decidable, 2, 'confidence counts rules, not weights');
+    });
+
+    test('two numbers', 'an all-fail profile scores 0 with full confidence', function(){
+      var t = { rules:[
+        rule({op:'>=', threshold:900, band:0}),
+        rule({analyte:'hemoglobin', op:'>=', threshold:90, unit:'g/dL', band:0})
+      ]};
+      var r = E.matchScore(profile({ferritin:1, hemoglobin:1}), t);
+      eq(r.score, 0, 'score');
+      eq(r.confidence.decidable, 2, 'both were decidable');
+      eq(r.confidence.total, 2, 'total');
+    });
+
+    test('two numbers', 'confidence is reported as decidable of total, never merged into the score', function(){
+      var r = E.matchScore(P_REAL, E.CORPUS[0]);
+      ok(r.confidence && typeof r.confidence.decidable === 'number' &&
+         typeof r.confidence.total === 'number', 'confidence must be a pair');
+      ok(typeof r.score === 'number' || r.score === null, 'score must be its own number');
+      ok(r.confidence.decidable <= r.confidence.total, 'decidable cannot exceed total');
+    });
+
+    /* ================= parser fixtures (regression net) ================= */
+
+    function onlyRule(text, pick){
+      var rules = E.parseCriteria(text);
+      var hit = rules.filter(pick);
+      if(hit.length !== 1) throw new Error('expected exactly 1 matching rule, got ' + hit.length);
+      return hit[0];
+    }
+
+    test('parser fixtures', 'NCT06942208: "Suboptimal ferritin levels (≤50 mcg/L)" -> ferritin <= 50 ng/mL', function(){
+      var rec = E.CORPUS.filter(function(r){ return r.nctId === 'NCT06942208'; })[0];
+      var r = onlyRule(rec.eligibilityCriteria, function(x){ return x.analyte === 'ferritin' && x.kind === 'numeric'; });
+      eq(r.kind, 'numeric', 'kind'); eq(r.sense, 'inclusion', 'sense');
+      eq(r.op, '<=', 'op'); eq(r.threshold, 50, 'threshold');
+      eq(r.unit, 'ng/mL', 'unit (mcg/L is 1:1 with ng/mL)');
+      eq(r.required, true, 'required');
+      ok(/Suboptimal ferritin levels/.test(r.source), 'source must be verbatim');
+    });
+
+    test('parser fixtures', 'NCT06942208: "Age 16-35" -> range 16–35 years', function(){
+      var rec = E.CORPUS.filter(function(r){ return r.nctId === 'NCT06942208'; })[0];
+      var r = onlyRule(rec.eligibilityCriteria, function(x){ return x.analyte === 'age' && x.kind === 'range'; });
+      eq(r.op, 'range', 'op'); eq(r.min, 16, 'min'); eq(r.max, 35, 'max');
+      eq(r.unit, 'years', 'unit');
+    });
+
+    test('parser fixtures', 'NCT06942208: "Anemic (hemoglobin \\<120g/L)" -> EXCLUSION hemoglobin < 12 g/dL', function(){
+      var rec = E.CORPUS.filter(function(r){ return r.nctId === 'NCT06942208'; })[0];
+      var r = onlyRule(rec.eligibilityCriteria, function(x){ return x.analyte === 'hemoglobin' && x.kind === 'numeric'; });
+      eq(r.sense, 'exclusion', 'sense — polarity must be right');
+      eq(r.op, '<', 'op'); eq(r.threshold, 12, 'threshold (120 g/L normalized to g/dL)');
+      eq(r.unit, 'g/dL', 'unit');
+    });
+
+    test('parser fixtures', 'NCT06942208: "BMI \\<16 but \\>30" is UNPARSED, not guessed into a range', function(){
+      var rec = E.CORPUS.filter(function(r){ return r.nctId === 'NCT06942208'; })[0];
+      var hits = E.parseCriteria(rec.eligibilityCriteria).filter(function(x){
+        return /BMI/.test(x.source) && /but/.test(x.source);
+      });
+      eq(hits.length, 1, 'found the bullet');
+      eq(hits[0].kind, 'unparsed', 'kind');
+      eq(hits[0].min, null, 'min must stay null');
+      eq(hits[0].max, null, 'max must stay null');
+      eq(hits[0].threshold, null, 'threshold must stay null');
+    });
+
+    test('parser fixtures', 'NCT07394972: European decimals + g/L normalize correctly', function(){
+      var rec = E.CORPUS.filter(function(r){ return r.nctId === 'NCT07394972'; })[0];
+      var rules = E.parseCriteria(rec.eligibilityCriteria);
+      var f = rules.filter(function(x){ return x.analyte === 'ferritin' && x.kind === 'numeric'; })[0];
+      eq(f.op, '<', 'ferritin op'); eq(f.threshold, 45, 'ferritin threshold (µg/L is 1:1)');
+      var b = rules.filter(function(x){ return x.analyte === 'bmi' && x.kind === 'range'; })[0];
+      near(b.min, 18.5, 0.001, 'BMI min from "18,5"');
+      near(b.max, 24.9, 0.001, 'BMI max from "24,9"');
+      var h = rules.filter(function(x){ return x.analyte === 'hemoglobin' && x.kind === 'numeric'; })[0];
+      eq(h.threshold, 12, 'hemoglobin 120 g/L -> 12 g/dL');
+      return 'decimal commas and g/L both handled';
+    });
+
+    test('parser fixtures', 'NCT05614219: unitless "Hba1C \\< 48" is refused as implausible', function(){
+      var rec = E.CORPUS.filter(function(r){ return r.nctId === 'NCT05614219'; })[0];
+      var hits = E.parseCriteria(rec.eligibilityCriteria).filter(function(x){ return /Hba1C/i.test(x.source); });
+      eq(hits.length, 1, 'found the bullet');
+      eq(hits[0].kind, 'unparsed', 'must not be read as "A1c under 48%"');
+      eq(hits[0].threshold, null, 'threshold must stay null');
+      return 'that is 48 mmol/mol in Danish units — everyone would pass "< 48%"';
+    });
+
+    test('parser fixtures', 'NCT07743983: indented real criteria are promoted, A1c gate survives', function(){
+      var rec = E.CORPUS.filter(function(r){ return r.nctId === 'NCT07743983'; })[0];
+      var rules = E.parseCriteria(rec.eligibilityCriteria);
+      var a = rules.filter(function(x){ return x.analyte === 'a1c' && x.kind === 'range'; })[0];
+      ok(a, 'the A1c gate must not be swallowed by its parent bullet');
+      near(a.min, 7.5, 0.001, 'a1c min'); near(a.max, 10.5, 0.001, 'a1c max');
+      var b = rules.filter(function(x){ return x.analyte === 'bmi' && x.kind === 'range'; })[0];
+      near(b.min, 28, 0.001, 'bmi min'); near(b.max, 35, 0.001, 'bmi max');
+    });
+
+    test('parser fixtures', 'every rule from every corpus record carries verbatim source', function(){
+      var n = 0;
+      E.CORPUS.forEach(function(rec){
+        E.parseCriteria(rec.eligibilityCriteria).forEach(function(r){
+          n++;
+          ok(typeof r.source === 'string' && r.source.trim().length > 0, rec.nctId + ': empty source');
+          ok(rec.eligibilityCriteria.indexOf(r.source.split('\n')[0].trim()) >= 0,
+             rec.nctId + ': source not found verbatim in the original text');
+        });
+      });
+      return n + ' rules checked across ' + E.CORPUS.length + ' records';
+    });
+
+    test('parser fixtures', 'no unparsed rule anywhere carries a threshold, min or max', function(){
+      var bad = 0;
+      E.CORPUS.forEach(function(rec){
+        E.parseCriteria(rec.eligibilityCriteria).forEach(function(r){
+          if(r.kind === 'unparsed' && (r.threshold !== null || r.min !== null || r.max !== null)) bad++;
+        });
+      });
+      eq(bad, 0, 'unparsed rules carrying a number');
+      return 'an unparsed rule cannot smuggle a guess into the evaluator';
+    });
+
+    test('parser fixtures', 'every decidable rule is in its analyte canonical unit', function(){
+      var bad = [];
+      E.CORPUS.forEach(function(rec){
+        E.parseCriteria(rec.eligibilityCriteria).forEach(function(r){
+          if((r.kind === 'numeric' || r.kind === 'range') && r.unit !== E.ANALYTES[r.analyte].canonical){
+            bad.push(rec.nctId + ':' + r.analyte + '=' + r.unit);
+          }
+        });
+      });
+      eq(bad.length, 0, 'rules in a non-canonical unit: ' + bad.join(', '));
+    });
+
+    /* ================= the Health Score ================= */
+
+    test('health score', 'markers with no value are excluded, not scored as zero', function(){
+      var hs = E.healthScore();
+      ok(hs.n < hs.total, 'a1c has no value, so n must be below total');
+      ok(hs.score > 0, 'score must not be dragged to 0 by the missing marker');
+      return hs.score + ' from ' + hs.n + ' of ' + hs.total + ' markers';
+    });
+
+    /* ================= end to end over the real corpus ================= */
+
+    test('end to end', 'every corpus record scores without throwing', function(){
+      var n = 0;
+      E.CORPUS.forEach(function(rec){
+        var r = E.matchScore(E.PROFILE, rec);
+        ok(r.confidence.total > 0, rec.nctId + ' produced no rules');
+        ok(r.score === null || (r.score >= 0 && r.score <= 100), rec.nctId + ' score out of range: ' + r.score);
+        n++;
+      });
+      return n + ' records scored';
+    });
+
+    test('end to end', 'ranking is ordered and puts blocked trials last', function(){
+      var ranked = E.rankCorpus(E.PROFILE, E.CORPUS);
+      eq(ranked.length, E.CORPUS.length, 'every trial is ranked — no filtering, no search');
+      var seenBlocked = false, bad = null;
+      ranked.forEach(function(row){
+        if(row.result.blocked) seenBlocked = true;
+        else if(seenBlocked && !bad) bad = row.trial.nctId;
+      });
+      ok(!bad, 'unblocked trial ' + bad + ' appeared after a blocked one');
+      return ranked.length + ' trials ranked';
+    });
+
+    test('end to end', 'no trial reports a score without also reporting confidence', function(){
+      E.CORPUS.forEach(function(rec){
+        var r = E.matchScore(E.PROFILE, rec);
+        ok(r.confidence && typeof r.confidence.decidable === 'number',
+           rec.nctId + ' reported a score with no confidence');
+      });
+    });
+
+    /* ---- summary ---- */
+    summary.className = failed ? 'bad' : 'ok';
+    summary.textContent = failed
+      ? failed + ' of ' + total + ' FAILED'
+      : 'all ' + total + ' passed';
+  }
+
+  var frame = document.getElementById('app');
+
+  function start(){
+    var E;
+    try { E = frame.contentWindow.OpenHealthEngine; }
+    catch(e){
+      summary.className = 'bad';
+      out.innerHTML = '<div class="err"><b>Cannot reach index.html.</b><br>' +
+        'Serve this directory over http and reload:<br><br>' +
+        '<code>python -m http.server 8731</code><br>' +
+        '<code>http://127.0.0.1:8731/tests.html</code></div>';
+      return;
+    }
+    if(!E){
+      summary.className = 'bad';
+      out.innerHTML = '<div class="err"><b>index.html loaded but exposed no engine.</b><br>' +
+        'Expected <code>window.OpenHealthEngine</code>.</div>';
+      return;
+    }
+    run(E);
+  }
+
+  /* The iframe sits above this script, so it may already have finished loading
+     by the time we get here — in which case the load event has been and gone.
+     Check for the engine first, and only wait for the event if it is not there. */
+  var ready = false;
+  try { ready = !!(frame.contentWindow && frame.contentWindow.OpenHealthEngine); } catch(e){}
+  if(ready) start();
+  else frame.addEventListener('load', start);
+})();
+</script>
