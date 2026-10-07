@@ -179,18 +179,25 @@ the end if a day is lost.
 
 ### The calendar
 
-| Date | Work | §7 item | Days |
-|---|---|---|---|
-| **Mon Oct 6** (tonight) | **Strip-out pass** — doctor flow, Jordan Reyes, condition input, `Doctors Available: 9`, and the last `countUp` literal | 5 | 0.5 |
-| **Tue Oct 7** | **Trial corpus** — ~20–25 real ClinicalTrials.gov records, raw `eligibilityCriteria` saved **verbatim** | 3 | 1 |
-| **Wed Oct 8 → Sat Oct 11** | **Criteria parser** — free text → predicates: inclusion/exclusion split, then numeric, range, presence, negation, and an explicit **`unparsed`** bucket | 1 | 4 |
-| *(alongside, Oct 8 → Oct 11)* | **Test harness + parser fixtures** — `tests.html` asserting known profiles produce known verdicts: exactly at threshold, missing lab, all-fail, unparsed criterion | 2.4 | 1.5 |
-| **Sun Oct 12** | **Evaluator re-wire** — `evaluateCriterion` / `matchScore` read the parser's output instead of hand-written objects. Score **and** confidence, two numbers | 2 | 1 |
-| **Mon Oct 13 → Tue Oct 14** | **Document rail** — Tesseract.js → parser → profile, with in-place user correction. The headline input, and the one that removes the condition question | 4 | 2 |
-| **Wed Oct 15 → Thu Oct 16** | **Hub shell** — 3-tab nav, Health Score ring with its `n of N markers` confidence line, Metrics tab | 6 | 1.5 |
-| **Fri Oct 17** | **Garmin rail** — sync script, `garmin.json`, reader, and the vitals trend on the near-miss callout | 7 | 1.5 |
-| **Sat Oct 18** | **Appointment prep sheet** — a real generated download | 8 | 1 |
-| **🔒 Sat Oct 18, EOD** | **FEATURE FREEZE** | — | — |
+> **Progress, 2026-10-07.** `UPDATELOGV1.md` closed all seven of its stages in two sittings,
+> which covers every row below through **Tue Oct 14** — six calendar days ahead. The four
+> items `SIMPLIFY.md` §7 marks *never cut* (1, 2, 3, 4) are **all shipped**. What remains is
+> the cuttable tail: the hub shell, the Garmin rail and the prep sheet, which are
+> `UPDATELOGV2.md`. The rows below are marked rather than deleted so the plan and what
+> happened can still be compared.
+
+| Date | Work | §7 item | Days | State |
+|---|---|---|---|---|
+| **Mon Oct 6** (tonight) | **Strip-out pass** — doctor flow, Jordan Reyes, condition input, `Doctors Available: 9`, and the last `countUp` literal | 5 | 0.5 | ✅ **Done** — V1 stage 1 |
+| **Tue Oct 7** | **Trial corpus** — ~20–25 real ClinicalTrials.gov records, raw `eligibilityCriteria` saved **verbatim** | 3 | 1 | ✅ **Done** — V1 stage 2, 23 records |
+| **Wed Oct 8 → Sat Oct 11** | **Criteria parser** — free text → predicates: inclusion/exclusion split, then numeric, range, presence, negation, and an explicit **`unparsed`** bucket | 1 | 4 | ✅ **Done** — V1 stage 3 |
+| *(alongside, Oct 8 → Oct 11)* | **Test harness + parser fixtures** — `tests.html` asserting known profiles produce known verdicts: exactly at threshold, missing lab, all-fail, unparsed criterion | 2.4 | 1.5 | ✅ **Done** — V1 stage 4, now **61 cases** |
+| **Sun Oct 12** | **Evaluator re-wire** — `evaluateCriterion` / `matchScore` read the parser's output instead of hand-written objects. Score **and** confidence, two numbers | 2 | 1 | ✅ **Done** — V1 stage 5 |
+| **Mon Oct 13 → Tue Oct 14** | **Document rail** — Tesseract.js → parser → profile, with in-place user correction. The headline input, and the one that removes the condition question | 4 | 2 | ✅ **Done** — V1 stage 6 |
+| **Wed Oct 15 → Thu Oct 16** | **Hub shell** — 3-tab nav, Health Score ring with its `n of N markers` confidence line, Metrics tab | 6 | 1.5 | **V2** |
+| **Fri Oct 17** | **Garmin rail** — sync script, `garmin.json`, reader, and the vitals trend on the near-miss callout | 7 | 1.5 | **V2** |
+| **Sat Oct 18** | **Appointment prep sheet** — a real generated download | 8 | 1 | **V2 — not built. The app produces no file yet** |
+| **🔒 Sat Oct 18, EOD** | **FEATURE FREEZE** | — | — | — |
 
 **Why the prep sheet sits last:** `SIMPLIFY.md` §7 says cut 8 first, then 7, then 6, so the
 last day holds the first thing to go. One tension worth naming out loud: §9's third answer
@@ -229,6 +236,19 @@ telling it what condition you have** — and get every known trial ranked, each 
 per-criterion table where every row is parsed from the registry's own text, and the rows the
 parser couldn't read shown honestly rather than dropped. Download the prep sheet and it is a
 real file. Tests pass. **Works with the network off, because there are no network calls.**
+
+> **Walked end to end 2026-10-07** (V1 stage 7), and the clause about the network needed
+> correcting rather than ticking. Everything before it holds: the document goes in, nothing
+> asks what condition you have, 23 trials rank, the audit rows are parsed from the registry's
+> text and the unread ones are shown verbatim. The prep sheet is **not built** — it is V2, and
+> until it ships the app produces no file, so the §9 answer that leans on it cannot be said in
+> the video yet. And "there are no network calls" is not accurate: there are three Google Fonts
+> requests at load and, on the first document only, the Tesseract.js bundle from one CDN.
+> Neither carries anything of the user's, and the app was verified fully functional with both
+> hosts unreachable — fonts fall back, and the document rail says it is offline and hands you
+> the typing path, which works. The honest claim is **"nothing you give it ever leaves the
+> device,"** not "there are no network calls." See [`ARCHITECTURE.md`](ARCHITECTURE.md) §8,
+> *What leaves the device*.
 
 ### 🔒 FEATURE FREEZE — end of day Saturday, October 18
 

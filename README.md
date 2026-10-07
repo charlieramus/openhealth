@@ -13,29 +13,50 @@ your labs, and shows the per-criterion arithmetic.
 
 **You never tell it what you have.** Every other consumer trial matcher opens with a
 questionnaire — you self-report, in medical vocabulary, before the tool does anything.
-OpenHealth opens by asking for a document. It reads your lab paperwork and your watch data,
-builds a profile, and ranks every trial it knows about against it.
+OpenHealth opens by asking for a document. It reads your lab paperwork, builds a profile, and
+ranks every trial it knows about against it. (Watch data is the second rail and is on the
+plan, not in the app — see *What is real* below.)
 
-**The trials are real, and so is everything else.** The standard the project is held to:
-*everything has to be functional — not just clickable, but actually real. The only accepted
-limitation is that there is no backend.* Lab values are OCR'd from actual documents in the
-browser. Vitals come from a real Garmin account. The trials are genuine
-[ClinicalTrials.gov](https://clinicaltrials.gov) records, and the app parses their raw
-eligibility text at runtime rather than reading rules a human pre-encoded.
+**The trials are real, and so is everything else that ships.** The standard the project is
+held to: *everything has to be functional — not just clickable, but actually real. The only
+accepted limitation is that there is no backend.* Lab values are OCR'd from actual documents
+in the browser. The trials are genuine [ClinicalTrials.gov](https://clinicaltrials.gov)
+records, and the app parses their raw eligibility text at runtime rather than reading rules a
+human pre-encoded.
 
-### What works today, and what's next
+### What is real, what is not, and what is not built yet
 
-Stated plainly, because the difference is the project:
+Stated plainly, because the difference is the project. Last walked end to end **2026-10-07**,
+at the close of [`UPDATELOGV1.md`](UPDATELOGV1.md).
 
 | | |
 |---|---|
-| ✅ **The matching engine is real** | Every score on screen is computed from a structured profile against protocol-quoted criteria. Change a lab value and the scores, bars and ranking all move. No literals |
-| ✅ **The trial records are real** | Real NCT IDs, sponsors, phases, and inclusion/exclusion text |
-| 🔨 **The criteria parser** | Criteria are still hand-transcribed into rule objects. **Automating that — free text → checkable rule — is the work in progress**, and it's the actual computer science. The same parser reads OCR'd lab documents |
-| 🔨 **The two input rails** | Document OCR (Tesseract.js, in-browser) and the Garmin sync script. Both keyless, both real. See [`docs/SIMPLIFY.md`](docs/SIMPLIFY.md) §5 |
+| ✅ **The criteria parser** | `parseCriteria()` turns a trial's published eligibility text into checkable rules **in the browser, at render time**. 460 rules across the 23 records. Every rule keeps the registry's own sentence in `source`; what it cannot read goes in an `unparsed` bucket shown verbatim on screen, never guessed and never dropped. This is the actual computer science and it is done |
+| ✅ **The matching engine** | Every score on screen is computed by `matchScore()` from the profile against those parsed rules. Change a lab value and the scores, the bars and the ranking all move. There is **no** hand-written rule array left in the file, so there is no second score that can disagree with the first |
+| ✅ **The trial records** | 23 genuine ClinicalTrials.gov records, downloaded 2026-10-06, stored with their eligibility text **verbatim** — original line breaks, bullets and typos. `scripts/build_corpus.py` asserts the text survives the round trip byte-for-byte |
+| ✅ **The document rail** | Drop in a photo or scan of a lab report and Tesseract.js reads it on the device. Values are converted into each analyte's canonical unit; a unit with no conversion on file is **refused rather than read as a bare number**, and every refused line is shown to you with its raw text. Every row is editable before anything enters the profile |
+| ✅ **Two numbers, never one** | Score and confidence are reported separately — *"100 / 100"* beside *"3 of 32 checkable"*. A missing value is `UNKNOWN`, which lowers confidence and **can never raise the score**. HbA1c is deliberately absent from the committed baseline as the standing test case for exactly that |
+| ⚠️ **The baseline lab history is invented** | The seven committed draws the app opens with are not anyone's. The *rails* that replace them are real: read a document or type a value and it is yours from then on. Nothing in this repo is, or has ever been, real patient data |
+| 🔨 **The three-tab hub** | The tabs today are **Home · Labs · Trials**. The Metrics tab is `UPDATELOGV2.md` |
+| 🔨 **The Garmin rail** | **Not built.** There is no `garmin.json` and no sync script in this repo yet. `UPDATELOGV2.md` |
+| 🔨 **The appointment prep sheet** | **Not built.** The app currently produces no downloadable file at all, which is why there is no download button anywhere. `UPDATELOGV2.md` |
 
 **Start with [`docs/SIMPLIFY.md`](docs/SIMPLIFY.md)** for the current plan, what got cut and
 why, then [`docs/REBUILD.md`](docs/REBUILD.md) for the API evidence the whole thing rests on.
+
+### What leaves your device
+
+Nothing you give it. The document is read by a worker on the page and is never uploaded;
+`index.html` contains no `fetch`, no `XMLHttpRequest`, no `sendBeacon`, no `WebSocket`, no
+`<form>` and no `mailto:`. Nothing is stored either — there is no `localStorage` and no
+IndexedDB for your data, so closing the tab is the delete button.
+
+There are exactly two inbound requests, and neither carries anything of yours: the Google
+Fonts stylesheet at page load, and — **only when you read your first document** — the
+Tesseract.js bundle from one CDN. Verified 2026-10-07 with both hosts unreachable: the app
+renders and scores normally on fallback fonts, and the document rail says it is offline and
+hands you the typing path, which works. So the accurate claim is *"nothing you give it ever
+leaves the device,"* not *"there are no network calls."*
 
 ---
 
@@ -43,32 +64,41 @@ why, then [`docs/REBUILD.md`](docs/REBUILD.md) for the API evidence the whole th
 
 **Prototype:** https://claude.ai/artifact/5H4KWf2bja3DKDydumaqyo
 
-Open it on a phone for the intended experience. Tap through **Home → Metrics → Trials**
-using the bottom tab bar, the in-screen buttons, or any scored trial card.
+Open it on a phone for the intended experience. Tap through **Home → Labs → Trials** using the
+bottom tab bar, the in-screen buttons, or any scored trial card. The published artifact is
+redeployed on ship, so it may trail the repo; `index.html` on this branch is the source of
+truth.
 
 ---
 
 ## The three tabs
 
+What ships today. The Metrics tab in the design spec is `UPDATELOGV2.md`; the tab in its
+place is **Labs**, which covers the same ground with less of it.
+
 | # | Tab | Role (I→P→O) | What it shows |
 |---|--------|--------------|---------------|
-| 1 | **Home** | Input | Health Score ring, biomarker bars, documents captured, your top trial match |
-| 2 | **Metrics** | Processing | Each biomarker vs. its reference range, with trend over time |
-| 3 | **Trials** | Output | Computed match score per trial, the per-criterion audit behind each one, and a downloadable appointment prep sheet |
+| 1 | **Home** | Input | Health Score ring with its `n of N markers` confidence line, biomarker bars, entries captured, your top-ranked trials |
+| 2 | **Labs** | Processing | Each biomarker against its reference range with trend over time, and the way in to adding a document or typing a value |
+| 3 | **Trials** | Output | Computed match score **and** confidence per trial, the per-criterion audit behind each one, and the criteria the parser could not read, shown verbatim |
 
 **The Health Score** on the home screen is the weighted share of your tracked biomarkers
 sitting inside their reference range, with partial credit for near-range values. A marker you
 have no value for is **excluded from the score and lowers the confidence instead** — it never
 counts as a pass. The exact formula is in [`docs/SIMPLIFY.md`](docs/SIMPLIFY.md) §6.
 
-**OpenHealth does not contact your doctor.** It generates a real one-page prep sheet — every
-failed criterion, every near-miss with the exact gap, your values and dates, the NCT numbers
-— that you take to an appointment you book yourself.
+**OpenHealth does not contact your doctor,** and has no channel with which to. The planned
+replacement — a real one-page prep sheet carrying every failed criterion, every near-miss with
+its exact gap, your values and dates, and the NCT numbers — is **specified but not built**
+(`UPDATELOGV2.md`). Until it ships the app generates no file, so this is a plan, not a
+feature, and should not be described as one.
 
 ### The trials in the app
 
-Genuine registry records, retrieved from ClinicalTrials.gov and stored with their **raw
-eligibility text verbatim**, which the app parses on load.
+**23** genuine registry records, retrieved from ClinicalTrials.gov on **2026-10-06** and
+stored with their **raw eligibility text verbatim**, which the app parses at render time. The
+unmodified API response for each one is in `assets/intake/trials/`, so every line the audit
+screen quotes can be checked against the registry in ten seconds. A few, by way of example:
 
 | Trial | NCT ID | Sponsor |
 |---|---|---|
@@ -77,17 +107,26 @@ eligibility text verbatim**, which the app parses on load.
 | N-acetylglucosamine in Crohn's | [NCT07225998](https://clinicaltrials.gov/study/NCT07225998) | Johns Hopkins |
 | Weight regain after GLP-1 | [NCT07729332](https://clinicaltrials.gov/study/NCT07729332) | Mass General |
 
+Rebuild the corpus from intake with `python scripts/build_corpus.py`.
+
 Scores are computed by `matchScore()` in `index.html`, not typed in, so they move with the
-profile and are **deliberately not quoted here**. Distance is OpenHealth's own preference
-filter, marked `protocol:false`, and never blocks eligibility.
+profile and are **deliberately not quoted here**. Distance to the nearest site is computed at
+build time from the registry's own `geoPoint` to a **fixed origin named in
+`scripts/build_corpus.py`** — the app does not know where you are and never asks, so the
+screen says what the number is measured from. It is a preference, marked `protocol:false`, and
+never blocks eligibility.
 
 ### A note on `garmin.json`
 
-The vitals in the app are the **repo owner's own real Garmin data** — resting heart rate,
-SpO2, HRV, sleep, body composition — pulled by a local Python script and committed in the
-clear. This is deliberate, so collaborators aren't surprised to find it. It is fitness data
-voluntarily contributed by the person who owns it; **it is not patient data, and no real
-patient data is ever used in this project.**
+**This file does not exist yet, and neither does the sync script.** The Garmin rail is
+`UPDATELOGV2.md`. The note is kept here because it describes the arrangement collaborators
+will find when it lands, and it is better agreed now than discovered later:
+
+the vitals will be the **repo owner's own real Garmin data** — resting heart rate, SpO2, HRV,
+sleep, body composition — pulled by a local Python script and committed in the clear. That is
+deliberate, so nobody is surprised to find it in the repo. It is fitness data voluntarily
+contributed by the person who owns it; **it is not patient data, and no real patient data is
+ever used in this project.**
 
 ---
 
@@ -95,9 +134,14 @@ patient data is ever used in this project.**
 
 ```
 index.html              ← the entire prototype (one file, no build step)
-garmin.json             ← committed snapshot of the owner's real Garmin data (see above)
+tests.html              ← the engine test harness. Loads index.html and drives the SHIPPED
+                          functions, not a copy. Needs the dir served over http:
+                          `python -m http.server 8731`, then open /tests.html
 scripts/
-  sync_garmin.py        ← local sync script. Run every few days; never deployed
+  build_corpus.py       ← regenerates the 23-record corpus in index.html from
+                          assets/intake/trials/. Asserts the criteria text is byte-identical
+garmin.json             ← NOT YET. The Garmin rail is UPDATELOGV2.md (see above)
+scripts/sync_garmin.py  ← NOT YET. Same
 docs/
   README.md             ← doc index + reading paths. Start here if you're browsing
   BRIEF.md              ← the idea + all 6 required deliverable answers (source of truth)

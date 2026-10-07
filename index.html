@@ -61,7 +61,13 @@ body{
   color:var(--ink);
   background:radial-gradient(120% 60% at 50% -10%,#EDF0EA 0%,var(--canvas) 60%);
   -webkit-font-smoothing:antialiased;
-  display:grid;grid-template-rows:minmax(0,1fr);place-items:center;
+  /* BOTH tracks are minmax(0,1fr). The rows one was always here; without the
+     columns one the single auto column sized to .phone's 404px max-width —
+     place-items:center stops the item stretching, so the track took its
+     max-content — and the whole page scrolled sideways on any viewport
+     narrower than 404 (iPhone SE and mini, most Androids at 360). */
+  display:grid;grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr);
+  place-items:center;
 }
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
@@ -264,7 +270,13 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 }
 .sheet-head .cal{
   width:34px;height:34px;border-radius:11px;background:var(--soft);
-  display:grid;grid-template-rows:minmax(0,1fr);place-items:center;
+  /* BOTH tracks are minmax(0,1fr). The rows one was always here; without the
+     columns one the single auto column sized to .phone's 404px max-width —
+     place-items:center stops the item stretching, so the track took its
+     max-content — and the whole page scrolled sideways on any viewport
+     narrower than 404 (iPhone SE and mini, most Androids at 360). */
+  display:grid;grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr);
+  place-items:center;
 }
 .sheet-head h2{font-family:var(--display);font-weight:800;font-size:1.12rem;letter-spacing:-.025em}
 .sheet-head .go{margin-left:auto;color:var(--ink-3)}
@@ -1750,6 +1762,12 @@ button.tile:active{transform:scale(.98)}
      per record. eligibilityCriteria below is that response's text VERBATIM:
      original line breaks, original bullet markers, original typos. It is parsed
      into rules at runtime by parseCriteria(); nothing here is pre-structured. */
+
+  /* Every siteDistanceMi below is measured from here. Emitted with the corpus
+     rather than typed into the page, so the label on screen and the origin the
+     distances were computed from cannot drift apart. */
+  var DISTANCE_ORIGIN = "Philadelphia, PA";
+
   var CORPUS =
   [
     {
@@ -3472,7 +3490,7 @@ button.tile:active{transform:scale(.98)}
     var noteEl = document.getElementById('auditNote');
     if(unknowns){
       noteEl.textContent = plural(unknowns, 'criterion', 'criteria') + ' above came back ' +
-        'Unknown. Your profile holds lab values and watch data, not a medical history, so ' +
+        'Unknown. Your profile holds lab values, not a medical history, so ' +
         'anything a trial asks about a condition or a diagnosis cannot be decided here — ' +
         'and an Unknown is never counted as a pass.';
       noteEl.hidden = false;
@@ -3503,8 +3521,12 @@ button.tile:active{transform:scale(.98)}
       ['Design',        (t.phase && t.phase !== 'NA' ? t.phase.replace(/^PHASE/, 'Phase ') + ' · ' : '') +
                         String(t.studyType || '').toLowerCase()],
       ['Registry',      t.nctId],
+      /* The distance is a great-circle computed at build time from the registry's
+         own geoPoint to a FIXED origin named in scripts/build_corpus.py. The app
+         does not know where you are and never asks, so the row says what the
+         number is measured from rather than letting it imply a location it holds. */
       ['Nearest site',  t.nearestSite + (t.siteDistanceMi === null || t.siteDistanceMi === undefined
-                          ? '' : ' · ' + num(t.siteDistanceMi) + ' mi')],
+                          ? '' : ' · ' + num(t.siteDistanceMi) + ' mi from ' + DISTANCE_ORIGIN)],
       ['Enrolling',     t.enrollment === null || t.enrollment === undefined
                           ? 'not stated' : num(t.enrollment) + ' participants'],
       ['Registry ages', [t.minimumAge, t.maximumAge].filter(Boolean).join(' – ') || 'not stated']
@@ -3748,8 +3770,12 @@ button.tile:active{transform:scale(.98)}
     var hs = healthScore();
     document.getElementById('todayHead').textContent = 'Today, ' +
       dateLabel(todayISO()).replace(/, \d{4}$/, '');
+    /* DOCS holds both kinds of entry the rail produces — a document that was
+       read and a value that was typed in. Calling a typed value a "document"
+       on this tile contradicted the rail's own list, which already says
+       "Typed in". The noun is the one both can be. */
     document.getElementById('docTile').innerHTML =
-      DOCS.length + '<span class="u">' + (DOCS.length === 1 ? 'document' : 'documents') + '</span>';
+      DOCS.length + '<span class="u">' + (DOCS.length === 1 ? 'entry' : 'entries') + '</span>';
     document.getElementById('markerTile').innerHTML =
       hs.n + '<span class="u">of ' + hs.total + '</span>';
   }

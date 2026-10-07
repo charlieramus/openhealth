@@ -1309,7 +1309,302 @@ than rounding it up to done.
 
 ## Stage 7 Report
 
-_Pending._
+Full walkthrough, headless Chromium over `http://127.0.0.1:8731`, 2026-10-07. No new
+features. Six small corrections were made and are itemised at the bottom; everything else in
+this report is observation.
+
+### 1 · `tests.html` — all 61 passed
+
+Driving the shipped engine through `window.OpenHealthEngine`, not a copy.
+
+```
+boundaries        5   exactly at >=, exactly at <=, one step below, strict >, range endpoints
+unknown           6   missing analyte -> UNKNOWN; a1c really absent; unparsed -> UNKNOWN;
+                      presence/negation -> UNKNOWN; 0 is a real value, not a missing one
+near-miss         5   signed margin, outside band -> plain FAIL, range measures from nearest
+                      bound, just-inside-an-exclusion is excluded, not a near miss
+polarity          2   exclusion not matched -> PASS; exclusion matched -> FAIL
+blocking          4   matched exclusion blocks; failed REQUIRED inclusion blocks; non-required
+                      does not; UNKNOWN never blocks
+two numbers       6   score over decidable only; an unparsed criterion lowers confidence and
+                      leaves score unchanged (50 -> 50, 2/2 -> 2/3); unknown can never raise;
+                      weights hit the score not the count; all-fail = 0 at full confidence
+parser fixtures  11   the five NCT fixtures, plus three corpus-wide invariants: 460 rules across
+                      23 records all carry verbatim source, no unparsed rule carries a
+                      threshold/min/max, every decidable rule is in its analyte canonical unit
+lab documents    16   value vs printed range, ug/L 1:1, g/L -> g/dL, IFCC -> NGSP, unit with no
+                      conversion REFUSED, out-of-bounds refused, two candidates refused, marker
+                      with no number refused, refused line RETURNED with raw text, page furniture
+                      not reported, "Hgb A1c" is A1c, collection date beats report date,
+                      hand-typed normalizes through the same reader, OCR confidence reaches the
+                      Measurement
+fhir              4   Measurement -> LOINC-coded US Core Observation; age never becomes one;
+                      bundle is a view of the profile (4 Observations); no identifying subject
+health score      1   markers with no value excluded, not scored as zero
+end to end        3   every corpus record scores without throwing; ranking ordered with blocked
+                      last; no trial reports a score without a confidence
+```
+
+Re-run after every edit this stage made: **still all 61 passed.** No console errors on
+`index.html`.
+
+### 2 · The walkthrough, step by step
+
+Driven as a user would — clicks and a real file upload, not function calls, except where noted.
+
+**Cold open, no data.** Four requests total and nothing else (full log in §4). Health Score
+**99**, *4 of 5 markers*, *1 point up since your June panel*. Three biomarker bars with real
+values against real ranges. *Add records · 0 entries*, *Markers with a value · 4 of 5*. *Trials
+ranked for you · Ranked against your profile · 23 trials*, top three listed with score and
+checkable count side by side.
+
+> **What a judge sees that is worse than it should be, one.** The ring says **99** while the
+> iron bar directly beneath it is a 5% sliver reading *8 / 12–150*. The two disagree in the same
+> glance. This is `docs/SIMPLIFY.md` §6's partial-credit span, flagged by Stage 1's own report
+> and unfixed: ferritin's reference interval is 138 wide, so being four units under the floor
+> costs 2.9% of its credit. A spec problem with a spec owner, and **not** a Stage 7 edit.
+>
+> **Two.** The status bar reads **9:41** and the bell carries an unexplained pink badge dot.
+> Both are hub-shell furniture V2 owns. `9:41` is device chrome, which is defensible; a
+> notification badge with nothing behind it is not.
+>
+> **Three.** Scroll to the bottom of Home and there is an **Insurance · Full coverage · Balance
+> due $0.00** panel. It is the last presentational block in the app and it describes something
+> that does not exist. Stage 1 and Stage 6 both flagged it as V2's. It is now the single worst
+> thing on the screen a judge opens first.
+
+**Add a lab document.** Tapped *Add records*. The screen is honest before it does anything:
+*"Your document is read here, by this page. It is never uploaded — there is no server to upload
+it to."* Uploaded a 760×620 PNG of a six-row lab report (Ferritin 11 ng/mL, Hemoglobin 112 g/L,
+Hgb A1c 42 mmol/mol, LDL 131 mg/dL, Vitamin B12 340 pg/mL, O2 sat 96%) with a letterhead,
+street address, CLIA number and phone number around it.
+
+Result: **5 values read · 0 lines refused.** The conversions are right and are shown *as*
+conversions, with the original line quoted under each row:
+
+| On the document | On the row | What happened |
+|---|---|---|
+| `Hemoglobin 112 g/L 120 - 160` | 11.2 g/dL | g/L ÷ 10 |
+| `Hgb A1c 42 mmol/mol 20 - 42` | 5.99 % | IFCC → NGSP |
+| `Ferritin 11 ng/mL 12 - 150` | 11 ng/mL | plus *"The report prints its own range: 12–150 ng/mL"* |
+
+Vitamin B12 is not an analyte the app holds, and it was correctly **not** reported as a line we
+failed to read — it is in the full-text disclosure instead. The letterhead, address and phone
+number were not mistaken for results. Every row carries *"the date was written as numbers, so
+the month/day order is assumed"*, which is the right amount of doubt about `10/02/2026`.
+
+**Correct a flagged value.** Nothing was flagged on this read — all five came back
+`READ CLEANLY` — so this step had no flag to act on. Exercised the identical edit path instead:
+changed ferritin 11 → 9. The chip flips to **`YOU CONFIRMED THIS`** and the quoted source line
+still reads `Ferritin 11 ng/mL 12 - 150`. The original is never overwritten by the correction,
+which is the behaviour that matters. The refusal paths were exercised in §4 and carry sixteen
+tests.
+
+**Read the ranked trials.** Added the five values. Everything downstream moved, and the move is
+the proof:
+
+```
+                 before document          after
+Health Score     99, 4 of 5 markers       88, 5 of 5 markers
+trend            1 point up               10 points down since your June panel
+iron             8                        9
+hemoglobin       13.1                     11.2
+HbA1c            never drawn              5.99
+entries          0                        1
+```
+
+The ranking rearranged for a reason you can say out loud: **hemoglobin fell to 11.2 g/dL, so the
+iron-deficiency-*without*-anemia trials excluded the patient.** `NCT07394972` went #1 → blocked
+and `NCT06942208` — the flagship — went #3 → blocked, both on a criterion the audit table quotes
+verbatim. Meanwhile five trials that previously had **no score** became scorable, because A1c
+finally had a value. That is the entire product demonstrated by one upload, and it is the thing
+to put in the video.
+
+> **Four.** After the document, **all eight unblocked trials show `100 / 100`.** The list is
+> correctly ordered — Stage 5's shrink-to-prior key separates them at .833 / .786 / .750 / … —
+> but **the key is not on screen**, so a judge sees eight identical chips in an order with no
+> visible justification, and the top one is a myocardial-infarction trial scoring 100 on 2
+> decidable criteria. The number that explains the order is deliberately hidden (Stage 5: *"no
+> screen shows them"*), and that decision is exactly what makes this view look arbitrary. Not a
+> Stage 7 edit: it is a Stage 5 decision with a real cost, and V2's Trials tab is where it gets
+> paid.
+
+**Open the audit for a strong match.** `NCT06270498`, 100 / 100, *3 of 32 checkable*, *"29
+criteria we could not check"*, *"Strong match on the 3 criteria we could check"*. Eight rows,
+each with a verdict, the actual value, the signed distance, and the registry's own sentence:
+
+```
+Hemoglobin 10–16 g/dL   PASS      11.2 g/dL   1.2 g/dL inside what the trial asks
+Age >= 18 years         PASS      34 years    16 years inside what the trial asks
+Ferritin > 400 ng/mL    PASS      9 ng/mL     391 ng/mL clear of the exclusion
+No anemia · Liver function · Cancer history · Pregnancy · Breastfeeding
+                        UNKNOWN   Not on file
+```
+
+Then *"5 criteria above came back Unknown … and an Unknown is never counted as a pass."* and
+*"This is not an eligibility decision. Only a screening visit can determine that."* Both land.
+
+> **Five.** The row reading **`Ferritin > 400 ng/mL` · PASS · 9 ng/mL** is momentarily alarming:
+> the rule label alone looks like it is asserting your ferritin is over 400. The `EXCLUSION` tag
+> and *"391 ng/mL clear of the exclusion"* resolve it within a second, but an exclusion's rule
+> cell is stated in the trial's polarity and its verdict in the patient's, and the two read
+> against each other. A V2 wording pass; not changed here.
+
+**Open the audit for a weak one.** `NCT07743983`, **0 / 100**, *2 of 7 checkable*, *"Not eligible
+on the criteria we could check"*, and the blocked callout names the arithmetic: *"It requires BMI
+28–35 kg/m2 and you are at 22.4 kg/m2. It requires HbA1c 7.5–10.5 % and you are at 5.99 %."* It
+sits at the bottom of the ranking and is still fully readable — the list shows its losses, which
+was Stage 5's point.
+
+> **Six.** One row on that trial is labelled **`No pregnancy` · UNKNOWN**, and its quoted source
+> is a single ~900-character mega-bullet covering pancreatitis, medullary thyroid carcinoma,
+> malignancy, NYHA III/IV heart failure, stroke, eGFR *and* pregnancy. The parser found "Pregnant
+> or lactating woman" inside it and labelled the whole blob with it. The verdict is defensible
+> (UNKNOWN either way) but the label badly understates the criterion. Same class as the
+> granularity residue Stage 5 logged for `BMI= 25-40`; it belongs with the §4.4 granularity work.
+
+**Read the unparsed section.** Opens to *"3 criteria we couldn't check automatically — Shown
+exactly as the registry publishes them. Nothing here was guessed at and nothing was dropped."*
+Three verbatim bullets (an FPG threshold, a hypertension clause, a consent/contraception clause),
+each tagged INCLUSION. Correct, and correctly framed as unread rather than failed.
+
+### 3 · The six rules, line by line
+
+| # | Rule | Verdict | Where checked |
+|---|---|---|---|
+| 1 | **No search bar, no condition picker, anywhere** | **PASS** | Zero `<select>`, zero `type="search"`, zero `placeholder` attributes in `index.html`. Four `<input>` total: two file pickers (`index.html:1255`, `:1262`) and two numeric fields (`:1281` manual entry, `:4018` the correction cell). None takes a condition and none takes free text |
+| 2 | **Unknown never a zero, a dash, or an empty bar** | **PASS** | Labs screen, HbA1c with no value: a **hatched empty track** plus *"No value on file"* / *"Never drawn"*, visually unlike both a filled bar and a zero. Gauge caption counts it out loud: *"3 of 4 markers in range · 1 outside · 1 marker never drawn"*. Audit rows: `UNKNOWN` + *"Not on file"*. Trials with nothing decidable: *"No score · 0 of N checkable"* — never `0 / 100` — sorting below everything checkable and above everything ruled out |
+| 3 | **Score and confidence never merged** | **PASS** | The audit hero renders them as two captioned figures (`MATCH SCORE 100 / 100`, `CONFIDENCE 3 of 32`). Trial cards render `100 / 100` above `3 of 32 checkable`. The ranking key that *does* combine them is never displayed. `tests.html` asserts the pair is never collapsed and that no trial reports a score without a confidence |
+| 4 | **Nothing is sent anywhere** | **PASS** | `index.html` contains **no** `fetch(`, `XMLHttpRequest`, `sendBeacon`, `WebSocket`, `EventSource`, `<form>`, `action=`, `.submit()` or `mailto:`. No doctor inbox, no chat, no assistant. The FHIR bundle is a `<details>` that says *"**Nothing posts them** — this app has no outbound channel at all"*. The Google Fonts and Tesseract.js requests are inbound resource loads carrying nothing of the user's; the document is handed to a local worker as a blob. The rule's *"the only output is a downloaded file"* clause is satisfied vacuously — **there is no download yet**, the prep sheet is V2 |
+| 5 | **Every number computed; layout survives a 3-digit score, a long name, a missing value** | **PASS, after a fix** | No retired constant anywhere: no `87`, `93`, `89`, `79/100`, no "Jordan Reyes", no "Doctors Available: 9", no `r4.smarthealthit.org`. Every markup literal (`#hs`→0, `#scoreNum`→0, `#cVal`→8, `#tName`→"Iron Revisited", `#vTx`'s four typed sentences) is overwritten before paint — probed live, all read computed values. The 3-digit score renders. `NCT05759078`'s 167-character title renders without breaking the card. HbA1c with no value renders. **The layout clause was failing and is now fixed** — fix 5 below |
+| 6 | **Verdicts legible without colour: icon plus word** | **PASS** | Audit rows: `PASS` / `FAIL` / `UNKNOWN` / `NEAR MISS` as words. Extraction rows: `✓ READ CLEANLY`, `READ WITH SOME DOUBT`, `CHECK THIS ONE`, `YOU CONFIRMED THIS` — tick plus words, never a bare chip. Labs rows: *Too low* / *In range* / *Never drawn*. The one place colour carries meaning alone is the biomarker spectrum (iron pink, hemoglobin purple…), which is identity, not verdict |
+
+### 4 · Offline
+
+Served a byte-identical copy of `index.html` with **every external host rewritten to an
+unreachable port** — `fonts.googleapis.com`, `fonts.gstatic.com` and `cdn.jsdelivr.net` all
+dead. That is a stricter test than pulling the cable after first load, because nothing is
+warm in cache.
+
+- **The app renders and scores completely.** Health Score, biomarker bars, 23 trials ranked,
+  audit tables, unparsed sections — all present on the fallback font stack, layout unchanged.
+- **The document rail fails honestly.** Uploading an image gives *"Could not read the document —
+  The reader could not be downloaded. You are offline, or the CDN is blocked. **Nothing was sent
+  anywhere and nothing was added to your profile.**"* plus a working **"Type the values in
+  instead"** button.
+- **The offline path works end to end.** Typed HbA1c 6.4 % through that button: the Labs screen
+  picked it up as *"6.4 % · Too high"*, the marker count went 4 of 5 → 5 of 5, and the Health
+  Score recomputed. No value, no verdict and no ranking depends on a network.
+
+Cold-load network log, online, complete:
+
+```
+127.0.0.1:8731        /index.html                                     same origin
+fonts.googleapis.com  /css2?family=Bricolage+Grotesque…&family=Inter…
+fonts.gstatic.com     /bricolagegrotesque…woff2
+fonts.gstatic.com     /inter…woff2
+```
+
+Nothing from `cdn.jsdelivr.net` until a document is read. Stage 6's claim holds.
+
+**The Google Fonts decision, which Stage 5 and Stage 6 both deferred to this stage: keep them,
+and fix the claim instead.** Three reasons. They carry nothing of the user's — no health data,
+no document, no value, no identifier — so they do not touch the rule that matters. They are the
+only font host the published-artifact sandbox allows (`docs/DESIGN.md`), so self-hosting means
+either dropping the typefaces or putting binary files inside a single-file artifact. And the app
+is **demonstrably** fully functional without them, which is what the project actually promises.
+What was wrong was never the request; it was the sentence *"zero network calls at runtime"*,
+which is not true. It is corrected in all three docs to **"nothing you give it ever leaves the
+device"** — a claim that is both stronger and checkable.
+
+### 5 · Docs updated
+
+- **`docs/ARCHITECTURE.md` §8** — rewritten. The prototype map still had Stage 2 as *"the real
+  work, and still the remaining gap"* with hand-transcribed objects *"being removed"*; both are
+  finished. The corpus row now says 23 records at a date; the normalization row describes the
+  canonical-unit coercion and the refusal behaviour that actually shipped. Two outright errors
+  fixed: the consent row claimed **`localStorage` only** when the app has no persistence at all,
+  and the prep-sheet row described the download as the replacement without saying it is not
+  built. Added a **"What leaves the device"** table enumerating all three requests.
+- **`docs/ROADMAP.md` Weeks 2–3** — the calendar table gained a **State** column: the six rows
+  through Tue Oct 14 are marked done with the V1 stage that delivered each, the three remaining
+  are marked **V2**, and the prep-sheet row carries *"not built. The app produces no file yet."*
+  Added a progress note that V1 closed six calendar days early and that §7 items 1–4 (never-cut)
+  are all shipped. The definition of done is annotated rather than ticked: the prep-sheet clause
+  is unmet and the *"no network calls"* clause is corrected.
+- **`README.md`** — the *"what works today"* table said **"Criteria are still hand-transcribed
+  into rule objects … work in progress"**, which was the most out-of-date sentence in the repo.
+  Replaced with a nine-row *"What is real, what is not, and what is not built yet"*. Three false
+  claims removed: *"Vitals come from a real Garmin account"* and the `garmin.json` note (**neither
+  the file nor `sync_garmin.py` exists** — V2), the Metrics tab (the tab is **Labs**), and the
+  prep sheet described as a feature. Repo map corrected, and `tests.html` and `build_corpus.py`
+  added to it with how to run them. New *"What leaves your device"* section.
+
+### 6 · Six corrections made in this stage
+
+No new features. Each of these removes a statement the app or the repo could not support.
+
+1. **`index.html` — "watch data" deleted from the audit note.** The Unknown explainer read *"Your
+   profile holds lab values and watch data."* **There is no watch data.** The Garmin rail is V2
+   and `garmin.json` does not exist, so this was the app claiming an input it does not have, on
+   the screen the whole project rests on. Now reads *"Your profile holds lab values."*
+2. **`index.html` — the Home tile called a typed value a document.** `DOCS` holds both kinds of
+   entry the rail produces. The rail's own list already said *"1 entry this session"* and tagged
+   the row *"Typed in"*, while the Home tile said *"1 document"* for the same thing. The tile now
+   says *entry* / *entries*, matching the rail.
+3. **`index.html` + `scripts/build_corpus.py` — the nearest-site distance now says what it is
+   measured from.** *"Pisa, Tuscany, Italy · 4,207 mi"* implies the app knows where you are. It
+   does not, and never asks. The row now reads *"· 4,207 mi from Philadelphia, PA"*, and the
+   origin is **emitted with the corpus** as `DISTANCE_ORIGIN` rather than typed into the page, so
+   the label and the coordinates the distances were computed from cannot drift apart.
+4. **`scripts/build_corpus.py` — the provenance date was `date.today()`.** Running the builder
+   rewrote *"23 real ClinicalTrials.gov records, downloaded 2026-10-06"* to today's date, on a
+   rebuild that re-downloaded nothing. Found by running it. The corpus's single most
+   check-it-against-the-registry-able fact was quietly falsifying itself on every build. Now
+   derived from the newest intake file's mtime: it reads `2026-10-06` again and will keep doing so.
+5. **`index.html` — horizontal page scroll on every viewport narrower than 404px.** `body` is
+   `display:grid` with `place-items:center` and only `grid-template-rows:minmax(0,1fr)`. With the
+   item not stretching, the single `auto` **column** sized to `.phone`'s 404px `max-width`, so at
+   375px the body's `scrollWidth` was 404 and the whole page slid sideways. That is spec rule 5's
+   layout clause failing on **iPhone SE, iPhone mini and most Androids at 360px** — the devices a
+   judge is most likely to open it on. One line: `grid-template-columns:minmax(0,1fr)` to match
+   the rows. Verified at 320 / 360 / 375 / 414 / 1280 — `scrollWidth === clientWidth` at every one.
+6. **The three docs above**, per §5.
+
+**Verify:** `tests.html` re-run after every edit — **all 61 passed**, no console errors on
+`index.html`. The walkthrough is reported step by step above, the six-rule audit line by line
+with locations, and the offline load is confirmed against a build with all three external hosts
+unreachable.
+
+### Named rather than rounded up to done
+
+- **The Health Score still reads 99** on a profile whose ferritin is below range and falling. It
+  is the first number a judge sees and it contradicts the bar beneath it. `docs/SIMPLIFY.md` §6
+  owns the formula; this is the third stage to flag it.
+- **The Insurance panel, the `9:41` status bar and the bell's badge dot are still on Home.** The
+  insurance panel is the last block in the app that depicts something that does not exist. V2
+  owns the hub shell, and this is the item to do first.
+- **Eight trials show `100 / 100` after a document and the order between them is not explained on
+  screen.** The ranking key is correct and deliberately hidden. Hiding it is what makes the list
+  look arbitrary.
+- **An exclusion's rule cell is phrased in the trial's polarity and its verdict in the patient's**
+  (`Ferritin > 400 ng/mL · PASS`), and a mega-bullet exclusion gets labelled by whichever clause
+  the parser recognised (`No pregnancy` standing over 900 characters about nine other things).
+  Both are §4.4 granularity work.
+- **Nothing was flagged on the live OCR read**, so the walkthrough's correction step was exercised
+  through the edit path rather than through a flag. The refusal paths have sixteen tests and the
+  offline failure path was walked, but the specific sequence *"OCR flags a row, the user fixes
+  it"* has not been seen end to end on a real document.
+- **The extraction subhead says "all read cleanly" after a row has been hand-corrected.** True of
+  the read, no longer the useful sentence. A wording change, deliberately not made here.
+- **`tests.html` needs the directory served over http** and says so in its own header comment.
+  Opened as `file://` it silently does nothing. It is now in the README's repo map with the
+  command.
+
+Not filed as tickets: all of the above. The `9:41` / bell / Insurance items are already owned by
+V2's hub-shell stage and would be duplicate queue entries; the §6 score and the §4.4 granularity
+items are spec revisions in docs that already carry them; the rest fail the filing test's three
+clauses. They are on the record here instead.
 
 ---
 
