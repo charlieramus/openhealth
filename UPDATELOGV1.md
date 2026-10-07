@@ -390,7 +390,166 @@ result; a low number achieved by guessing is a bug.
 
 ## Stage 3 Report
 
-_Pending._
+`parseCriteria(text) → Rule[]` is built to the `docs/ARCHITECTURE.md` §4a contract and lives
+in `index.html` above the trials section. **Not wired into the UI** — confirmed on the live
+page: `parseCriteria` is present, nothing calls it with a trial. That is Stage 5's job.
+
+### The headline number
+
+```
+460 bullets parsed across 23 trials
+
+  numeric     22    4.8%
+  range       18    3.9%        decidable: 40 rules, 8.7%
+  presence    75   16.3%
+  negation    17    3.7%        named but no data on file: 92 rules, 20.0%
+  UNPARSED   328   71.3%
+```
+
+**The overall unparsed rate is 71.3%,** and I am reporting it as a result rather than
+tuning it down. Per-trial it runs from **42.9%** (`NCT07743983`) to **90.0%**
+(`NCT05614219`). Why each bullet failed:
+
+| Count | Reason |
+|---|---|
+| 312 | no analyte or condition recognised |
+| 10 | two bounds that do not form an interval |
+| 3 | names age but states no checkable number |
+| 1 | value 48 % outside the plausible range for a1c, and no unit was printed |
+| 1 | names ferritin but states no checkable number |
+| 1 | names a1c but states no checkable number |
+
+That 312 is the honest shape of the problem: most eligibility prose is about medications,
+prior surgeries, consent, contraception and investigator judgement. **It is not that the
+parser is failing at 312 numeric criteria — it is that 312 of these bullets contain no
+number at all.** Of the bullets that *do* name something in the engine's vocabulary, the
+parser extracts a checkable predicate from 40 of 47.
+
+### How it works
+
+Built as **one parser, two kinds of text** per §4a. The tokenizer — `normalizeText`,
+`findAnalyte`, `readComparisons`, `readBareRange`, `toCanonical`, `plausible` — is the same
+machinery Stage 6's `parseLabDocument()` will use on OCR'd lab reports. No second extractor.
+
+- **Blocks and polarity.** `splitBlocks()` finds `Inclusion Criteria` / `Exclusion Criteria`
+  headers and sets `Rule.sense`. Text before any header is inclusion. Polarity is set once,
+  here.
+- **Units, normalized on the way in.** Every analyte declares a canonical UCUM unit and
+  conversions into it. `mcg/L → ng/mL` 1:1, `g/L → g/dL` ÷10, `mmol/L → mg/dL` ×38.67,
+  `mmol/mol → %` via IFCC→NGSP. **A unit not in the table is `unparsed`, not a guess** —
+  §4a's rule that a conversion we don't have is an UNKNOWN.
+- **`source` is verbatim and never discarded.** Verified across all 460 rules: every
+  `source` appears character-for-character inside the original registry text.
+- **Nothing is dropped.** One rule per bullet, in document order.
+
+### Three judgement calls worth naming
+
+**1 · Plausibility bounds, and the criterion they caught.** Each analyte carries `lo`/`hi`
+bounds in its canonical unit. If a parsed value lands outside them, the rule is refused
+rather than trusted, because an implausible number means we misread the *unit*, not that the
+patient is extraordinary. This caught a real one in `NCT05614219`:
+
+```
+* Dysregulated diabetes. Hba1C \< 48
+```
+
+That is 48 **mmol/mol** in Danish units, with no unit printed. Read naively as "A1c under
+48%", every human being alive passes it. The plausibility gate rejects it (a1c is bounded
+3–20%) and it goes to the unparsed bucket where it is shown to the user as written. This is
+exactly the "confidently wrong answer" §4a warns about, and it is now impossible.
+
+**2 · Refusing more than one analyte per bullet.** `findAnalyte()` returns `null` when a
+bullet names two different analytes. Binding a number to the wrong analyte is the one
+failure worse than UNKNOWN, so ambiguity is a refusal.
+
+**3 · `BMI \<16 but \>30kg/m2` is deliberately unparsed.** `NCT06942208` states its BMI
+exclusion as a lower bound of 16 and an upper bound of 30 that do not bound an interval. The
+protocol plainly *means* "outside 16–30", and the old hand-transcribed object encoded it
+that way — but reading it so is interpretation, not parsing. It goes to the unparsed bucket
+and is shown verbatim. **This is a real loss of coverage against the hand-written version,
+accepted on purpose**, and it accounts for 10 of the 328 unparsed bullets across the corpus.
+
+### Two bugs found and fixed during verification
+
+**A silent one.** The hemoglobin pattern was `/\bh(?:ae)?moglobin\b/`, which matches
+*haemoglobin* and *hmoglobin* — **but not *hemoglobin***. Every American-spelled hemoglobin
+criterion in the corpus was being missed, including `NCT06942208`'s
+`Anemic (hemoglobin \<120g/L)`, which fell through to a vague `presence: anemia` rule instead
+of the numeric one. The same flaw was in `glycated h(?:ae)?moglobin` and in the anemia
+condition pattern. Fixed to `ha?emoglobin` / `ana?emi`; that recovered 3 decidable rules and
+`NCT06942208` now yields `hemoglobin < 12 g/dL` as an **exclusion**, which is correct.
+
+**A structural one.** Sponsors indent nested lists in opposite ways. `NCT06942208` indents
+genuine *details* (`Tier 3: Highly Trained`) under a parent; `NCT07743983` indents its *real
+criteria* (`BMI 28.0-35.0 kg/m²`, `HbA1c between ≥7.5% and ≤10.5%`) under one parent bullet.
+My first splitter folded everything, so `NCT07743983` produced 2 rules from 1,625 characters
+and its A1c gate vanished. Folding on indent alone loses those criteria; splitting on
+checkability alone let unparseable siblings (`FPG ≤15.0 mmol/L`, `SBP \<180 mmHg`) contaminate
+the A1c rule with 8 comparisons from other analytes. The rule now is: a bullet opens a new
+criterion when it is a **sibling or outdent** of the current one **or** is independently
+checkable. `NCT07743983` now yields 7 rules including the A1c range — which matters, because
+that A1c gate is one of the standing UNKNOWN tests.
+
+### NCT06942208, rules beside their source
+
+52 rules; the decidable ones:
+
+```
+ 2. [inclusion RANGE  ]  age in 16–35 years        band 5,  weight 1, required=true
+     source: * Age 16-35
+
+ 5. [inclusion NUMERIC]  ferritin <= 50 ng/mL      band 10, weight 3, required=true
+     source: * Suboptimal ferritin levels (≤50 mcg/L)       ← mcg/L normalized to ng/mL
+
+12. [exclusion NUMERIC]  hemoglobin < 12 g/dL      band 1,  weight 2, required=false
+     source: * Anemic (hemoglobin \<120g/L)                 ← g/L normalized to g/dL
+```
+
+All three agree with the hand-transcribed objects they will replace in Stage 5. A
+representative sample of the other 49:
+
+```
+ 1. [inclusion UNPARSED]  no analyte or condition recognised
+     source: * Biologically female athlete
+ 3. [inclusion UNPARSED]  names age but states no checkable number
+     source: * At least one year past the age of menarche
+ 8. [inclusion UNPARSED]  no analyte or condition recognised
+     source: * Energy availability \>30 kcal/kg LBM
+15. [exclusion PRESENCE]  smoking — no data on file for this
+     source: * Are a smoker or use tobacco products
+18. [exclusion UNPARSED]  two bounds that do not form an interval
+     source: * Have a BMI \<16 but \>30kg/m2
+```
+
+### Verify
+
+Ran the **shipped** parser against the **shipped** corpus — both extracted from `index.html`
+rather than re-implemented — over all 23 records. Invariants, all true:
+
+- every Rule carries a non-empty `source`
+- every `source` appears verbatim in the original registry text
+- every `kind` is one of the five contract kinds
+- **no unparsed rule carries a `threshold`, `min` or `max`** — it cannot smuggle a guess
+- every numeric/range rule is expressed in its analyte's canonical unit
+
+Served the page and navigated Home → Labs → Trials → switch trial → Home: **zero runtime
+errors**, the Stage 1 Health Score still renders, screen 3 still shows its 5 hand-written
+criterion rows.
+
+### Known limitations, stated rather than hidden
+
+- `presence`/`negation` rules are drawn from a deliberately short 8-entry condition
+  vocabulary. They will all evaluate to UNKNOWN in Stage 5 because the profile holds no
+  condition data — correct, but it means 20% of rules are informative labels rather than
+  checks.
+- When a block contains **no** checkable sub-bullet, the parser never learns that block's
+  sibling indent level, so a run of indented prose criteria folds into one unparsed rule
+  carrying several criteria in its verbatim source. Nothing is lost — all the text is shown
+  — but the granularity is coarser than ideal. `NCT07743983`'s exclusion block is the
+  example.
+- `Rule.source` keeps the registry's own markdown escaping (`\<`, `\>`). That is literally
+  verbatim as the spec requires, but `\<` will read as a typo to a judge when the audit table
+  quotes it. **Stage 5 should unescape at display time only**, leaving `source` untouched.
 
 ---
 

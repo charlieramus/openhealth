@@ -1757,6 +1757,395 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   ];
   /* ===== CORPUS:END ===== */
 
+  /* ================= the criteria parser =================
+     docs/ARCHITECTURE.md §4a is the contract. parseCriteria(text) -> Rule[].
+
+     This is the piece the whole project turns on. A trial publishes its
+     eligibility as free prose; the app has to decide, in front of the viewer,
+     which of those sentences are checkable and which are not — and then say so
+     out loud. The honesty guarantee is one line long:
+
+         ANYTHING THIS CANNOT CONFIDENTLY EXTRACT BECOMES kind:'unparsed'.
+         Never dropped. Never guessed. Never silently treated as satisfied.
+
+     It is written deterministically rather than with a model because a key
+     cannot live in client-side JS (docs/STACK.md §6a), and it is written behind
+     the §4a interface so a model-backed extractor could replace the insides
+     later without the evaluator or the UI changing.
+
+     ONE PARSER, TWO KINDS OF TEXT. The tokenizer below — findAnalyte,
+     readComparisons, toCanonical, plausible — is the same machinery Stage 6's
+     parseLabDocument() uses on OCR'd lab reports. A criterion and a lab line are
+     the same computational problem: free text in, {analyte, op, value, unit} out.
+     Do not write a second extractor. */
+
+  /* ---- analyte vocabulary + unit normalization (ARCHITECTURE §4a table) ----
+     canonical  the one unit every comparison is coerced to before anything is
+                compared. Without this, "ferritin below 15 µg/L" and a lab
+                reading "8 ng/mL" never meet even though they are the same
+                quantity.
+     units      multiplier INTO the canonical unit. A unit not listed here is a
+                conversion we do not have, and §4a is explicit that a conversion
+                we do not have is an UNKNOWN, not a guess.
+     lo / hi    plausibility bounds in the canonical unit. A number outside them
+                means we misread the unit, not that the patient is extraordinary,
+                so the rule is refused rather than trusted. This is what stops
+                "Hba1C \< 48" (Danish mmol/mol, no unit printed) from being read
+                as "A1c under 48%", which everything on earth would pass.
+     band       near-miss tolerance: how far short still counts as a near miss.
+     weight     how much the criterion counts toward the score. */
+  var ANALYTES = {
+    ferritin: {
+      loinc:'2276-4', canonical:'ng/mL', band:10, weight:3, lo:1, hi:3000,
+      match:/\bferritins?\b/i,
+      units:{ 'ng/ml':1, 'µg/l':1, 'ug/l':1, 'mcg/l':1 }
+    },
+    hemoglobin: {
+      loinc:'718-7', canonical:'g/dL', band:1, weight:2, lo:3, hi:25,
+      match:/\bha?emoglobin\b|\bhgb\b|\bhb\b/i,
+      units:{ 'g/dl':1, 'g/l':0.1 }
+    },
+    a1c: {
+      loinc:'4548-4', canonical:'%', band:0.5, weight:3, lo:3, hi:20,
+      match:/\bhba1c\b|\ba1c\b|glycated ha?emoglobin/i,
+      units:{ '%':1, 'mmol/mol':'ifcc' }      /* IFCC -> NGSP, see toCanonical */
+    },
+    ldl: {
+      loinc:'18262-6', canonical:'mg/dL', band:20, weight:2, lo:10, hi:600,
+      match:/\bldl\b|\bldl-c\b|low[- ]density lipoprotein/i,
+      units:{ 'mg/dl':1, 'mmol/l':38.67 }
+    },
+    spo2: {
+      loinc:'2708-6', canonical:'%', band:2, weight:2, lo:50, hi:100,
+      match:/\bspo2\b|\bsao2\b|oxygen saturation/i,
+      units:{ '%':1 }
+    },
+    bmi: {
+      loinc:'39156-5', canonical:'kg/m2', band:3, weight:2, lo:10, hi:80,
+      match:/\bbmi\b|body mass index/i,
+      units:{ 'kg/m2':1, 'kg/m²':1, 'kg/m²':1 }
+    },
+    age: {
+      canonical:'years', band:5, weight:1, lo:0, hi:120,
+      match:/\bages?\b|\byears? old\b|\byo\b/i,
+      units:{ 'years':1, 'year':1, 'yrs':1, 'yr':1, 'y':1 }
+    }
+  };
+
+  /* Conditions we can recognise by name but hold NO data about. They become
+     presence/negation rules, which the evaluator reports as UNKNOWN — which is
+     the correct answer, and a more useful one than 'unparsed', because the app
+     can at least tell you what the trial is asking. Deliberately short: a long
+     list here would be the parser claiming competence it does not have. */
+  var CONDITIONS = {
+    pregnancy:  /\bpregnan|\bgestation/i,
+    lactation:  /\blactat|\bbreast[- ]?feed|\bnursing\b/i,
+    smoking:    /\bsmok|\btobacco\b|\bcigarette/i,
+    anemia:     /\bana?emi/i,
+    diabetes:   /\bdiabet|\bt2dm\b|\bt1dm\b/i,
+    malignancy: /\bmalignan|\bcancer\b|\bcarcinoma\b|\btumou?r\b/i,
+    renal:      /\brenal\b|\bkidney\b|\bnephro/i,
+    hepatic:    /\bhepatic\b|\bliver\b/i
+  };
+
+  /* cues that flip a presence rule into a negation */
+  var NEGATION = /\b(?:no|not|non|without|absence of|free of|never|exclud\w*|unwilling|denies)\b|^\s*non-/i;
+
+  /* ---- tokenizer -------------------------------------------------------- */
+
+  /* The registry markdown-escapes its own comparators: "\<" and "\>". Undo that
+     for READING only — Rule.source keeps the text exactly as the registry
+     published it, because the audit table quotes it as the original wording. */
+  function normalizeText(s){
+    return s
+      .replace(/\\([<>*_])/g, '$1')
+      .replace(/[≤]/g, '<=').replace(/[≥]/g, '>=')
+      .replace(/[−–—]/g, '-')
+      .replace(/ /g, ' ');
+  }
+
+  /* "18,5" is a European decimal; "1,000" is a thousands separator. Only the
+     first is a number with a comma in it. */
+  function toNumber(raw){
+    var s = String(raw).trim();
+    if(/^\d{1,3},\d{3}$/.test(s)) return parseFloat(s.replace(',', ''));
+    if(/^\d+,\d{1,2}$/.test(s))   return parseFloat(s.replace(',', '.'));
+    return parseFloat(s);
+  }
+
+  /* -> the single analyte this text is about, or null when it names none or
+     names more than one. More than one is deliberately a refusal: binding a
+     number to the wrong analyte is the failure mode that produces a confidently
+     wrong answer, which is the one outcome worse than saying "unknown". */
+  function findAnalyte(text){
+    var found = [];
+    for(var k in ANALYTES){
+      if(ANALYTES[k].match.test(text)) found.push(k);
+    }
+    /* "HbA1c" also matches the /\bhb\b/ hemoglobin alias; prefer the specific */
+    if(found.length === 2 && found.indexOf('a1c') > -1 && found.indexOf('hemoglobin') > -1){
+      if(/\bhba1c\b|\ba1c\b/i.test(text) && !/\bh(?:ae)?moglobin\b|\bhgb\b/i.test(text)) return 'a1c';
+    }
+    return found.length === 1 ? found[0] : null;
+  }
+
+  /* value + unit -> canonical unit, or null when we have no conversion for it */
+  function toCanonical(key, value, unit){
+    var a = ANALYTES[key];
+    if(unit === null || unit === undefined || unit === ''){
+      /* no unit printed: assume the canonical one, but only if the number is
+         plausible in it. That check is doing real work — see ANALYTES.lo/hi */
+      return value;
+    }
+    var u = String(unit).toLowerCase().replace(/\s+/g, '');
+    var f = a.units[u];
+    if(f === undefined) return null;                 /* conversion we don't have */
+    if(f === 'ifcc')    return value * 0.09148 + 2.152;   /* mmol/mol -> NGSP % */
+    return value * f;
+  }
+
+  function plausible(key, v){
+    var a = ANALYTES[key];
+    return typeof v === 'number' && isFinite(v) && v >= a.lo && v <= a.hi;
+  }
+
+  var UNIT_RE = '(?:%|kg\\/m2|kg\\/m²|ng\\/ml|mg\\/dl|mmol\\/mol|mmol\\/l|µg\\/l|ug\\/l|mcg\\/l|g\\/dl|g\\/l|years?|yrs?)';
+
+  /* every "op number unit" in the text, in order, flagged if parenthesised */
+  function readComparisons(text){
+    var out = [];
+    var re = new RegExp('(<=|>=|<|>|=)\\s*(\\d+(?:[.,]\\d+)?)\\s*(' + UNIT_RE + ')?', 'gi');
+    var m;
+    while((m = re.exec(text)) !== null){
+      var before = text.slice(0, m.index);
+      var opens = (before.match(/\(/g) || []).length;
+      var closes = (before.match(/\)/g) || []).length;
+      out.push({ op:m[1], value:toNumber(m[2]), unit:m[3] || '', inParen: opens > closes });
+    }
+    return out;
+  }
+
+  /* "16-35", "18,5 - 24,9 kg/m2", "18 to 65 years" — a range with no comparators */
+  function readBareRange(text){
+    var m = text.match(new RegExp(
+      '(\\d+(?:[.,]\\d+)?)\\s*(?:-|to)\\s*(\\d+(?:[.,]\\d+)?)\\s*(' + UNIT_RE + ')?', 'i'));
+    if(!m) return null;
+    return { min:toNumber(m[1]), max:toNumber(m[2]), unit:m[3] || '' };
+  }
+
+  /* ---- splitting the text into blocks, then bullets --------------------- */
+
+  var INCLUSION_HEAD = /^\s*(?:key\s+)?inclusion\s+criteria\b/i;
+  var EXCLUSION_HEAD = /^\s*(?:key\s+|additional\s+)?exclusion\s+criteria\b/i;
+
+  /* -> [{ sense, lines:[] }]. Text before any header is treated as inclusion,
+     which is what the registry's own convention implies. */
+  function splitBlocks(text){
+    var blocks = [{ sense:'inclusion', lines:[] }];
+    text.split(/\r?\n/).forEach(function(line){
+      if(EXCLUSION_HEAD.test(line))      blocks.push({ sense:'exclusion', lines:[] });
+      else if(INCLUSION_HEAD.test(line)) blocks.push({ sense:'inclusion', lines:[] });
+      else blocks[blocks.length - 1].lines.push(line);
+    });
+    return blocks.filter(function(b){ return b.lines.join('').trim(); });
+  }
+
+  var BULLET = /^\s*(?:[*\-\u2022\u25cb\u25cf]|\d+[.)])\s+/;
+
+  /* Does this line, on its own, carry something checkable? Used to decide whether
+     an indented sub-bullet is a criterion in its own right or only a detail of
+     the one above it. Sponsors are inconsistent about this: NCT06942208 indents
+     genuine details ("Tier 3: Highly Trained"), while NCT07743983 indents its
+     real criteria ("BMI 28.0-35.0 kg/m2") under a single parent bullet.
+     Promoting only the lines that name an analyte AND state a number gets both
+     of those right without guessing at either. */
+  function looksCheckable(line){
+    var t = normalizeText(line.replace(BULLET, ''));
+    if(!findAnalyte(t)) return false;
+    return readComparisons(t).length > 0 || readBareRange(t) !== null;
+  }
+
+  /* -> one string per bullet. A bullet line opens a NEW criterion when it is a
+     sibling or an outdent of the current one, or when it is independently
+     checkable; otherwise it folds into the bullet above it, and so does any
+     line with no bullet marker at all.
+
+     Both halves of that test are load-bearing, because sponsors format nested
+     lists in opposite ways:
+
+       NCT06942208  "* Activity level based on ... Framework"
+                    "  * Tier 3: Highly Trained"      <- a DETAIL of the parent.
+                                                         Deeper, not checkable,
+                                                         so it folds.
+       NCT07743983  "* Have been diagnosed with T2DM"
+                    "  * BMI 28.0-35.0 kg/m2"         <- a real CRITERION the
+                    "  * Have HbA1c between ..."         sponsor merely indented.
+                    "  * FPG <=15.0 mmol/L"              The first is checkable so
+                                                         it opens a criterion, and
+                                                         the rest are its siblings.
+
+     Indent alone folds NCT07743983's criteria into one blob; checkability alone
+     lets its unparseable siblings (FPG, SBP/DBP) contaminate the HbA1c rule with
+     comparisons that belong to other analytes. Together they get both right.
+
+     Nothing is ever discarded: a folded line stays inside its parent's verbatim
+     source and is shown to the user there. */
+  function splitBullets(lines){
+    var out = [], cur = null, curIndent = 0;
+    lines.forEach(function(raw){
+      var line = raw.replace(/\s+$/, '');
+      if(!line.trim()) return;
+      var indent = (raw.match(/^\s*/) || [''])[0].length;
+      if(BULLET.test(line) &&
+         (cur === null || indent <= curIndent || looksCheckable(line))){
+        if(cur !== null) out.push(cur);
+        cur = line;
+        curIndent = indent;
+      } else if(cur !== null){
+        cur += '\n' + line;                 /* a detail, or a wrapped continuation */
+      } else {
+        cur = line;                         /* a bare paragraph with no marker */
+        curIndent = indent;
+      }
+    });
+    if(cur !== null) out.push(cur);
+    return out;
+  }
+
+  /* A line that only introduces the bullets under it is not a criterion. Narrow
+     on purpose: it must end in a colon AND carry no number and no comparator,
+     so nothing checkable can ever be swallowed by this. */
+  function isHeading(bullet){
+    var first = bullet.split('\n')[0].trim();
+    return /:$/.test(first) && !/\d/.test(first) && !/[<>=]/.test(normalizeText(first));
+  }
+
+  /* ---- the contract: parseCriteria(text) -> Rule[] ---------------------- */
+
+  function makeRule(sense, source, extra){
+    var r = {
+      kind:'unparsed', sense:sense, analyte:null, op:null,
+      threshold:null, min:null, max:null, unit:null,
+      band:null, weight:1, required:(sense === 'inclusion'),
+      source:source,                 /* VERBATIM. never rewritten, never dropped */
+      note:null
+    };
+    for(var k in extra) r[k] = extra[k];
+    return r;
+  }
+
+  function parseBullet(sense, source){
+    var text = normalizeText(source.replace(BULLET, ''));
+    var key = findAnalyte(text);
+
+    /* --- no analyte we know: is it at least a condition we can name? --- */
+    if(!key){
+      for(var c in CONDITIONS){
+        if(CONDITIONS[c].test(text)){
+          var negated = NEGATION.test(text);
+          return makeRule(sense, source, {
+            kind: negated ? 'negation' : 'presence',
+            analyte: c, weight: 1,
+            note: 'no data on file for this'
+          });
+        }
+      }
+      return makeRule(sense, source, { note:'no analyte or condition recognised' });
+    }
+
+    var a = ANALYTES[key];
+    var comps = readComparisons(text);
+
+    /* a parenthesised restatement in another unit is the same quantity twice
+       ("\< 150 mg/dL (\< 3.9 mmol/L)"), not two separate requirements */
+    if(comps.length === 2 && comps[0].op === comps[1].op){
+      var v0 = toCanonical(key, comps[0].value, comps[0].unit);
+      var v1 = toCanonical(key, comps[1].value, comps[1].unit);
+      if(v0 !== null && v1 !== null && Math.abs(v0 - v1) <= Math.max(0.02 * Math.abs(v0), 0.5)){
+        comps = [comps[comps[1].inParen ? 0 : 1]];
+      }
+    }
+
+    /* --- one comparison: a numeric rule --- */
+    if(comps.length === 1){
+      var cmp = comps[0];
+      var v = toCanonical(key, cmp.value, cmp.unit);
+      if(v === null){
+        return makeRule(sense, source, {
+          analyte:key, note:'unit "' + cmp.unit + '" has no conversion to ' + a.canonical });
+      }
+      if(!plausible(key, v)){
+        return makeRule(sense, source, {
+          analyte:key,
+          note:'value ' + round2(v) + ' ' + a.canonical + ' is outside the plausible range for ' +
+               key + (cmp.unit ? '' : ' and no unit was printed') });
+      }
+      return makeRule(sense, source, {
+        kind:'numeric', analyte:key, op:cmp.op, threshold:round2(v),
+        unit:a.canonical, band:a.band, weight:a.weight });
+    }
+
+    /* --- two comparisons: a range, but only if they really bound one --- */
+    if(comps.length === 2){
+      var los = [], his = [];
+      comps.forEach(function(cp){
+        var val = toCanonical(key, cp.value, cp.unit);
+        if(val === null) return;
+        if(cp.op === '>' || cp.op === '>=') los.push(val);
+        else if(cp.op === '<' || cp.op === '<=') his.push(val);
+      });
+      if(los.length === 1 && his.length === 1 && los[0] <= his[0] &&
+         plausible(key, los[0]) && plausible(key, his[0])){
+        return makeRule(sense, source, {
+          kind:'range', analyte:key, op:'range',
+          min:round2(los[0]), max:round2(his[0]),
+          unit:a.canonical, band:a.band, weight:a.weight });
+      }
+      /* "Have a BMI \<16 but \>30kg/m2" lands here: an upper bound of 16 and a
+         lower bound of 30 do not bound an interval. The protocol plainly means
+         "outside 16-30", but reading it that way is interpretation, not parsing,
+         so it goes to the unparsed bucket and gets shown to the user as written. */
+      return makeRule(sense, source, {
+        analyte:key, note:'two bounds that do not form an interval' });
+    }
+
+    if(comps.length > 2){
+      return makeRule(sense, source, {
+        analyte:key, note:comps.length + ' separate comparisons in one criterion' });
+    }
+
+    /* --- no comparator: maybe a bare range like "Age 16-35" --- */
+    var br = readBareRange(text);
+    if(br){
+      var lo = toCanonical(key, br.min, br.unit);
+      var hi = toCanonical(key, br.max, br.unit);
+      if(lo !== null && hi !== null && lo <= hi && plausible(key, lo) && plausible(key, hi)){
+        return makeRule(sense, source, {
+          kind:'range', analyte:key, op:'range',
+          min:round2(lo), max:round2(hi), unit:a.canonical,
+          band:a.band, weight:a.weight });
+      }
+    }
+
+    return makeRule(sense, source, {
+      analyte:key, note:'names ' + key + ' but states no checkable number' });
+  }
+
+  function round2(n){ return Math.round(n * 100) / 100; }
+
+  /* THE CONTRACT. One Rule per bullet, in document order, nothing discarded. */
+  function parseCriteria(text){
+    if(!text) return [];
+    var rules = [];
+    splitBlocks(text).forEach(function(block){
+      splitBullets(block.lines).forEach(function(bullet){
+        if(isHeading(bullet)) return;
+        rules.push(parseBullet(block.sense, bullet));
+      });
+    });
+    return rules;
+  }
+
   /* ================= the trials themselves =================
      THE PATIENT ABOVE IS INVENTED. THE TRIALS BELOW ARE NOT.
 
