@@ -236,6 +236,11 @@ in the old build are deleted, not restyled — §4 names both all-caps labels an
 labels-above-content as tells, and most of them introduced a section that needed no
 introduction.
 
+**Words are specified elsewhere.** How many of them a slot gets, and what shape they
+take, is [`COPY.md`](COPY.md) — written 2026-10-16 after the thermal mockup's lead card
+shipped a 23-word metaphor where a 4-word readout belonged. Sentence case and the
+mono-for-quantities rule above are the two places the two files touch; this one wins there.
+
 ### 7.4 · The tolerance scale — the signature primitive
 
 The engine already emits this. `renderMarkerCard()` writes `.scale > .band + .pin` and

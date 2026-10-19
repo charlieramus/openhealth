@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thermal</title>
+<style>
+/*INTER_FACES*/
+
+/* ============================================================
+   THERMAL — light. Component gallery for OpenHealth.
+
+   The vernacular is mechanical drafting, because that is where
+   "you are 4 ng/mL short" already lives in the real world. A
+   criterion is a tolerance band; your value is a tick; the
+   distance between them is drawn the way a drawing draws a
+   distance — extension lines, a dimension line, arrowheads and
+   a tag that breaks the line to hold the number.
+
+   Heat tracks ACTIONABILITY, not badness:
+     met          no annotation at all
+     missed wide  a faint wash over the distance, no dimension
+     near miss    the full dimension line, in signal red
+   ============================================================ */
+
+:root{
+  /* ---- layer 1 · primitives ------------------------------- */
+  --zinc-050:#FAFAFA;
+  --zinc-100:#F4F4F5;
+  --zinc-150:#EEEEF0;
+  --zinc-200:#E4E4E7;
+  --zinc-300:#D4D4D8;
+  --zinc-400:#A1A1AA;
+  --zinc-600:#52525B;
+  --zinc-900:#18181B;
+
+  /* the heat family. all of it is annotation; none of it is
+     a surface. deliberately a true red, not terracotta.       */
+  --h-wash:#FFF2EC;
+  --h-out:#FFE2D4;
+  --h-tint:#FFD3BC;
+  --h-flare:#F2541B;
+  --h-sig:#D7122A;
+  --h-deep:#7F1026;
+
+  /* marker identity — one hue per biomarker, everywhere */
+  --m-fe:#B01E5B;
+  --m-hgb:#E2561F;
+  --m-o2:#C8860A;
+  --m-ldl:#6E2250;
+
+  /* ---- layer 2 · semantic --------------------------------- */
+  --paper:var(--zinc-100);
+  --sheet:#FFFFFF;
+  --ink:var(--zinc-900);
+  --ink-2:var(--zinc-600);
+  --ink-3:var(--zinc-400);
+  --rule:var(--zinc-200);
+  --construction:var(--zinc-300);
+
+  /* ---- layer 3 · component -------------------------------- */
+  --pad:22px;
+  --r-sheet:16px;
+  --r-card:10px;
+  --r-tag:4px;
+
+  --t-display:2.5rem;
+  --t-h1:1.75rem;
+  --t-h2:1.1875rem;
+  --t-quant:1.0625rem;
+  --t-body:.9375rem;
+  --t-small:.84375rem;
+  --t-micro:.71875rem;
+
+  --f:"Inter","Inter Fallback",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font:400 var(--t-body)/1.6 var(--f);
+  font-feature-settings:"cv05" 1,"cv11" 1,"ss01" 1;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* One family does both jobs. Quantities get tabular figures and
+   tighter tracking — Inter's tnum aligns digits against scale
+   ticks, so no second face has to be downloaded to get a column
+   of numbers to line up. */
+.n{font-variant-numeric:tabular-nums;letter-spacing:-.02em;font-weight:600}
+
+:focus-visible{outline:2px solid var(--h-sig);outline-offset:3px;border-radius:2px}
+
+/* ============================================================
+   gallery chrome
+   ============================================================ */
+.page{max-width:1180px;margin:0 auto;padding:0 var(--pad) 140px}
+
+/* a drawing sheet opens with a title block. this one carries
+   the metadata a reviewer actually needs, nothing invented. */
+.titleblock{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;
+  align-items:end;padding:72px 0 26px;border-bottom:1px solid var(--ink)}
+.titleblock h1{font-size:var(--t-display);font-weight:700;letter-spacing:-.04em;
+  line-height:.98;margin:0}
+.titleblock .lede{margin:16px 0 0;max-width:46ch;color:var(--ink-2);
+  font-size:var(--t-small);line-height:1.6}
+.meta{display:grid;grid-template-columns:auto auto;gap:3px 20px;
+  font-size:var(--t-micro);align-items:baseline}
+.meta dt{color:var(--ink-3)}
+.meta dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;
+  font-weight:500;color:var(--ink-2)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;padding:18px 0 0}
+
+.sec{padding:60px 0 0}
+.sec > h2{font-size:var(--t-h2);font-weight:600;letter-spacing:-.016em;margin:0 0 6px}
+.sec > .note{margin:0 0 28px;color:var(--ink-2);font-size:var(--t-small);max-width:66ch}
+
+.spec{display:grid;grid-template-columns:392px minmax(0,1fr);gap:40px;
+  align-items:start;margin-bottom:22px}
+.spec > .anno{color:var(--ink-2);font-size:var(--t-small);max-width:48ch;padding-top:4px}
+.spec > .anno b{color:var(--ink);font-weight:600}
+.spec > .anno code{font-size:.8em;font-weight:500;color:var(--h-sig);
+  background:var(--h-wash);padding:1px 5px;border-radius:3px}
+@media (max-width:880px){.spec{grid-template-columns:minmax(0,1fr);gap:22px}}
+
+/* every specimen sits on a sheet, at phone measure */
+.frame{background:var(--sheet);border:1px solid var(--rule);
+  border-radius:var(--r-sheet);padding:var(--pad);
+  box-shadow:0 1px 2px rgba(24,24,27,.04),0 8px 24px -12px rgba(24,24,27,.12)}
+
+/* ============================================================
+   buttons
+   ============================================================ */
+.btn{font:600 var(--t-small)/1 var(--f);letter-spacing:-.008em;color:#fff;
+  background:var(--h-sig);border:0;border-radius:8px;padding:13px 17px;
+  min-height:44px;cursor:pointer;transition:background 130ms ease}
+.btn:hover{background:#B80E23}
+.btn:active{transform:translateY(.5px)}
+.btn.ghost{background:var(--sheet);color:var(--ink);
+  box-shadow:inset 0 0 0 1px var(--zinc-300)}
+.btn.ghost:hover{background:var(--zinc-050)}
+.btn.quiet{background:transparent;color:var(--ink-2);box-shadow:none;padding:13px 2px}
+.btn.quiet:hover{color:var(--h-sig)}
+
+/* ============================================================
+   ramp + tokens
+   ============================================================ */
+.ramp{display:grid;grid-template-columns:repeat(5,1fr);border-radius:var(--r-card);
+  overflow:hidden;border:1px solid var(--rule)}
+.ramp div{padding:22px 12px 13px;min-height:104px;display:flex;
+  flex-direction:column;justify-content:flex-end;gap:2px}
+.ramp .nm{font-size:var(--t-micro);font-weight:600;letter-spacing:-.005em}
+.ramp .hx{font-size:var(--t-micro);font-variant-numeric:tabular-nums;opacity:.72}
+
+.tokens{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);
+  border-radius:var(--r-card);overflow:hidden;margin-top:16px}
+.tokens > div{background:var(--sheet);padding:13px 15px;display:flex;
+  align-items:center;gap:11px}
+.tokens i{width:20px;height:20px;border-radius:5px;flex:none;
+  box-shadow:inset 0 0 0 1px rgba(24,24,27,.1)}
+.tokens em{font-style:normal;font-size:var(--t-small);display:block;
+  letter-spacing:-.006em}
+.tokens b{font-weight:400;font-size:var(--t-micro);color:var(--ink-3);
+  display:block;font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   THE TOLERANCE SCALE — the signature primitive
+   ============================================================ */
+.scale{position:relative;height:62px;--tint:var(--zinc-400)}
+.scale[data-m="fe"] {--tint:var(--m-fe)}
+.scale[data-m="hgb"]{--tint:var(--m-hgb)}
+.scale[data-m="o2"] {--tint:var(--m-o2)}
+.scale[data-m="ldl"]{--tint:var(--m-ldl)}
+.scale.near{height:102px}
+
+/* the axis. a hairline marks a boundary; it is never decoration. */
+.scale .axis{position:absolute;left:0;right:0;top:29px;height:1px;
+  background:var(--construction)}
+
+/* the required range, in the marker's own hue */
+.scale .band{position:absolute;top:22px;height:15px;left:var(--from);
+  width:calc(var(--to) - var(--from));
+  background:color-mix(in srgb,var(--tint) 26%,#fff);
+  border-left:1.5px solid var(--tint);border-right:1.5px solid var(--tint)}
+
+/* the distance you are outside the band, washed but not dimensioned.
+   drawn on any miss; promoted to a full dimension line on a near miss. */
+.scale .out{position:absolute;top:22px;height:15px;left:var(--from);
+  width:calc(var(--to) - var(--from));background:var(--h-out)}
+
+/* your value. the highest-contrast mark on the scale. */
+.scale .pin{position:absolute;top:18px;height:22px;width:2px;
+  background:var(--ink);left:var(--at);transform-origin:bottom}
+.scale .pin b{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);
+  font-size:var(--t-quant);font-weight:600;font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
+
+/* thresholds, labelled, because they are the numbers that matter.
+   the label carries the sheet colour so an extension line passing
+   behind it breaks for the text — the drafting convention. */
+.scale .edge{position:absolute;top:42px;left:var(--at);
+  transform:translateX(-50%);font-size:var(--t-micro);font-weight:500;
+  font-variant-numeric:tabular-nums;color:var(--ink-3);white-space:nowrap;
+  background:var(--sheet);padding:0 5px;z-index:2}
+
+/* ---- the dimension. the whole boldness budget, spent here. ---- */
+.scale .ext{position:absolute;top:18px;height:68px;width:1px;left:var(--at);
+  background:var(--h-sig);opacity:.55}
+.scale .dim{position:absolute;top:86px;left:var(--from);
+  width:calc(var(--to) - var(--from));height:1.5px;background:var(--h-sig)}
+.scale .dim::before,.scale .dim::after{content:"";position:absolute;top:-3px;
+  border-top:4px solid transparent;border-bottom:4px solid transparent}
+.scale .dim::before{left:0;border-right:7px solid var(--h-sig)}
+.scale .dim::after{right:0;border-left:7px solid var(--h-sig)}
+.scale .dim b{position:absolute;left:50%;top:-24px;transform:translateX(-50%);
+  background:var(--h-sig);color:#fff;font-size:var(--t-micro);font-weight:600;
+  font-variant-numeric:tabular-nums;letter-spacing:-.01em;padding:3px 8px;
+  border-radius:var(--r-tag);white-space:nowrap;line-height:1.4;
+  box-shadow:0 0 0 2.5px var(--sheet)}
+.scale.near .pin{background:var(--h-sig)}
+.scale.near .pin b{color:var(--h-sig)}
+
+/* ---- not read. no annotation, because nothing was measured.
+        the band is still drawn and still labelled; only the tick
+        is absent, and the absence is named in full-weight ink. ---- */
+.scale.unread .band{background:repeating-linear-gradient(135deg,
+    #fff 0 4px,var(--zinc-300) 4px 8px);
+  border:1.5px dashed var(--ink-3)}
+.scale.unread .noread{position:absolute;bottom:40px;left:var(--at);
+  transform:translateX(-50%);font-size:var(--t-small);font-weight:600;
+  letter-spacing:-.008em;color:var(--ink);white-space:nowrap}
+
+.scale-wrap{--tint:var(--zinc-400)}
+.scale-wrap[data-m="fe"] {--tint:var(--m-fe)}
+.scale-wrap[data-m="hgb"]{--tint:var(--m-hgb)}
+.scale-wrap[data-m="o2"] {--tint:var(--m-o2)}
+.scale-wrap[data-m="ldl"]{--tint:var(--m-ldl)}
+.scale-head{display:flex;justify-content:space-between;align-items:baseline;
+  gap:14px;margin-bottom:8px}
+.scale-head .nm{font-size:var(--t-body);font-weight:600;letter-spacing:-.01em}
+.scale-head .dot{width:8px;height:8px;border-radius:50%;display:inline-block;
+  margin-right:8px;vertical-align:1px;background:var(--tint)}
+.scale-wrap + .scale-wrap{margin-top:26px;padding-top:24px;
+  border-top:1px solid var(--rule)}
+
+/* ============================================================
+   verdict marks — a shape, a word and a position. colour is
+   never the only carrier, so all four survive greyscale.
+   ============================================================ */
+.vd{display:inline-flex;align-items:center;gap:7px;font-size:var(--t-small);
+  font-weight:600;letter-spacing:-.008em;white-space:nowrap;color:var(--ink-2)}
+.vd svg{flex:none;width:14px;height:14px}
+.vd.near{color:var(--h-sig)}
+.vd.unread{color:var(--ink)}
+.vd.missed svg{color:var(--h-deep)}
+
+/* ============================================================
+   the lead card — the product's actual insight. not a score.
+   ============================================================ */
+.lead{background:var(--h-wash);border:1px solid var(--h-tint);
+  border-radius:var(--r-card);padding:20px 20px 18px}
+.lead .big{display:flex;align-items:baseline;gap:9px;margin-bottom:2px}
+.lead .big .v{font-size:var(--t-display);font-weight:700;letter-spacing:-.045em;
+  font-variant-numeric:tabular-nums;color:var(--h-sig);line-height:1}
+.lead .big .u{font-size:var(--t-h2);font-weight:600;letter-spacing:-.02em;
+  color:var(--h-sig)}
+.lead p{margin:6px 0 0;font-size:var(--t-small);color:var(--ink-2);max-width:34ch}
+.lead p strong{color:var(--ink);font-weight:600}
+
+/* drafts of that one sentence. an unapplied draft is drawn in construction
+   weight — dashed, no heat — so the sheet never shows two live cards.     */
+.draft{padding:20px 0}
+.draft:first-child{padding-top:0}
+.draft+.draft{border-top:1px solid var(--rule)}
+.draft-h{display:flex;align-items:baseline;gap:9px;margin-bottom:11px}
+.draft-h .lt{width:13px;font-size:var(--t-micro);font-weight:700;color:var(--ink-3)}
+.draft-h .nm{font-size:var(--t-micro);font-weight:600;color:var(--ink);
+  letter-spacing:-.004em}
+.draft-h .wc{margin-left:auto;font-size:var(--t-micro);color:var(--ink-3);
+  font-variant-numeric:tabular-nums}
+.lead.ghost{background:transparent;border:1px dashed var(--construction)}
+.lead.ghost .big .v,.lead.ghost .big .u,.lead.ghost p{color:var(--ink-3)}
+.lead.ghost p strong{color:var(--ink-2);font-weight:600}
+.verd{margin:11px 0 0;font-size:var(--t-micro);line-height:1.6;
+  color:var(--ink-2);max-width:48ch}
+.verd b{font-weight:600;color:var(--h-deep)}
+.verd.ok b{color:var(--ink)}
+
+/* ============================================================
+   audit row — the product
+   ============================================================ */
+.audit{border-top:1px solid var(--rule)}
+.audit-row{border-bottom:1px solid var(--rule);position:relative}
+.audit-row.is-near{background:var(--h-wash);
+  box-shadow:inset 3px 0 0 var(--h-sig);margin:0 calc(var(--pad) * -1);
+  padding:0 var(--pad)}
+.audit-row > button{all:unset;display:grid;grid-template-columns:1fr auto;
+  gap:5px 16px;width:100%;padding:15px 26px 15px 0;cursor:pointer;
+  min-height:44px;align-items:center;box-sizing:border-box}
+.audit-row .crit{font-size:var(--t-body);letter-spacing:-.008em;color:var(--ink)}
+.audit-row .val{grid-column:2;grid-row:1;text-align:right;
+  font-size:var(--t-quant);font-weight:600;font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em}
+.audit-row.is-near .val{color:var(--h-sig)}
+.audit-row .sub{grid-column:1/-1;display:flex;gap:16px;align-items:center;
+  justify-content:space-between}
+.audit-row .margin{font-size:var(--t-micro);font-weight:600;
+  font-variant-numeric:tabular-nums;color:#fff;background:var(--h-sig);
+  padding:3px 8px;border-radius:var(--r-tag)}
+.audit-row .caret{position:absolute;right:2px;top:24px;width:8px;height:8px;
+  border-right:1.5px solid var(--ink-3);border-bottom:1.5px solid var(--ink-3);
+  transform:rotate(45deg);transition:transform 170ms ease;pointer-events:none}
+.audit-row.is-near .caret{right:calc(2px + var(--pad))}
+.audit-row.open .caret{transform:rotate(-135deg);border-color:var(--ink)}
+/* no measurement is drawn as a hatch, never as a dash or a zero */
+.nodata{display:inline-block;width:38px;height:14px;vertical-align:-2px;
+  border:1px dashed var(--ink-3);
+  background:repeating-linear-gradient(135deg,#fff 0 3px,var(--zinc-300) 3px 6px)}
+
+.source{display:none;padding:0 0 18px;border-left:2px solid var(--construction);
+  padding-left:15px;margin-bottom:15px}
+.audit-row.open .source{display:block}
+.source p{margin:0;color:var(--ink-2);font-size:var(--t-small);max-width:58ch}
+.source .cite{display:block;margin-top:9px;font-size:var(--t-micro);
+  color:var(--ink-3);font-variant-numeric:tabular-nums}
+.source mark{background:var(--h-tint);color:var(--ink);padding:1px 3px;
+  border-radius:3px;font-weight:500}
+
+/* ============================================================
+   trial row
+   ============================================================ */
+.trial{display:grid;grid-template-columns:1fr auto;gap:7px 16px;padding:17px 0;
+  border-bottom:1px solid var(--rule);cursor:pointer}
+.trial h3{grid-column:1;margin:0;font-size:var(--t-body);font-weight:600;
+  letter-spacing:-.01em;line-height:1.4;max-width:33ch}
+.trial .nct{grid-column:1;font-size:var(--t-micro);color:var(--ink-3);
+  font-variant-numeric:tabular-nums}
+.trial .tally{grid-column:2;grid-row:1/span 2;align-self:center;text-align:right}
+.trial .tally .n{font-size:var(--t-quant);font-weight:600;
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em;display:block}
+.trial .tally .of{font-size:var(--t-micro);color:var(--ink-3)}
+.trial .flags{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
+
+/* ============================================================
+   chips / tabs / nav
+   ============================================================ */
+.chip{display:inline-flex;align-items:center;border-radius:5px;padding:4px 9px;
+  font-size:var(--t-micro);font-weight:600;letter-spacing:-.005em;
+  background:var(--zinc-100);color:var(--ink-2)}
+.chip.near{background:var(--h-sig);color:#fff}
+.chip.unread{background:var(--sheet);color:var(--ink);
+  box-shadow:inset 0 0 0 1px var(--construction)}
+
+.tabs{display:flex;gap:2px;background:var(--zinc-100);padding:3px;
+  border-radius:9px;width:max-content}
+.tabs button{all:unset;padding:9px 17px;min-height:38px;box-sizing:border-box;
+  font-size:var(--t-small);font-weight:600;letter-spacing:-.008em;
+  color:var(--ink-2);cursor:pointer;border-radius:6px;text-align:center}
+.tabs button[aria-selected="true"]{background:var(--sheet);color:var(--ink);
+  box-shadow:0 1px 2px rgba(24,24,27,.07)}
+
+.nav{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--rule)}
+.nav button{all:unset;display:grid;justify-items:center;gap:5px;padding:13px 0 15px;
+  min-height:56px;box-sizing:border-box;cursor:pointer;font-size:var(--t-micro);
+  font-weight:600;color:var(--ink-3)}
+.nav button[aria-current="page"]{color:var(--ink);box-shadow:inset 0 2px 0 var(--h-sig)}
+.nav svg{width:20px;height:20px}
+
+/* ============================================================
+   score — a summary of the scales, so it never outranks them
+   ============================================================ */
+.score{display:flex;align-items:flex-end;gap:14px}
+.score .fig{display:inline-block;width:104px;height:34px;
+  border:1px dashed var(--ink-3);
+  background:repeating-linear-gradient(135deg,#fff 0 4px,var(--zinc-300) 4px 8px)}
+.score .lab{font-size:var(--t-small);color:var(--ink-2);padding-bottom:4px}
+.conf{margin-top:15px;padding-top:15px;border-top:1px solid var(--rule);
+  display:flex;justify-content:space-between;align-items:baseline;gap:16px}
+.conf + .conf{border-top:0;padding-top:0;margin-top:7px}
+.conf .k{font-size:var(--t-small);color:var(--ink-2)}
+.conf .v{font-size:var(--t-small);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   empty state
+   ============================================================ */
+.empty{padding:28px 0 12px}
+.empty h3{margin:0 0 7px;font-size:var(--t-h2);font-weight:600;letter-spacing:-.016em}
+.empty p{margin:0 0 20px;color:var(--ink-2);font-size:var(--t-small);max-width:38ch}
+
+/* ============================================================
+   type specimen
+   ============================================================ */
+.type-row{display:grid;grid-template-columns:168px minmax(0,1fr);gap:24px;
+  align-items:baseline;padding:16px 0;border-bottom:1px solid var(--rule)}
+.type-row .meta-l{font-size:var(--t-micro);color:var(--ink-3);line-height:1.6;
+  font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   motion — ONE orchestrated moment: the measurement being taken.
+   extension lines drop, the dimension sweeps open from your tick
+   toward the threshold, the tag lands. nothing else moves.
+   ============================================================ */
+@keyframes drop{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes sweep{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes land{from{opacity:0;transform:translate(-50%,4px)}
+                to{opacity:1;transform:translate(-50%,0)}}
+.measure .ext{animation:drop 150ms ease-out backwards;transform-origin:top;
+  animation-delay:calc(var(--i,0) * 70ms)}
+.measure .dim{animation:sweep 240ms cubic-bezier(.22,1,.36,1) backwards;
+  transform-origin:left;animation-delay:calc(var(--i,0) * 70ms + 130ms)}
+.measure .dim b{animation:land 160ms ease-out backwards;
+  animation-delay:calc(var(--i,0) * 70ms + 330ms)}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:1ms !important;
+    animation-iteration-count:1 !important;transition-duration:1ms !important}
+}
+
+body.gs{filter:grayscale(1)}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="titleblock">
+  <div>
+    <h1>Thermal</h1>
+    <p class="lede">Components for OpenHealth, drawn in the vernacular of a
+      dimensioned drawing. A criterion is a tolerance band, your value is a tick,
+      and the distance between them is annotated the way a drawing annotates a
+      distance. Annotation tracks what you can act on: a met criterion gets none
+      at all, a wide miss gets a wash, and a near miss gets the full dimension —
+      because that is the one worth a conversation.</p>
+  </div>
+  <dl class="meta">
+    <dt>Sheet</dt><dd>mockups/thermal.html</dd>
+    <dt>Mode</dt><dd>Light</dd>
+    <dt>Type</dt><dd>Inter, embedded</dd>
+    <dt>Network calls</dt><dd>0</dd>
+    <dt>Drawn</dt><dd>14 Oct 2026</dd>
+  </dl>
+</header>
+<div class="tools">
+  <button class="btn ghost" id="gs">Check in greyscale</button>
+  <button class="btn ghost" id="replay">Replay the measurement</button>
+</div>
+
+<!-- ───────────────────────────── ramp -->
+<section class="sec">
+  <h2>The heat family</h2>
+  <p class="note">All of it is annotation; none of it is a surface. The ground stays
+    a neutral zinc so the red is the only saturated thing a person ever sees — a true
+    red rather than a terracotta, which keeps it away from the warm-cream palette
+    <code>DESIGN.md</code> §4 names as the most recognisable generated-design tell.</p>
+  <div class="ramp">
+    <div style="background:#FFF2EC"><span class="nm">wash</span><span class="hx">#FFF2EC</span></div>
+    <div style="background:#FFD3BC"><span class="nm">tint</span><span class="hx">#FFD3BC</span></div>
+    <div style="background:#F2541B;color:#fff"><span class="nm">flare</span><span class="hx">#F2541B</span></div>
+    <div style="background:#D7122A;color:#fff"><span class="nm">signal</span><span class="hx">#D7122A</span></div>
+    <div style="background:#7F1026;color:#fff"><span class="nm">deep</span><span class="hx">#7F1026</span></div>
+  </div>
+  <div class="tokens">
+    <div><i style="background:#F4F4F5"></i><div><em>page</em><b>--paper</b></div></div>
+    <div><i style="background:#FFFFFF"></i><div><em>sheet</em><b>--sheet</b></div></div>
+    <div><i style="background:#E4E4E7"></i><div><em>rule</em><b>--rule</b></div></div>
+    <div><i style="background:#D4D4D8"></i><div><em>construction</em><b>--construction</b></div></div>
+    <div><i style="background:#52525B"></i><div><em>secondary</em><b>--ink-2</b></div></div>
+    <div><i style="background:#18181B"></i><div><em>ink</em><b>--ink</b></div></div>
+    <div><i style="background:#B01E5B"></i><div><em>ferritin</em><b>--m-fe</b></div></div>
+    <div><i style="background:#E2561F"></i><div><em>hemoglobin</em><b>--m-hgb</b></div></div>
+    <div><i style="background:#C8860A"></i><div><em>SpO2</em><b>--m-o2</b></div></div>
+    <div><i style="background:#6E2250"></i><div><em>LDL</em><b>--m-ldl</b></div></div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── type -->
+<section class="sec">
+  <h2>Type</h2>
+  <p class="note">Inter, embedded in the file as base64 so the zero-network rule holds —
+    four weights, about 90KB before encoding. One family does both jobs: quantities
+    switch on tabular figures and tighten to <code>-.02em</code>, which aligns a column
+    of digits against scale ticks without downloading a second face. That also avoids
+    the small-monospace-data-label tell in §4. Sentence case throughout.</p>
+  <div class="type-row"><div class="meta-l">display · 40 / 700 / -.04em</div>
+    <div class="n" style="font-size:var(--t-display);font-weight:700;letter-spacing:-.045em">4 ng/mL</div></div>
+  <div class="type-row"><div class="meta-l">h1 · 28 / 600 / -.025em</div>
+    <div style="font-size:var(--t-h1);font-weight:600;letter-spacing:-.025em">Where you stand</div></div>
+  <div class="type-row"><div class="meta-l">h2 · 19 / 600 / -.016em</div>
+    <div style="font-size:var(--t-h2);font-weight:600;letter-spacing:-.016em">Your bloodwork</div></div>
+  <div class="type-row"><div class="meta-l">quantity · 17 / 600 / tnum</div>
+    <div class="n" style="font-size:var(--t-quant)">88 mL/min · 14.1 g/dL · 188 mg/dL</div></div>
+  <div class="type-row"><div class="meta-l">body · 15 / 400 / 1.6</div>
+    <div style="max-width:58ch">Two of this trial's eleven criteria could not be
+      checked against your documents. They are listed first.</div></div>
+  <div class="type-row"><div class="meta-l">small · 13.5 / 400</div>
+    <div style="font-size:var(--t-small);color:var(--ink-2)">Read from your lab PDF on 11 October.</div></div>
+  <div class="type-row"><div class="meta-l">micro · 11.5 / 500 / tnum</div>
+    <div style="font-size:var(--t-micro);font-weight:500;color:var(--ink-3);font-variant-numeric:tabular-nums">12 · 150 ng/mL</div></div>
+</section>
+
+<!-- ───────────────────────────── the scale -->
+<section class="sec" id="scales">
+  <h2>The tolerance scale</h2>
+  <p class="note">The signature primitive, in four states. Everything on it either
+    marks a value or marks a boundary; nothing is drawn for looks. The dimension line
+    is the one saturated element in the whole system, and it appears on exactly one
+    state.</p>
+
+  <div class="spec">
+    <div class="frame">
+      <div class="scale-wrap" data-m="hgb">
+        <div class="scale-head"><span class="nm"><span class="dot"></span>Hemoglobin</span>
+          <span class="vd met"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.3 3.3L13 5"/></svg>Met</span></div>
+        <div class="scale" data-m="hgb">
+          <div class="axis"></div>
+          <div class="band" style="--from:24%;--to:80%"></div>
+          <div class="pin" style="--at:50%"><b>14.1</b></div>
+          <div class="edge" style="--at:24%">12.0</div>
+          <div class="edge" style="--at:80%">17.5 g/dL</div>
+        </div>
+      </div>
+    </div>
+    <div class="anno"><b>Met — no annotation.</b> The scale says everything by position:
+      the tick is inside the band. Nothing congratulates you, because the register here
+      is a lab report, not a fitness ring. The hue is hemoglobin's identity and means
+      the same thing on every screen; it is never a verdict.</div>
+  </div>
+
+  <div class="spec">
+    <div class="frame measure">
+      <div class="scale-wrap" data-m="fe">
+        <div class="scale-head"><span class="nm"><span class="dot"></span>Ferritin</span>
+          <span class="vd near"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2.6 3.6v8.8M13.4 3.6v8.8M3.1 8h9.8"/><path d="M5.7 6.3L3.3 8l2.4 1.7M10.3 6.3L12.7 8l-2.4 1.7"/></svg>Near miss</span></div>
+        <div class="scale near" data-m="fe" style="--i:0">
+          <div class="axis"></div>
+          <div class="band" style="--from:34%;--to:88%"></div>
+          <div class="out" style="--from:16%;--to:34%"></div>
+          <div class="pin" style="--at:16%"><b>8</b></div>
+          <div class="edge" style="--at:34%">12</div>
+          <div class="edge" style="--at:88%">150 ng/mL</div>
+          <div class="ext" style="--at:16%"></div>
+          <div class="ext" style="--at:34%"></div>
+          <div class="dim" style="--from:16%;--to:34%"><b>4 ng/mL</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="anno"><b>Near miss — dimensioned.</b> Extension lines drop from your tick
+      and from the threshold, a dimension line runs between them with arrowheads, and
+      the exact margin sits in a tag that breaks the line. This is how a drawing has
+      annotated a distance for two hundred years, and it is precisely what
+      <code>marginPhrase()</code> already computes — the old build threw that number
+      away into a caption.</div>
+  </div>
+
+  <div class="spec">
+    <div class="frame">
+      <div class="scale-wrap" data-m="ldl">
+        <div class="scale-head"><span class="nm"><span class="dot"></span>LDL cholesterol</span>
+          <span class="vd missed"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6"/></svg>Not met</span></div>
+        <div class="scale" data-m="ldl">
+          <div class="axis"></div>
+          <div class="band" style="--from:6%;--to:42%"></div>
+          <div class="out" style="--from:42%;--to:86%"></div>
+          <div class="pin" style="--at:86%"><b>188</b></div>
+          <div class="edge" style="--at:6%">0</div>
+          <div class="edge" style="--at:42%">100 mg/dL</div>
+        </div>
+      </div>
+    </div>
+    <div class="anno"><b>Missed wide — washed, not dimensioned.</b> The distance is
+      shaded so you can see it, but it is never measured out, because a gap this size
+      is not something a conversation moves. That restraint is the point of the system:
+      annotation is spent where it can change what you do, so a near miss outranks a
+      hard fail visually even though it is the better result.</div>
+  </div>
+
+  <div class="spec">
+    <div class="frame">
+      <div class="scale-wrap" data-m="o2">
+        <div class="scale-head"><span class="nm"><span class="dot"></span>HbA1c</span>
+          <span class="vd unread"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.6v4M8 11.2v.3"/></svg>Not read</span></div>
+        <div class="scale unread">
+          <div class="axis"></div>
+          <div class="band" style="--from:10%;--to:60%"></div>
+          <div class="noread" style="--at:50%">no value in your documents</div>
+          <div class="edge" style="--at:10%">4.0</div>
+          <div class="edge" style="--at:60%">8.0 %</div>
+        </div>
+      </div>
+    </div>
+    <div class="anno"><b>Not read — drawn, never omitted.</b> The axis, the band and both
+      thresholds are still there; only the tick is missing, and the absence is named in
+      full-weight ink rather than implied by a gap. A1c is deliberately absent from this
+      project to prove the engine never reads a missing value as a pass, so this state
+      has to be at least as loud as a failure. Here it is louder.</div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── verdicts -->
+<section class="sec">
+  <h2>Verdict marks</h2>
+  <p class="note">Each one pairs a shape, a word and a position on the scale, so none of
+    them needs colour to be read. Confirm it with the greyscale button above.</p>
+  <div class="spec">
+    <div class="frame" style="display:flex;flex-wrap:wrap;gap:18px 30px">
+      <span class="vd met"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.3 3.3L13 5"/></svg>Met</span>
+      <span class="vd near"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2.6 3.6v8.8M13.4 3.6v8.8M3.1 8h9.8"/><path d="M5.7 6.3L3.3 8l2.4 1.7M10.3 6.3L12.7 8l-2.4 1.7"/></svg>Near miss</span>
+      <span class="vd missed"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6"/></svg>Not met</span>
+      <span class="vd unread"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.6v4M8 11.2v.3"/></svg>Not read</span>
+    </div>
+    <div class="anno">Patient-side wording. <b>Not read</b> rather than
+      <code>UNKNOWN</code>, because it says what happened instead of naming an enum.
+      <b>Not met</b> rather than <code>FAIL</code>, because the trial failed to match
+      you as much as you failed to match it.</div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── lead card -->
+<section class="sec">
+  <h2>The nearest you are</h2>
+  <p class="note">What opens the Trials screen. Not a score and not a ring — the single
+    smallest margin the engine found anywhere in the corpus, named in full. It is the
+    one thing on screen that a person could actually take to an appointment, and no
+    other matcher computes it.</p>
+  <div class="spec">
+    <div class="frame measure">
+      <div class="lead">
+        <div class="big"><span class="v">4</span><span class="u">ng/mL</span></div>
+        <p>Ferritin, below the minimum for <strong>NCT06942208</strong>.</p>
+      </div>
+      <div class="scale near" data-m="fe" style="--i:0;margin-top:20px">
+        <div class="axis"></div>
+        <div class="band" style="--from:34%;--to:88%"></div>
+        <div class="out" style="--from:16%;--to:34%"></div>
+        <div class="pin" style="--at:16%"><b>8</b></div>
+        <div class="edge" style="--at:34%">12</div>
+        <div class="edge" style="--at:88%">150 ng/mL</div>
+        <div class="ext" style="--at:16%"></div>
+        <div class="ext" style="--at:34%"></div>
+        <div class="dim" style="--from:16%;--to:34%"><b>4 ng/mL</b></div>
+      </div>
+    </div>
+    <div class="anno"><b>This replaces the score ring.</b> §4 calls a big number with a
+      small label and a gradient accent <em>the</em> generated default, and the old home
+      screen was exactly that. A big number survives here only because it is a measured
+      quantity with a unit and a named counterparty, not a manufactured index — and
+      because the scale underneath it shows the measurement it came from.
+      <b>The sentence under it is six words</b> because the number, the scale and the
+      audit already say the rest; the four drafts it beat are in the next section.</div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── the description -->
+<section class="sec" id="description">
+  <h2>The description</h2>
+  <p class="note">The sentence under that number, drafted five ways and measured against
+    <code>docs/COPY.md</code> — twelve words for this slot, and eight rules taken from how
+    Apple writes interface text: say the one thing the screen is for, never caption what
+    the graphic already draws, and spend no words on feeling. Four of these are drawn in
+    construction weight because they are not shipping.</p>
+  <div class="spec">
+    <div class="frame">
+
+      <div class="draft">
+        <div class="draft-h"><span class="lt">A</span><span class="nm">As drawn, 14 Oct</span><span class="wc">18 words</span></div>
+        <div class="lead ghost">
+          <div class="big"><span class="v">4</span><span class="u">ng/mL</span></div>
+          <p>of ferritin is the whole distance between you and <strong>NCT06942208</strong>.
+            Every other criterion it lists, you already meet.</p>
+        </div>
+        <p class="verd"><b>Breaks C1, C4, budget — and it is untrue.</b> Two questions
+          answered in one string, with a figure of speech doing the measuring. The second
+          sentence is contradicted by the audit further down this same sheet: A1c is not
+          read, and LDL is 188 against a limit of 100.</p>
+      </div>
+
+      <div class="draft">
+        <div class="draft-h"><span class="lt">B</span><span class="nm">The cheerleader</span><span class="wc">10 words</span></div>
+        <div class="lead ghost">
+          <div class="big"><span class="v">4</span><span class="u">ng/mL</span></div>
+          <p>You're just 4 ng/mL away from qualifying for this trial!</p>
+        </div>
+        <p class="verd"><b>Breaks C3, C6 — and overclaims.</b> It says the number the card
+          is already saying, spends an exclamation mark on a lab value, and promises
+          something nobody here can grant: a trial screens you, this app only measures the
+          distance.</p>
+      </div>
+
+      <div class="draft">
+        <div class="draft-h"><span class="lt">C</span><span class="nm">The explainer</span><span class="wc">20 words</span></div>
+        <div class="lead ghost">
+          <div class="big"><span class="v">4</span><span class="u">ng/mL</span></div>
+          <p>Your ferritin is 8 ng/mL. <strong>NCT06942208</strong> asks for at least
+            12 ng/mL, so you are 4 ng/mL below its minimum.</p>
+        </div>
+        <p class="verd"><b>Breaks C2, C3, budget.</b> True, plain, no metaphor — and still
+          the wrong sentence, because the scale directly beneath it already draws 8, draws
+          12, and dimensions the gap. Prose that reads a drawing out loud is the longest
+          kind there is.</p>
+      </div>
+
+      <div class="draft">
+        <div class="draft-h"><span class="lt">D</span><span class="nm">The telegram</span><span class="wc">2 words</span></div>
+        <div class="lead ghost">
+          <div class="big"><span class="v">4</span><span class="u">ng/mL</span></div>
+          <p>Ferritin · <strong>NCT06942208</strong></p>
+        </div>
+        <p class="verd"><b>Breaks C1.</b> Inside every budget and still a failure: a reader
+          cannot tell from it whether this is good news or bad. Short is not the target.
+          One complete fact is.</p>
+      </div>
+
+      <div class="draft">
+        <div class="draft-h"><span class="lt">E</span><span class="nm">Applied</span><span class="wc">6 words</span></div>
+        <div class="lead">
+          <div class="big"><span class="v">4</span><span class="u">ng/mL</span></div>
+          <p>Ferritin, below the minimum for <strong>NCT06942208</strong>.</p>
+        </div>
+        <p class="verd ok"><b>Passes.</b> Which marker, which direction, whose rule — one
+          fact, and the only one this card is for. How far is left to the number, how far
+          relative to the band is left to the scale, and every other criterion is left to
+          the audit rows a tap below, so the sentence has nothing left to repeat or to get
+          wrong.</p>
+      </div>
+
+    </div>
+    <div class="anno"><b>Shortening is subtraction of jobs, not of words.</b> A carried
+      four: name the marker, size the gap, name the trial, summarise the rest. Three of
+      them were already being done on the card by the number, the scale and the audit — so
+      six words is not a terser A, it is A with its duplicated work deleted. D is the other
+      edge: cut the words without moving the job anywhere and the string stops saying
+      anything. Each verdict names its rule in words, never in colour alone, so the
+      greyscale check at the top of the sheet still reads them.</div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── audit row -->
+<section class="sec">
+  <h2>Audit row</h2>
+  <p class="note">The product. Every row is one of the trial's own eligibility sentences
+    resolved against your number, and every row opens onto the sentence it came from.
+    Not-read rows sort first, because they are the ones you can still do something about;
+    the near miss is the only row that carries a fill.</p>
+  <div class="spec">
+    <div class="frame">
+      <div class="audit">
+        <div class="audit-row open"><span class="caret"></span>
+          <button aria-expanded="true">
+            <span class="crit">Hemoglobin A1c below 8.0%</span>
+            <span class="val"><i class="nodata"></i></span>
+            <span class="sub"><span class="vd unread"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.6v4M8 11.2v.3"/></svg>Not read</span></span>
+          </button>
+          <div class="source">
+            <p>"Subjects with <mark>hemoglobin A1c &gt; 8.0%</mark> at screening are excluded."</p>
+            <span class="cite">NCT06942208, exclusion 4, verbatim</span>
+          </div>
+        </div>
+        <div class="audit-row is-near"><span class="caret"></span>
+          <button aria-expanded="false">
+            <span class="crit">Ferritin at or above 12 ng/mL</span>
+            <span class="val">8</span>
+            <span class="sub"><span class="vd near"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2.6 3.6v8.8M13.4 3.6v8.8M3.1 8h9.8"/><path d="M5.7 6.3L3.3 8l2.4 1.7M10.3 6.3L12.7 8l-2.4 1.7"/></svg>Near miss</span><span class="margin">4 ng/mL short</span></span>
+          </button>
+          <div class="source">
+            <p>"Serum <mark>ferritin ≥ 12 ng/mL</mark> at the screening visit."</p>
+            <span class="cite">NCT06942208, inclusion 2, verbatim</span>
+          </div>
+        </div>
+        <div class="audit-row"><span class="caret"></span>
+          <button aria-expanded="false">
+            <span class="crit">eGFR at or above 60 mL/min</span>
+            <span class="val">88</span>
+            <span class="sub"><span class="vd met"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.3 3.3L13 5"/></svg>Met</span></span>
+          </button>
+          <div class="source">
+            <p>"Estimated glomerular filtration rate <mark>≥ 60 mL/min/1.73m²</mark>."</p>
+            <span class="cite">NCT06942208, inclusion 5, verbatim</span>
+          </div>
+        </div>
+        <div class="audit-row"><span class="caret"></span>
+          <button aria-expanded="false">
+            <span class="crit">LDL cholesterol below 100 mg/dL</span>
+            <span class="val">188</span>
+            <span class="sub"><span class="vd missed"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6"/></svg>Not met</span></span>
+          </button>
+          <div class="source">
+            <p>"Low-density lipoprotein cholesterol <mark>&lt; 100 mg/dL</mark> while on
+              stable therapy for at least 4 weeks."</p>
+            <span class="cite">NCT06942208, inclusion 7, verbatim</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="anno"><b>Structure encodes the content.</b> The only rules are row
+      boundaries and the only indent is the quote bar on a source sentence. Nothing is
+      numbered, because a trial's criteria are a set and not a sequence. An unread value
+      is a hatch, never a dash and never a zero — a dash reads as "none", and "none" is
+      a measurement this app did not take.</div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── trial rows -->
+<section class="sec">
+  <h2>Trial row</h2>
+  <p class="note">A tally of criteria rather than a percentage: it reports what the
+    engine actually checked, and leaves no room to read a number as a chance of getting
+    in. Unread criteria stay visible on the row instead of being folded into the count.</p>
+  <div class="spec">
+    <div class="frame">
+      <div class="trial">
+        <h3>Oral versus intravenous iron in non-anaemic iron deficiency</h3>
+        <span class="nct">NCT06942208</span>
+        <span class="tally"><span class="n">9/11</span><span class="of">criteria met</span></span>
+        <span class="flags"><span class="chip near">4 ng/mL short</span><span class="chip unread">1 not read</span></span>
+      </div>
+      <div class="trial">
+        <h3>Lipid-lowering therapy in adults with normal renal function</h3>
+        <span class="nct">NCT07502508</span>
+        <span class="tally"><span class="n">5/9</span><span class="of">criteria met</span></span>
+        <span class="flags"><span class="chip">2 not met</span><span class="chip unread">2 not read</span></span>
+      </div>
+    </div>
+    <div class="anno">No search field and no condition picker anywhere in the app — the
+      engine ranks every trial it holds against your data, so a filter box would be
+      designing the wrong product. The near-miss chip carries the margin itself rather
+      than the word "near miss", because the number is the useful part.</div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── score -->
+<section class="sec">
+  <h2>Score and confidence</h2>
+  <p class="note">The score is a summary of the scales, so it sits below them and never
+    outgrows the one quantity a screen is about. Confidence keeps its own line and is
+    never folded in.</p>
+  <div class="spec">
+    <div class="frame">
+      <div class="score">
+        <span class="fig"></span>
+        <span class="lab">match, across 11 criteria</span>
+      </div>
+      <div class="conf"><span class="k">Based on</span><span class="v">9 of 11 criteria read</span></div>
+      <div class="conf"><span class="k">Last document</span><span class="v">11 Oct 2026</span></div>
+    </div>
+    <div class="anno"><b>The figure is hatched out on purpose.</b> Every score is engine
+      output and moves with the profile, so a mockup is not allowed to print one — a
+      constant in a mock is how a constant ends up in the markup, which is exactly how
+      "87/100" survived in this repo for weeks. What the specimen shows is the slot, its
+      size and its alignment.</div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── controls -->
+<section class="sec">
+  <h2>Controls</h2>
+  <p class="note">One filled button per screen, on the single thing worth doing.
+    Everything else is a hairline ghost or plain text, and a button says exactly what
+    happens and never more.</p>
+  <div class="spec">
+    <div class="frame" style="display:flex;flex-direction:column;gap:20px;align-items:flex-start">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn">Download prep sheet</button>
+        <button class="btn ghost">Add a document</button>
+        <button class="btn quiet">Show the trial's wording</button>
+      </div>
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true">Criteria</button>
+        <button role="tab" aria-selected="false">Your values</button>
+        <button role="tab" aria-selected="false">Source</button>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <span class="chip">2 not met</span>
+        <span class="chip near">4 ng/mL short</span>
+        <span class="chip unread">1 not read</span>
+      </div>
+    </div>
+    <div class="anno">Radius carries hierarchy instead of being one value everywhere:
+      <code>16px</code> on a sheet, <code>10px</code> on a card, <code>8px</code> on a
+      button, <code>4px</code> on a tag, and <code>0</code> on anything that measures.
+      Sheets lift on a single soft shadow; nothing else in the system has one.</div>
+  </div>
+  <div class="spec">
+    <div class="frame" style="padding:0;overflow:hidden">
+      <nav class="nav">
+        <button aria-current="page"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M3 9l7-6 7 6v8H3z"/></svg>Home</button>
+        <button><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 15V9M8 15V5M13 15v-4M18 15V7"/></svg>Metrics</button>
+        <button><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h10v14H5zM8 7h4M8 10h4M8 13h2"/></svg>Trials</button>
+      </nav>
+    </div>
+    <div class="anno">Three tabs, named the way a person would name them. The current one
+      is marked by a red rule and full-ink type, so it still reads with colour removed.</div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── empty -->
+<section class="sec">
+  <h2>Empty state</h2>
+  <p class="note">An empty screen is an invitation to act. It does not apologise, and it
+    is never vague about what happened.</p>
+  <div class="spec">
+    <div class="frame">
+      <div class="empty">
+        <h3>No documents yet</h3>
+        <p>Add a lab report and the engine checks it against every trial it holds. You
+          never tell it what you have.</p>
+        <button class="btn">Add a document</button>
+      </div>
+    </div>
+    <div class="anno">No illustration and no centred icon circle. The sentence carries it.</div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── motion -->
+<section class="sec">
+  <h2>Motion</h2>
+  <p class="note">One orchestrated moment, and it depicts the thing the app does:
+    extension lines drop from the tick and the threshold, the dimension line sweeps open
+    between them, and the margin tag lands. 520ms end to end, staggered 70ms per row.
+    Nothing else in the app moves on its own — no section entrances, no card hovers, no
+    animated ring. Press and expand feedback stays, because it answers something a
+    person did. All of it off under <code>prefers-reduced-motion</code>.</p>
+</section>
+
+</div>
+
+<script>
+document.getElementById('gs').addEventListener('click', function(){
+  var on = document.body.classList.toggle('gs');
+  this.textContent = on ? 'Back to colour' : 'Check in greyscale';
+});
+
+document.getElementById('replay').addEventListener('click', function(){
+  document.querySelectorAll('.measure').forEach(function(el){
+    el.classList.remove('measure');
+    void el.offsetWidth;
+    el.classList.add('measure');
+  });
+});
+
+document.querySelectorAll('.audit-row > button').forEach(function(b){
+  b.addEventListener('click', function(){
+    var row = b.parentElement;
+    var open = row.classList.toggle('open');
+    b.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+});
+</script>
+</body>
+</html>

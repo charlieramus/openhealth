@@ -10,3 +10,7 @@ Thumbs.db
 *.tmp
 *.log
 .gstack/
+
+# Python bytecode (skill scripts)
+__pycache__/
+*.pyc

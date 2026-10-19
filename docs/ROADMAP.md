@@ -17,8 +17,9 @@
 | | |
 |---|---|
 | **Submission closes** | **12:00 pm EDT, Monday, October 26th, 2026** |
-| Today | **October 6, 2026** |
-| Runway | **20 days**, of which **12 are build days** before the freeze |
+| Today | **October 16, 2026** |
+| Runway | **10 days**, of which **2.5 are build days** before the freeze |
+| ~~Was~~ | ~~Oct 6 · 20 days · 12 build days~~ — updated 2026-10-16 |
 | Practical internal deadline | **Sunday, October 25** — never submit into a noon cutoff |
 | After the deadline | **"the Submission cannot be modified in any way"** |
 
@@ -52,7 +53,7 @@ useful document in the whole submission process and it changes where the work sh
 |---|---|---|
 | **Function** | "App is functional with **complex features**" | **3–4, up from 2.** The scale reads: 1 lacks functionality · 2 "contains snippets of code/action" · 3 works with errors · 4 fully functional · 5 complex features. The engine now computes every trial score from a structured profile, which cleared the mockup floor. Reaching **5** is what [`REBUILD.md`](REBUILD.md) is for |
 | **Code** | "**Explanation of code** indicates immense understanding" | **1.** The bottom of this scale is literally *"Video does not explain code"* |
-| **UI** | "App is highly innovative in design and interface" | **5.** This is our strongest box and it's already earned |
+| **UI** | "App is highly innovative in design and interface" | **3, corrected 2026-10-16 from 5.** This row was written before the visual execution was rejected wholesale on 2026-10-07 and never updated. The shipping build is v1 Tolerance paint over the October 6 skeleton: a score ring averaging invented numbers, four hard-coded vitals, a gauge needle and eleven all-caps eyebrow labels. `UPDATELOGV3.md` is what recovers it |
 
 ### Three things that fall out of this
 
@@ -194,9 +195,9 @@ the end if a day is lost.
 | *(alongside, Oct 8 → Oct 11)* | **Test harness + parser fixtures** — `tests.html` asserting known profiles produce known verdicts: exactly at threshold, missing lab, all-fail, unparsed criterion | 2.4 | 1.5 | ✅ **Done** — V1 stage 4, now **61 cases** |
 | **Sun Oct 12** | **Evaluator re-wire** — `evaluateCriterion` / `matchScore` read the parser's output instead of hand-written objects. Score **and** confidence, two numbers | 2 | 1 | ✅ **Done** — V1 stage 5 |
 | **Mon Oct 13 → Tue Oct 14** | **Document rail** — Tesseract.js → parser → profile, with in-place user correction. The headline input, and the one that removes the condition question | 4 | 2 | ✅ **Done** — V1 stage 6 |
-| **Wed Oct 15 → Thu Oct 16** | **Hub shell** — 3-tab nav, Health Score ring with its `n of N markers` confidence line, Metrics tab | 6 | 1.5 | **V2** |
-| **Fri Oct 17** | **Garmin rail** — sync script, `garmin.json`, reader, and the vitals trend on the near-miss callout | 7 | 1.5 | **V2** |
-| **Sat Oct 18** | **Appointment prep sheet** — a real generated download | 8 | 1 | **V2 — not built. The app produces no file yet** |
+| **Wed Oct 15 → Thu Oct 16** | **Hub shell** — 3-tab nav, Health Score ring with its `n of N markers` confidence line, Metrics tab | 6 | 1.5 | ⚠️ **Tabs shipped** (V2 stage 1, `TAB_OF` at `index.html:1774`). **The ring is being deleted** — see below |
+| **Fri Oct 17** | **Garmin rail** — sync script, `garmin.json`, reader, and the vitals trend on the near-miss callout | 7 | 1.5 | ❌ **CUT 2026-10-16.** Never started; `garmin.json` does not exist |
+| **Sat Oct 18** | **Appointment prep sheet** — a real generated download | 8 | 1 | ⏸ **Deferred, decide Sun Oct 18 night.** Still not built |
 | **🔒 Sat Oct 18, EOD** | **FEATURE FREEZE** | — | — | — |
 
 **Why the prep sheet sits last:** `SIMPLIFY.md` §7 says cut 8 first, then 7, then 6, so the
@@ -208,6 +209,90 @@ sheet in the video and then not ship it.
 **Never cut items 1, 2, 3, or 4.** They are the app. Cutting 7 costs the Metrics tab its best
 content; cutting 6 means shipping the existing three screens with the new engine behind them,
 which loses no functionality at all.
+
+---
+
+## ⚠️ Replan — Oct 16 → Oct 26
+
+> **Written 2026-10-16.** The calendar above stopped matching reality on **October 7**,
+> which is the date of the last commit in this repo. Nine days passed in which the work that
+> actually happened — the `Thermal` component gallery, `docs/COPY.md`, and the design
+> decisions behind both — was never committed and is not on any row above. This section is
+> the plan from here. **The calendar above is kept, not deleted, so the plan and what
+> happened can still be compared.**
+
+### What those nine days actually produced
+
+| | |
+|---|---|
+| `mockups/thermal.src.html` | A 13-section component gallery: every component the app needs, drawn and argued. **No engine — every number on it is typed** |
+| `mockups/build.py` | Inlines four Inter weights as base64, closing the embedded-font problem `DESIGN.md` §7.9 left open |
+| `docs/COPY.md` | Per-slot word budgets and eight copy rules, written after the gallery's lead card shipped a 23-word metaphor where a 4-word readout belonged |
+| **Not committed** | **All of it.** Untracked as of 2026-10-16 |
+
+### The three corrections this section makes
+
+1. **UI is not a 5.** The rubric row above said "already earned" and predated the 2026-10-07
+   rejection by a day. Corrected to 3. **This reframes the thermal port: it is not polish,
+   it is recovering five points this document already spent.**
+2. **The three-tab nav already exists.** V2 Stage 1 shipped it. Any plan that budgets time to
+   build it is budgeting for work that is done.
+3. **Two Tolerance systems existed and contradicted each other** — the shipping `index.html`
+   and the thermal gallery disagreed on the palette and on the single biggest type decision.
+   Resolved 2026-10-16 in thermal's favour; `DESIGN.md` is rewritten to match in
+   `UPDATELOGV3.md` Stage 1.
+
+### Where the points are, with nine days left
+
+| Sub-criterion | Status | What moves it |
+|---|---|---|
+| Ideology | 4–5 | Banked |
+| Impact | 4 | Video only |
+| **Structure** | **0 — no video exists** | **The video** |
+| Function | 4, reaching 5 | Engine is done; protected by the subtraction |
+| **Code** | **1 — the floor** | **One 45-second video segment** |
+| **UI** | **3** | **`UPDATELOGV3.md`** |
+
+**Two of six boxes are at or near zero and both are recoverable in nine days.** That is the
+whole shape of the remaining plan: the thermal port and the video are the work, and
+everything else is defence.
+
+### The calendar from here
+
+**Note on days:** this document called Oct 18 a Saturday. In 2026 it is a **Sunday** — Oct 1
+is a Thursday. The freeze therefore has a **full weekend** in front of it rather than one
+day, which is the only piece of good news in this replan.
+
+| Date | Work | Stage | State |
+|---|---|---|---|
+| **Fri Oct 16** (tonight) | **Commit the nine days.** Then `UPDATELOGV3.md` Stage 1 — reconcile `DESIGN.md`, this file's rubric row, and `CLAUDE.md`'s vitals claim | V3·1 | Docs only, no code |
+| **Sat Oct 17** | **System swap** (V3·2) — thermal's stylesheet into `index.html:13–935`, alias band repointed, Inter inlined. **Dimension line** (V3·3) — `auditScale()` at 3364 | V3·2–3 | The two that cannot be cut |
+| **Sun Oct 18** | **The subtraction** (V3·4) — rings, vitals, needle, nine eyebrows. **The lead card** (V3·5) — smallest margin across the whole corpus | V3·4–5 | V3·5 is the agreed casualty if the day runs short |
+| **🔒 Sun Oct 18, EOD** | **FEATURE FREEZE** | — | — |
+| **Mon Oct 19 → Wed Oct 21** | **Audit and trial rows** (V3·6, freeze-legal restyle) · a11y, persistence, `/design-review`, `/qa-only` · **script the video** | V3·6 | The 3.5 budgeted non-feature days |
+| **Thu Oct 22 → Sat Oct 24** | **Shoot and cut the video.** The 1:20–2:20 code minute first — it is the highest-value minute in the project | — | 10 of 30 points |
+| **Sun Oct 25** | **Coherence and verify** (V3·7). **Submit** | V3·7 | Never submit into a noon cutoff |
+| **Mon Oct 26, 12:00 pm EDT** | Official deadline | — | Buffer only |
+
+### What is cut, and the cost of cutting it
+
+**Garmin rail — cut.** `SIMPLIFY.md` §7 already ranked it second-to-cut, and it was never
+started. With the invented vitals deleted in V3·4 the claim it was meant to support is gone
+cleanly rather than half-made. **The cost:** `CLAUDE.md`'s "Vitals | **Real** — the
+operator's own Garmin data" row has to change with it, or the standards doc becomes one of
+the things that is lying. That edit is in V3 Stage 1.
+
+**Appointment prep sheet — deferred, decided Sunday night.** Officially first-to-cut, and
+still unbuilt. But it is ~1 day, it is the only *file* the app would ever produce, and
+`SIMPLIFY.md` §9's third judge answer — *"it does not contact your doctor; it prepares the
+sheet you take to one"* — leans on it existing. **If it is cut, it is cut from the video
+script in the same sitting.** Do not claim the sheet and then not ship it.
+
+**Never cut:** V3 stages 2, 3 and 4 as a set. Stopping after Stage 2 leaves thermal's CSS on
+top of the October 6 skeleton, which is the half-rethemed outcome and is worse than shipping
+today's build untouched.
+
+---
 
 ### The screen spec — and why Figma Make is not on this calendar
 
@@ -383,7 +468,7 @@ the rest plainly, and both the rules and the rubric reward you for it.
 
 ```mermaid
 gantt
-    title OpenHealth — 20 days to submission
+    title OpenHealth — replanned 2026-10-16, 10 days to submission
     dateFormat YYYY-MM-DD
     axisFormat %b %d
 
@@ -398,13 +483,22 @@ gantt
     Tests + parser fixtures         :s24, 2026-10-08, 4d
     Evaluator re-wire + confidence  :crit, s2, 2026-10-12, 1d
     Document rail (OCR to profile)  :crit, s4, 2026-10-13, 2d
-    Hub shell (3 tabs, score ring)  :s6, 2026-10-15, 2d
-    Garmin rail                     :s7, 2026-10-17, 1d
-    Appointment prep sheet          :s8, 2026-10-18, 1d
+    Hub shell (3 tabs)              :done, s6, 2026-10-15, 2d
+
+    section Thermal port (V3)
+    Reconcile the design record     :crit, v31, 2026-10-16, 1d
+    System swap + dimension line    :crit, v32, 2026-10-17, 1d
+    Subtraction + lead card         :crit, v34, 2026-10-18, 1d
     FEATURE FREEZE                  :milestone, crit, frz, 2026-10-18, 0d
+    Audit + trial rows (freeze-legal) :v36, 2026-10-19, 3d
+
+    section Cut
+    Garmin rail (CUT)               :crit, done, s7, 2026-10-17, 1d
+    Prep sheet (decide Oct 18)      :active, s8, 2026-10-19, 1d
 
     section Submission
-    Script + record demo video      :crit, vid, 2026-10-19, 4d
+    Script the video                :crit, vids, 2026-10-19, 3d
+    Shoot + cut the video           :crit, vid, 2026-10-22, 3d
     A11y, persistence, QA, devices  :post, 2026-10-19, 3d
     Written answers + AI disclosure :ans, 2026-10-21, 3d
     SUBMIT (internal)               :milestone, crit, sub, 2026-10-25, 0d

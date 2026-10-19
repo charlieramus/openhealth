@@ -1,6 +1,6 @@
 # OpenHealth — Documentation
 
-Thirteen docs, five groups. Start wherever your question is.
+Fourteen docs, five groups. Start wherever your question is.
 
 > **If you read one thing, read [`SIMPLIFY.md`](SIMPLIFY.md).** Two decision docs stack:
 >
@@ -34,6 +34,7 @@ Thirteen docs, five groups. Start wherever your question is.
 | [**ARCHITECTURE.md**](ARCHITECTURE.md) | How data is collected from APIs, normalized, matched, and distributed — with flowcharts | You want to see the wires. **This is the API flow doc** |
 | [**BUILDSPEC.md**](BUILDSPEC.md) | The screen-by-screen spec the prototype was built from | You're changing the prototype |
 | [**DESIGN.md**](DESIGN.md) | Color, type, layout, motion, voice | You're touching anything visual |
+| [**COPY.md**](COPY.md) | Every word in the UI: per-slot word budgets, the eight copy rules, and the notes from Apple they came from | You're writing or editing any string a user reads. **Read before adding a sentence to a screen** |
 | [**STACK.md**](STACK.md) | Why the prototype is one static HTML file and not Next.js, what a port would cost, and what would change the answer | You're asking "shouldn't this be a framework?" or planning Figma handoff |
 
 ## Is it a business
@@ -76,7 +77,8 @@ defend the offer sheet under questioning
 **For an engineer picking this up**
 → [`SIMPLIFY.md`](SIMPLIFY.md) (what we're building now) → [`REBUILD.md`](REBUILD.md) (why) →
 [`ARCHITECTURE.md`](ARCHITECTURE.md) **§4a — the parser/evaluator contract** →
-[`BUILDSPEC.md`](BUILDSPEC.md) → [`DESIGN.md`](DESIGN.md) → [`STACK.md`](STACK.md) §6a →
+[`BUILDSPEC.md`](BUILDSPEC.md) → [`DESIGN.md`](DESIGN.md) → [`COPY.md`](COPY.md) →
+[`STACK.md`](STACK.md) §6a →
 `../index.html`
 
 **For "what do I build next, right now"**
