@@ -13,7 +13,7 @@
 > constraints a direction has to survive, and the invariants that are not negotiable
 > whatever direction wins. The direction itself gets decided, then written here.
 
-## 1 · Three retired directions — do not reinstate
+## 1 · Four retired directions — do not reinstate
 
 Recording these so none of them gets rediscovered and mistaken for the plan.
 
@@ -22,6 +22,7 @@ Recording these so none of them gets rediscovered and mistaken for the plan.
 | 1 | **Dark theme** — `#0D1117` canvas, `#E91E8C`/`#9C27B0`/`#26A69A`/`#2196F3` bars | `BUILDSPEC.md` | Never shipped. Contradicted this file's light theme for weeks while both sat in the repo |
 | 2 | **Green-forward light** — green→lime hero gradient, white cards, warm-green neutrals, amber ring, Bricolage + Inter | this file, `FIGMA-MAKE-PROMPT.md`, shipped in `index.html` | Rejected 2026-10-07. This is the one that is live and hideous |
 | 3 | **Warm paper + serif** — cream sheet, Fraunces/Instrument Serif numerals | uncommitted `styleguide.html` draft | Deleted unbuilt. It is the single most recognisable AI-generated design cliché there is (see §4) |
+| 4 | **Tolerance v1, cool blue** — `#E7ECEE` grey-blue paper, `#B81D40` carmine signal, IBM Plex Mono on every quantity | this file §7.2–7.3, shipped in `index.html` | Retired 2026-10-16. Two Tolerance palettes existed in the repo and contradicted each other; `mockups/thermal.src.html` won on being newer, on a neutral ground instead of a tinted one, and on the argument that a mono face carrying small data labels is itself the §4 tell. The *system* survives — only the paint and the second face are retired |
 
 `Screenshot 2026-10-06 153715.png` is the reference *for direction 2*. It is now a
 historical artifact. **It is not a design reference and must not be matched.**
@@ -175,71 +176,117 @@ gap). That has three consequences worth stating:
 - There is exactly **one** high-chroma colour in the whole interface, spent on the one
   number no competitor shows. That is the boldness budget, spent in one place.
 
+**Repainted 2026-10-16 — thermal.** Every token below is read out of
+[`mockups/thermal.src.html`](../mockups/thermal.src.html)'s `:root` block, which is the
+built direction rather than a retype from memory. **The rule above is unchanged by the
+repaint** — only the hexes moved. The cool grey-blue palette this replaces is retired in
+§1 as direction 4.
+
+**Primitives — the zinc ground.** Neutral, neither cool nor warm, so the one saturated
+family has nothing to compete with.
+
 | Token | Hex | Role |
 |---|---|---|
-| `--paper` | `#E7ECEE` | canvas behind the device — cool grey-blue, engineering paper |
-| `--sheet` | `#F7F9FA` | app background |
-| `--card` | `#FFFFFF` | raised surface, used sparingly |
-| `--ink` | `#17212A` | graphite. Primary text **and every value tick** |
-| `--ink-2` | `#53646F` | secondary text |
-| `--ink-3` | `#8698A3` | tick labels, captions |
-| `--rule` | `#C9D5DB` | scale axes, threshold edges, card borders |
-| `--band` | `#DCE6EA` | neutral required-range fill where no marker owns the scale |
-| `--gap` | `#B81D40` | **the signal.** Deep carmine, the annotation pen. The near-miss bracket and its number. Nothing else, ever |
+| `--zinc-050` | `#FAFAFA` | — |
+| `--zinc-100` | `#F4F4F5` | the page |
+| `--zinc-150` | `#EEEEF0` | — |
+| `--zinc-200` | `#E4E4E7` | rules, card borders |
+| `--zinc-300` | `#D4D4D8` | construction lines |
+| `--zinc-400` | `#A1A1AA` | tick labels, captions |
+| `--zinc-600` | `#52525B` | secondary ink |
+| `--zinc-900` | `#18181B` | ink |
 
-Deliberately cool and deliberately not: cream (`#F4F1EA`), terracotta (`#D97757`),
-tinted near-black (`#0B0B0B`), acid green, purple gradient. See §4.
+**The heat family — all of it is annotation; none of it is a surface.** Deliberately a
+*true red* rather than a terracotta: terracotta over cream is the warm-palette tell §4
+names, and the point of one saturated family is that it reads as an annotation pen and not
+as a brand colour.
 
-**Marker identity** — low-chroma, used as the band tint (~22% alpha) and the marker dot.
-Low chroma on purpose: these identify, they do not shout, because the tick has to stay the
-loudest thing on the scale. Lightness is spread so they separate in greyscale too.
+| Token | Hex | Role |
+|---|---|---|
+| `--h-wash` | `#FFF2EC` | faintest annotation ground |
+| `--h-out` | `#FFE2D4` | annotation edge |
+| `--h-tint` | `#FFD3BC` | the required band — the tint in the rule |
+| `--h-flare` | `#F2541B` | the step between tint and signal. Defined, and currently unspent outside the ramp |
+| `--h-sig` | `#D7122A` | **the signal.** The gap, its bracket and its number. Nothing else, ever |
+| `--h-deep` | `#7F1026` | the missed-verdict mark and the verdict word (`.vd.missed`, `.verd b`) |
+
+**Marker identity** — one hue per biomarker, used everywhere that marker appears. Lightness
+is spread so they separate in greyscale too, and the tick stays the loudest thing on any
+scale.
 
 | Token | Hex | Marker |
 |---|---|---|
-| `--m-fe` | `#8C3C62` | Iron / Ferritin — mulberry |
-| `--m-hgb` | `#3F4A86` | Hemoglobin — indigo |
-| `--m-o2` | `#1F6B64` | SpO₂ — deep teal |
-| `--m-ldl` | `#4A6B8A` | LDL — steel |
+| `--m-fe` | `#B01E5B` | Iron / Ferritin |
+| `--m-hgb` | `#E2561F` | Hemoglobin |
+| `--m-o2` | `#C8860A` | SpO₂ |
+| `--m-ldl` | `#6E2250` | LDL |
+
+**Semantic layer.** These are the names the markup and the render functions should use.
+
+| Token | Resolves to | Role |
+|---|---|---|
+| `--paper` | `--zinc-100` | the page |
+| `--sheet` | `#FFFFFF` | the sheet on it |
+| `--ink` | `--zinc-900` | primary text **and every value tick** |
+| `--ink-2` | `--zinc-600` | secondary text |
+| `--ink-3` | `--zinc-400` | tick labels, captions |
+| `--rule` | `--zinc-200` | scale axes, threshold edges, borders |
+| `--construction` | `--zinc-300` | construction lines |
+
+**One renaming trap, for Stage 2 of `UPDATELOGV3.md`:** in the retired v1 palette `--paper`
+was the canvas *behind the device* and `--sheet` was the app background. In thermal
+`--paper` is the page and `--sheet` is white. The alias band in `index.html`'s `:root` gets
+repointed onto these names, so the two meanings must not be mixed.
+
+Deliberately not: cream (`#F4F1EA`), terracotta (`#D97757`), tinted near-black (`#0B0B0B`),
+acid green, purple gradient. See §4.
 
 ### 7.3 · Type
 
-**One self-hosted face**, per the budget decision: **IBM Plex Mono**, weights 400 and 600,
-embedded as base64 `@font-face`. It was drawn for technical readout, it has true tabular
-figures, and tabular figures are **load-bearing here** — values have to align vertically
-against scale ticks or the stack stops reading as an instrument.
+**One self-hosted face: Inter**, four weights — 400, 500, 600, 700 — embedded as base64
+`@font-face` by [`mockups/build.py`](../mockups/build.py), about 90KB of woff2 before
+encoding. Zero network calls is a hard constraint (`CLAUDE.md`, [`STACK.md`](STACK.md) §6a),
+so the face travels inside the file; the build script is the same arrangement as the trial
+corpus — a local script that writes a committed file, not a server. A metric-matched
+`'Inter Fallback'` face (`local('Segoe UI')`, `size-adjust:107%`) keeps the first paint from
+reflowing, and keeps the file honest if the data URI is ever stripped.
 
-`DESIGN.md` §4 lists "a monospace face for small data labels" as template chrome, and that
-warning is accepted with a hard restriction:
+**The mono-for-quantities rule is deleted, not softened.** The two-face stack this section
+used to specify is retired in §1 as direction 4. One face now does both jobs:
 
-> **Mono is for measured quantities only** — values, units, scale tick labels, margins,
-> NCT IDs. **Never** for labels, headings, buttons, prose or eyebrows. If it is not a
-> number you could put a unit on, it is not mono.
+> **Quantities get `font-variant-numeric: tabular-nums` and `-.02em` tracking.** Inter's
+> tabular figures align a column of digits against the scale ticks, which is the entire job
+> the mono rule existed to do. §4 lists *a monospace face for small data labels* as template
+> chrome, so the second face was buying a tell rather than paying for one.
 
-Prose and UI take a **system humanist sans stack** (`ui-sans-serif, -apple-system,
-"Segoe UI", Roboto, …`) — zero bytes, zero network, and clearly distinct from the mono, so
-the two-face rule is satisfied without a second download.
+Tabular figures are still **load-bearing** — values have to align vertically against scale
+ticks or the stack stops reading as an instrument. What changed is which face provides them.
 
-Scale, 16px base at a 1.25 ratio:
+`body` sets Inter's stylistic alternates once —
+`font-feature-settings:"cv05" 1,"cv11" 1,"ss01" 1` — and no component sets them again.
+
+Scale, as built in the gallery:
 
 | Token | Size | Use |
 |---|---|---|
-| `--t-quant-xl` | 2.25rem | the one big quantity on a screen. Mono 600, tracking `-.03em` |
-| `--t-h1` | 1.375rem | screen title. Sans 650, sentence case |
-| `--t-h2` | 1.0625rem | section title. Sans 650 |
-| `--t-quant` | 1rem | inline values. Mono 600 |
-| `--t-body` | .9375rem / 1.55 | prose |
-| `--t-small` | .8125rem | captions |
-| `--t-tick` | .6875rem | scale tick labels. Mono 400 |
+| `--t-display` | 2.5rem / 40px | the one big quantity on a screen. 700, `-.04em`, tabular |
+| `--t-h1` | 1.75rem / 28px | screen title. 600, `-.025em`, sentence case |
+| `--t-h2` | 1.1875rem / 19px | section title. 600, `-.016em` |
+| `--t-quant` | 1.0625rem / 17px | inline values. 600, tabular, `-.02em` |
+| `--t-body` | .9375rem / 15px, 1.6 | prose |
+| `--t-small` | .84375rem / 13.5px | captions |
+| `--t-micro` | .71875rem / 11.5px | scale tick labels, the margin badge |
 
 **Sentence case everywhere. No all-caps, at any size.** The 11 `.eyebrow` all-caps labels
 in the old build are deleted, not restyled — §4 names both all-caps labels and unnecessary
 labels-above-content as tells, and most of them introduced a section that needed no
-introduction.
+introduction. Two of the eleven are engine write targets (`auditHead`, `tRelatedHead`) and
+become section headings instead; see `UPDATELOGV3.md` Stage 4.
 
 **Words are specified elsewhere.** How many of them a slot gets, and what shape they
 take, is [`COPY.md`](COPY.md) — written 2026-10-16 after the thermal mockup's lead card
-shipped a 23-word metaphor where a 4-word readout belonged. Sentence case and the
-mono-for-quantities rule above are the two places the two files touch; this one wins there.
+shipped a 23-word metaphor where a 4-word readout belonged. Sentence case is now the one
+place the two files touch, and this one wins there.
 
 ### 7.4 · The tolerance scale — the signature primitive
 
@@ -260,8 +307,8 @@ Ferritin                                    8 ng/mL
 - **`.band`** — the required range, filled in the marker's tint, with 1px solid edges at
   the thresholds. The edges are the numbers that matter, so they are drawn.
 - **`.pin`** — your value. A 2px full-height `--ink` tick, the highest-contrast mark on the
-  scale, with its value in mono beneath.
-- **`.gap`** *(new)* — drawn only on a near-miss: a bracket in `--gap` spanning tick to
+  scale, with its value beneath in tabular figures (§7.3).
+- **`.gap`** *(new)* — drawn only on a near-miss: a bracket in `--h-sig` spanning tick to
   threshold, labelled with the exact margin from `marginPhrase()`.
 - **`.scale.none`** — the unknown state. **Axis drawn, band drawn as a dashed outline, no
   tick**, and "not read" set where the tick would be. Unknown is drawn, not omitted, and it
@@ -314,14 +361,18 @@ expand/collapse feedback stays, because it answers a user action. All of it off 
 5. Verify: screenshots at phone width, greyscale pass, contrast, reduced motion, zero
    network calls, no retired score string.
 
-### 7.9 · Open, and deliberately not decided here
+### 7.9 · Both open items closed 2026-10-16
 
-- **The fake vitals on the Metrics screen.** `Resting HR 62`, `Weight 154 lb`,
-  `Hydration 6 glasses` are hard-coded in the static HTML with hand-drawn SVG sparklines.
-  They are not read from `garmin.json` and they are not real. By the standard in
-  `CLAUDE.md` — *if a screen looks like it does something it does not do, it gets deleted,
-  not polished* — these should go. Deleting features is not a presentation decision, so
-  they are flagged rather than removed.
-- **Embedding the Plex Mono subset.** Needs the woff2 fetched once at build time and
-  base64'd into the file. Until that lands the stack falls back to system mono, which
-  renders correctly but without the identity.
+- **The fake vitals on the Metrics screen — closed: deleted.** Four tiles, not three:
+  `Resting HR 62`, `Oxygen 97`, `Weight 154` and `Hydration 6`, each with a hand-drawn SVG
+  sparkline, hard-coded in the static markup around `index.html:1086` and read from
+  nothing. `garmin.json` does not exist in this repo and the Garmin rail is cut
+  ([`ROADMAP.md`](ROADMAP.md), "Replan — Oct 16 → Oct 26"), so there is nothing for them to
+  be read from later either. By the `CLAUDE.md` standard — *if a screen looks like it does
+  something it does not do, it gets deleted, not polished* — they go. Flagging rather than
+  removing was the right call for a presentation doc; the decision was taken in
+  `UPDATELOGV3.md`'s Decisions block, where feature deletions belong, and it **executes in
+  that log's Stage 4, "The subtraction"**, alongside the gauge needle and the eyebrows.
+- **Embedding the Plex Mono subset — closed: obsolete.** Inter ships instead, four weights
+  base64'd into the file by `mockups/build.py` (§7.3). There is no second face to subset,
+  and the fall-back-to-system-mono caveat this item carried no longer applies.

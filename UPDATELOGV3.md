@@ -116,7 +116,113 @@ touched in this stage.
 
 ## Stage 1 Report
 
-_Pending._
+Documentation only, as specified. Two files changed — `docs/DESIGN.md` and `CLAUDE.md`.
+`git status` shows nothing else modified.
+
+**1 · §7.2 repainted, read out of the gallery rather than retyped.** The single-table
+palette is replaced by thermal's three layers, taken from `mockups/thermal.src.html`'s
+`:root` block: the zinc primitives (`--zinc-050` → `--zinc-900`), the heat family
+(`--h-wash` `#FFF2EC`, `--h-out` `#FFE2D4`, `--h-tint` `#FFD3BC`, `--h-flare` `#F2541B`,
+`--h-sig` `#D7122A`, `--h-deep` `#7F1026`), the four marker hues (`--m-fe` `#B01E5B`,
+`--m-hgb` `#E2561F`, `--m-o2` `#C8860A`, `--m-ldl` `#6E2250`) and the semantic aliases.
+**The rule is kept verbatim** — your value is ink, the requirement is a tint, the gap is the
+only thing in signal colour — because the repaint moved hexes and nothing else.
+
+Two things worth having in writing before Stage 2 repoints the alias band, both found by
+grepping the gallery rather than assumed:
+
+- **`--paper` and `--sheet` swap meaning.** In the retired v1 palette `--paper` was the
+  canvas *behind the device* and `--sheet` was the app background; in thermal `--paper` is
+  the page and `--sheet` is white. Written into §7.2 as a named trap, since those two
+  aliases are referenced from static markup.
+- **`--h-flare` is defined and unspent** outside the ramp swatch, and `--h-deep` has
+  exactly two uses (`.vd.missed svg`, `.verd b`). Recorded so neither gets treated as a
+  surface colour on the way in.
+
+**2 · §7.3 is one face.** Inter, four weights (400/500/600/700), embedded as base64 by
+`mockups/build.py` — which already exists, already fetches nothing at runtime, and already
+has its four woff2 subsets committed at `mockups/fonts/` (~90KB before encoding). The
+mono-for-quantities restriction and the two-face stack are **deleted**, and the replacement
+rule is stated in their place: quantities get `font-variant-numeric: tabular-nums` and
+`-.02em` tracking. The scale table is thermal's seven steps (`--t-display` 40px →
+`--t-micro` 11.5px) instead of v1's `--t-quant-xl`/`--t-tick` set, and the `'Inter Fallback'`
+metric-matched face is documented so the first-paint reflow question does not get reopened.
+
+The verify asks that §7.3 carry no reference to IBM Plex Mono or to a second typeface.
+**It carries neither** — no occurrence of "Plex" or "IBM" in the section. Two occurrences of
+the word "mono" survive and both exist to argue *against* a second face: the sentence
+deleting the rule, and the §4 citation (*"a monospace face for small data labels"*) that is
+the reason one family ships. Removing that citation would delete the argument, so it stays.
+
+**3 · §1 is four retired directions**, not three. Heading changed and row 4 added —
+Tolerance v1 cool blue, `#E7ECEE` paper and `#B81D40` signal, retired 2026-10-16 with the
+reason stated: two Tolerance palettes contradicted each other in the repo, and the mono rule
+was itself the §4 tell. The row says plainly that the **system** survives and only the paint
+and the second face are retired, so nobody reads row 4 as Tolerance being dead.
+
+**4 · §7.9 closed, both items.** The Plex Mono subset item is closed as obsolete. The fake
+vitals item is closed with the deletion decision and a pointer to Stage 4 of this log —
+**and corrected on a point of fact**: it named three tiles (`Resting HR 62`, `Weight 154 lb`,
+`Hydration 6 glasses`) and there are **four**. `Oxygen 97` was missing from the list. The
+closure text names all four with the markup location (`index.html:1086` and down), because
+Stage 4 has to delete what is actually there rather than what the doc remembered.
+
+**5 · `docs/ROADMAP.md` needed no edit — the condition already holds.** Line 56 reads
+*"**3, corrected 2026-10-16 from 5.**"* with the reason in one clause (score ring over
+invented numbers, four hard-coded vitals, the gauge needle, eleven all-caps eyebrows) and
+`UPDATELOGV3.md` named as what recovers it; the rubric summary at line 254 agrees. That
+landed in `f6e7ae1`, the Oct 19 commit of the untracked design work. Grepped for the old
+assertion — *"strongest box"* appears nowhere in `docs/` or `CLAUDE.md`. **This is the one
+spec item that produced no diff**, and it is reported rather than restated as work done.
+
+**6 · `CLAUDE.md` is honest about the Garmin rail.** The `Vitals | Real` row now reads
+**Cut 2026-10-16**, states that the rail was never built, and says the four hard-coded tiles
+are deleted rather than relabelled. The three-tab description is untouched, as the spec says,
+because the tabs are real.
+
+**Deviation, same file, same reason:** two other lines in `CLAUDE.md` asserted the same
+thing the Vitals row did. Line 45 said the corpus **and `garmin.json`** are committed files,
+and the Efficiency note at line 114 said *"`garmin.json` holds the operator's real fitness
+data and is committed in the clear."* Neither is true — the file does not exist in the repo.
+Fixing one row and leaving two is the failure mode the stage exists to prevent, so both are
+corrected: the Python bullet now names the two scripts that do exist
+(`scripts/build_corpus.py`, `mockups/build.py`) and says the `python-garminconnect` script
+was never written, and the Efficiency note says plainly that no fitness data is committed
+anywhere. The zero-network bullet also now says *"apart from the one CDN library above"*,
+which is Tesseract.js and was already true of the shipping build.
+
+**Deviation, `docs/DESIGN.md` §7.4 — two lines item 2 invalidated.** §7.4 described `.pin`
+as carrying *"its value in mono beneath"* and `.gap` as a bracket in `--gap`. With the mono
+rule deleted and `--gap` replaced by `--h-sig`, both would have contradicted the two
+sections directly above them. Changed to "tabular figures (§7.3)" and `--h-sig`. No other
+line of §7.4–7.8 was touched.
+
+**Two self-inflicted errors, caught before commit, reported rather than quietly repaired.**
+Inserting the §1 row shifted every later line by one, so the §7.2/§7.3 replacement — written
+against line numbers read *before* the insert — ate the blank line above the §7.2 heading and
+left the final line of the old §7.3 paragraph orphaned above §7.4. Both found by re-reading
+the boundaries after writing, both fixed; §7.2 now opens at line 165 with its blank line
+intact and §7.4 at line 291 with no orphan.
+
+**Noted, not fixed, not this stage's call:** the file's header block still reads *"Status:
+OPEN BRIEF, not an answer. Reset 2026-10-07"* while §7 locks a system and §7.2–7.3 now
+specify it down to the hex. That is a coherence edit for Stage 7, not a palette decision,
+and changing a status banner in a stage scoped to six named items would be scope creep.
+
+### Verify
+
+- **The four retired directions in §1:** 1 Dark theme · 2 Green-forward light · 3 Warm paper
+  + serif · 4 Tolerance v1, cool blue.
+- **§7.3 contains no reference to IBM Plex Mono and specifies no second typeface.** Grep of
+  the section: `Plex` 0, `IBM` 0. The two surviving `mono` strings are the rule's deletion
+  sentence and the §4 citation, quoted above.
+- **New §7.2 `--h-sig`:** `#D7122A`.
+- **`docs/ROADMAP.md` no longer asserts a UI score of 5** — line 56 reads
+  `**3, corrected 2026-10-16 from 5.**`, line 254 reads `3`, and *"strongest box"* is gone
+  from the repo.
+- **No file outside `docs/` and `CLAUDE.md` touched** — `git status --porcelain` returns
+  exactly `M CLAUDE.md` and `M docs/DESIGN.md`. No code ran and none needed to; `index.html`
+  and `tests.html` are byte-identical to `f6e7ae1`.
 
 ---
 

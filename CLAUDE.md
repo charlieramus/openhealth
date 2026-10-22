@@ -17,7 +17,7 @@ polished.
 | **Trials** | **Real** — ClinicalTrials.gov records, saved verbatim. Raw criteria text parsed at runtime |
 | **Matching engine** | **Real** — every score computed from a structured profile |
 | **Lab values** | **Real** — OCR'd from actual documents in-browser (Tesseract.js) |
-| **Vitals** | **Real** — the operator's own Garmin data via a local sync script |
+| **Vitals** | **Cut 2026-10-16.** The Garmin rail was never built — there is no `garmin.json` and no sync script in this repo — and the four hard-coded vitals tiles that stood in for it are deleted, not relabelled ([`docs/DESIGN.md`](docs/DESIGN.md) §7.9). The app ships with no vitals rather than with invented ones |
 | **Data standard** | **Real** — FHIR R4 / US Core shapes with LOINC codes (format only; no server call) |
 | **Patient data** | **Never real.** The operator's own fitness data is not patient data |
 
@@ -42,10 +42,12 @@ to build next: [`docs/SIMPLIFY.md`](docs/SIMPLIFY.md) §7.
 
 - Pure HTML/CSS/JS — single file per published artifact
 - No build step, no framework. Two CDN libraries only: Tesseract.js (OCR)
-- **Zero network calls at runtime.** The trial corpus and `garmin.json` are committed files
-- Python, off to the side: a local sync script (`python-garminconnect`) that writes
-  `garmin.json` every few days. A build-time pipeline, **not a backend** — nothing listens
-  on a port
+- **Zero network calls at runtime**, apart from the one CDN library above. The trial corpus is a committed file
+- Python, off to the side: `scripts/build_corpus.py` (writes the trial corpus into
+  `index.html` between the `CORPUS:BEGIN` / `CORPUS:END` markers) and `mockups/build.py`
+  (base64s the Inter weights into the page). Build-time pipelines, **not a backend** —
+  nothing listens on a port. The `python-garminconnect` sync script described here until
+  2026-10-16 was never written; that rail is cut
 - Published via Claude Artifacts (live URL)
 
 **Do not add an API key to this project — including one we already have.** A key can't live
@@ -111,4 +113,4 @@ This applies to every commit — no silent one-liner pushes.
 - **No condition input anywhere in the app.** No search box, no condition dropdown. The app reads your data and ranks every trial it knows about. See [`docs/SIMPLIFY.md`](docs/SIMPLIFY.md) §2
 - **A1c is deliberately absent** — it's the UNKNOWN test case, and the engine must not treat a missing value as a pass
 - **Retired, do not reintroduce:** the synthetic patient (Jordan Reyes), the send-to-doctor flow, "Doctors Available: 9", and the `r4.smarthealthit.org` call. The doctor flow is replaced by a real downloadable **appointment prep sheet** — the app never contacts a clinician
-- `garmin.json` holds the operator's real fitness data and is committed in the clear. Deliberate; noted in the README so collaborators aren't surprised
+- **There is no `garmin.json`.** The Garmin rail is cut as of 2026-10-16 and no fitness data is committed anywhere in this repo. Earlier notes here and in the README described a committed real-data file and a sync script as though both existed; neither was ever built, and nothing in the app reads a vitals source
