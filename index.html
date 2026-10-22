@@ -1036,6 +1036,19 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 .leadcard p{margin:6px 0 0;font-size:var(--t-small);color:var(--ink-2);max-width:34ch}
 .leadcard p strong{color:var(--ink);font-weight:600}
 
+/* ---- the lead card's two honest alternatives to a margin ---- */
+.empty h3{margin:0 0 7px;font-size:var(--t-h2);font-weight:650;letter-spacing:-.016em;color:var(--ink)}
+.empty p{margin:0 0 16px;color:var(--ink-2);font-size:var(--t-small);max-width:38ch;line-height:1.55}
+.leadcard p{margin:6px 0 0}
+.leadcard .scale{margin-top:18px}
+/* the threshold label breaks the extension line behind it — on the lead card
+   that break has to be the card's own wash, not the sheet, or it reads as a
+   white chip sitting on top of the drawing */
+.leadcard .scale .edge{background:var(--h-wash)}
+.leadcard .scale .dim b{box-shadow:0 0 0 2.5px var(--h-wash)}
+.leadcard .btn{width:auto;margin-top:16px}
+.empty .btn{width:auto}
+
 /* ---- audit row and trial row (Stage 6) ---- */
 .audit-row{border-bottom:1px solid var(--rule);position:relative}
 .audit-row.is-near{background:var(--h-wash);box-shadow:inset 3px 0 0 var(--h-sig);
@@ -1155,6 +1168,14 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
                 </div>
               </div>
             </div>
+
+            <!-- THE LEAD CARD. What opens the app, in the slot the Health Score
+                 ring used to fill. It is the single smallest margin the engine
+                 found anywhere in the corpus — the one thing on this screen a
+                 person could act on. Written entirely by renderLead(): the
+                 number, the sentence, the trial it names and the scale under it
+                 are all engine output, and none of it appears in this markup. -->
+            <div class="reveal" id="lead"></div>
 
             <div class="reveal">
               <div class="score">
@@ -3887,6 +3908,87 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
   };
   window.keyTrial = function(e,id){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openTrial(id); } };
 
+  /* ---------------- the lead card ----------------
+     The smallest margin the engine found ANYWHERE in the corpus. One reduce
+     over every trial and every rule, using the same shortfall() the evaluator
+     uses, so the card and the audit row can never disagree about a distance.
+
+     Only a NEAR MISS on something actually read is a candidate: an exclusion
+     is not a distance you can close, and an unread criterion has no distance
+     at all. A card that ranked flat fails by size would be pointing at the
+     trial you are furthest from. */
+  function leadMargin(){
+    var best = null;
+    RANKED.forEach(function(r){
+      (r.result.nearMisses || []).forEach(function(v){
+        var rule = v.rule, verdict = v.verdict;
+        if(rule.kind !== 'numeric' && rule.kind !== 'range') return;
+        if(rule.sense === 'exclusion') return;
+        if(verdict.value === null || verdict.value === undefined) return;
+        var s = round2(shortfall(rule, verdict.value));
+        if(best === null || s < best.short){
+          best = { short:s, rule:rule, verdict:verdict, trial:r.trial };
+        }
+      });
+    });
+    return best;
+  }
+
+  /* draft E, generated: which marker, which direction, whose rule. Six words,
+     and every one of them comes out of the winning rule — docs/COPY.md §3.1
+     caps this slot at twelve. */
+  function leadSentence(best){
+    var name = ANALYTE_LABEL[best.rule.analyte] || best.rule.analyte;
+    var below = best.rule.kind === 'range'
+      ? best.verdict.value < best.rule.min
+      : (best.rule.op === '>' || best.rule.op === '>=');
+    return esc(name) + ', ' + (below ? 'below the minimum' : 'above the maximum') +
+           ' for ' + esc(best.trial.nctId) + '.';
+  }
+
+  function renderLead(){
+    var el = document.getElementById('lead');
+    var hs = healthScore();
+
+    /* nothing read yet. A margin here would be invented, and a zero would be
+       the shape of a result nobody measured. */
+    if(hs.score === null){
+      el.innerHTML =
+        '<div class="empty">' +
+          '<h3>No documents yet</h3>' +
+          '<p>Add a lab result and every trial in the registry is checked against it.</p>' +
+        '</div>';
+      return;
+    }
+
+    var best = leadMargin();
+
+    /* read, but nothing is within reach of a threshold. This is a different
+       true sentence, not a smaller fabricated margin. */
+    if(!best){
+      el.innerHTML =
+        '<div class="empty">' +
+          '<h3>No near miss</h3>' +
+          '<p>Across ' + RANKED.length + ' trials, every criterion read is met or missed outright.</p>' +
+          '<button class="btn" onclick="go(3)">Add a document</button>' +
+        '</div>';
+      return;
+    }
+
+    el.innerHTML =
+      '<div class="leadcard">' +
+        '<div class="big">' +
+          '<span class="v">' + best.short + '</span>' +
+          '<span class="u">' + esc(best.rule.unit || '') + '</span>' +
+        '</div>' +
+        '<p>' + leadSentence(best) + '</p>' +
+        auditScale(best.rule, best.verdict) +
+        '<button class="btn" onclick="openTrial(\'' + best.trial.nctId + '\')">' +
+          'Open ' + esc(best.trial.nctId) +
+        '</button>' +
+      '</div>';
+  }
+
   /* ---------------- match score count-up ---------------- */
   function countUp(el, to){
     /* requestAnimationFrame does not fire in a background tab, so the number is
@@ -4616,6 +4718,7 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
     if(!ROW[currentTrial]) currentTrial = RANKED[0].trial.nctId;
 
     renderHealth();
+    renderLead();
     renderMacros();
     renderToday();
     renderHomeTrials();
@@ -4633,6 +4736,7 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
      is no frame in which a typed placeholder is on screen. */
   renderHomeTrials();
   renderMacros();
+  renderLead();
   renderToday();
   renderLabsHead();
   renderMarkerCard();

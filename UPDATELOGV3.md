@@ -705,7 +705,82 @@ the sentence is assembled from engine output and appears nowhere as a literal in
 
 ## Stage 5 Report
 
-_Pending._
+Built, not cut. The slot the ring vacated now holds the smallest margin the engine found
+anywhere in the corpus, and the card re-derives from the profile every time anything is
+added.
+
+**1 · The reduce.** `leadMargin()` walks `RANKED`, takes each trial's `result.nearMisses`,
+and keeps the minimum `shortfall(rule, value)` — the evaluator's own function, so the card
+and the audit row can never disagree about a distance. Candidacy is narrowed exactly as the
+spec says: numeric and range rules only, **no exclusions** (an exclusion is not a distance
+you can close) and **nothing unread** (an absent value has no distance at all). A card that
+ranked flat fails by size would be pointing at the trial you are furthest from.
+
+**2 · The card** is thermal's `.leadcard` — renamed from `.lead` in Stage 2 to avoid the
+manual-entry paragraph of the same name — with the quantity at `--t-display` in signal
+colour, its unit beside it, the sentence beneath, and **the full dimensioned
+`.scale.dimd.near` from Stage 3** under both. One thing was adjusted on arrival: the
+threshold label breaks the extension line behind it, and that break is now `--h-wash` rather
+than `--sheet`, or it renders as a white chip sitting on the card's own wash.
+
+**3 · The sentence is generated, in six words.** `leadSentence()` assembles
+`ANALYTE_LABEL[analyte] + direction + 'for' + nctId`, where the direction is read off the
+rule's shape (below the minimum / above the maximum). `docs/COPY.md` §3.1 caps this slot at
+twelve words and C8 forbids a typed number; this is six words and carries no number at all,
+because the quantity above it is the number. **Grep confirms the sentence exists nowhere as
+a literal:** zero matches for `below the minimum for NCT` in the whole file; the only
+occurrence of either direction phrase is inside `leadSentence()` at line 3945.
+
+**4 · Both empty cases are real branches, and one of them is what currently ships.**
+
+- **No near miss anywhere** → `No near miss` over *"Across 23 trials, every criterion read
+  is met or missed outright."* — eleven words, with the 23 interpolated from `RANKED.length`
+  rather than typed. **This is the live state of the app after Stage 4**, because emptying
+  the synthetic patient's `facts` removed the only near misses in the corpus. The card says
+  so instead of inventing a margin, which is the whole point of the branch.
+- **Nothing read at all** → `No documents yet` + the one action. Honest limitation,
+  reported rather than claimed: **this branch cannot be reached in the shipped build.** Its
+  condition is `healthScore() === null`, and `MARKERS` ships with the operator's committed
+  lab values, so the score is never null. The same condition gates `#firstRun`, which means
+  that button has been unreachable since it was written. The branch is correct by reading
+  and by the condition it shares with existing code, but I did not see it render and am not
+  going to say I did. **Noted for Stage 7.**
+
+**5 · One filled button.** The lead card carries it, and it is on the single thing worth
+doing: `Open NCT…` when there is a margin to look at, `Add a document` when there is not.
+The "See details" pill stays ghost, and `#firstRun` only ever appears in the unreachable
+branch, so no screen shows two filled buttons.
+
+### Verify
+
+Driven through the app's own manual-entry rail — no values written into the source, which is
+also the honest way to demonstrate the card re-derives.
+
+- **The margin it shows, and the trial it names.** With BMI 24.1 entered: **`0.9 kg/m2`**,
+  *"BMI, below the minimum for NCT04485871."*, dimension tag `0.9 kg/m2 short of it`, button
+  `Open NCT04485871`.
+- **Confirmed by hand that nothing in the corpus is smaller.** Every trial opened in sequence
+  and every audit row read back: the corpus holds exactly **three** near misses —
+  `NCT04485871` BMI 25–40 at **0.9**, `NCT07502508` BMI 25–40 at **0.9**, `NCT06897475`
+  BMI ≥ 27 at **2.9**. 0.9 is the minimum. **Two trials tie at 0.9**, and the card takes the
+  first in `RANKED` order because the comparison is strict (`s < best.short`) — so a tie goes
+  to the better-ranked trial, which is the defensible way round. Worth knowing before someone
+  reads the tie as a bug.
+- **It changes when the profile changes.** BMI re-entered as 26.5: 25–40 becomes a PASS, and
+  the card moves to a **different trial and a different rule shape** — `0.5 kg/m2`, *"BMI,
+  below the minimum for NCT06897475."*, one-sided rule, one edge label `27 kg/m2`. Nothing
+  about the card is pinned to a trial.
+- **Clearing everything** returns the `No near miss` branch rather than a zero or a blank —
+  that is the state the app loads in. The `No documents yet` branch is the unreachable one
+  described above.
+- **`tests.html`: `all 61 passed`.**
+
+**One consequence to carry into Stage 6 and the video.** The lead card is the app's best
+screen and it currently renders its fallback sentence, because the only near misses in the
+corpus come from a BMI the operator has not entered. Entering one real age and one real BMI
+through the manual-entry screen turns the card on with a true margin — that is a data
+decision for the owner, not a code change, and it is the same point the Stage 4 report
+closes on.
 
 ---
 
