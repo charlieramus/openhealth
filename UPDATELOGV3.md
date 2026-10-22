@@ -259,7 +259,139 @@ Screenshot Home, Metrics and Trials at phone width.
 
 ## Stage 2 Report
 
-_Pending._
+The paint is thermal's. `index.html` 4454 → 4641 lines, 162KB → 392KB, all of the growth
+being the four Inter weights now travelling inside the file.
+
+**The spec's item 1 could not be executed literally, and this is the one thing in this stage
+worth reading carefully.** "Replace `index.html` lines 13–935 with the stylesheet from
+`mockups/thermal.src.html`" assumes the two sheets cover the same ground. They do not. I
+inventoried both before touching either:
+
+```
+index.html  <style>   191 class selectors   the app's markup + render functions use 177
+thermal.src <style>    74 class selectors   the gallery uses 75
+of the 177 the app uses, thermal defines 23 — and does not define 154
+```
+
+A wholesale paste would have left **154 classes unstyled** — the device shell, the five
+screens, the scroll track, the tab bar, the OCR panel, the manual-entry form, the document
+rows, the print block — which is a total collapse, not a repaint, and it would have failed
+this stage's own verify on the first line. The gallery is a component sheet; it was never
+the app's sheet.
+
+**What the swap actually is, and why that is still the whole system.** The v1 sheet was
+already Tolerance, in the same token vocabulary (`--paper`, `--sheet`, `--ink`, `--rule`,
+`--m-*`, `--t-*`, `--r-*`, `--pad`). So the system swapped at the token layer and the type
+layer, where a system lives, and every one of those 191 rules repainted with it:
+
+1. **The face.** Four weights of Inter as base64 `@font-face`, plus the metric-matched
+   `'Inter Fallback'`, between `/*INTER_FACES:BEGIN*/` and `/*INTER_FACES:END*/` markers.
+2. **`:root` replaced** with thermal's three layers verbatim — eight zinc primitives, the
+   six-step heat family, the four marker hues, the semantic aliases, `--pad` 20px → 22px,
+   `--r-tag` 4px.
+3. **The type scale replaced** with thermal's seven steps. `--t-h1` 1.375rem → 1.75rem,
+   `--t-h2` 1.0625 → 1.1875, `--t-small` .8125 → .84375, and `--t-display`/`--t-micro`
+   taking over from `--t-quant-xl`/`--t-tick`.
+4. **`body`** is now `400 var(--t-body)/1.6 var(--f)` with Inter's `cv05`/`cv11`/`ss01`
+   alternates set once, and `text-rendering:optimizeLegibility`. The grid rows/columns line
+   is untouched — it is load-bearing below 404px and the comment saying so is still there.
+5. **The mono rule is gone at the root.** `--mono` now resolves to the Inter stack, so the
+   35 `font-family:var(--mono)` declarations further down the sheet stop being a second face
+   without 35 separate edits, and `.n` picks up thermal's
+   `tabular-nums` + `-.02em` + 600. Those 35 declarations are now no-ops and can be deleted
+   in Stage 6 or 7; leaving them in this stage kept the diff reviewable.
+6. **The four hardcoded v1 literals** that were not tokens: the near-miss callout's
+   `#FDF4F6`/`#F0D3DA` and the near verdict chip's `#FDF4F6` became `--h-wash`/`--h-out`,
+   the ink button's `#0E1720` hover became a `color-mix` off `--ink`, and the device bezel's
+   two near-blacks and its drop shadow were rebased off zinc. **Grep confirms no retired v1
+   hex survives anywhere in the file** — the only three matches for the old palette are
+   prose in comments saying it is retired.
+
+**The alias band is kept and repointed, per item 2.** All nineteen aliases plus the six the
+v1 sheet itself used (`--card`, `--inset`, `--band`, `--gap`, `--mono`, `--sans`,
+`--t-quant-xl`, `--t-tick`, `--r-chip`). Nothing was deleted without grepping: a scripted
+pass over every `var(--x)` in the file against every token defined in `:root` reports
+**zero undefined tokens**, with `--c`, `--from`, `--to`, `--at`, `--tint`, `--i` and `--ang`
+excluded as locals the markup and render functions set inline. `--brand` and `--brand-d`
+still resolve to ink; no green came back. `--gap` resolves to `--h-sig`, so every rule that
+drew the signal still draws it, now in `#D7122A`.
+
+**Item 3 — the engine's class names.** Checked by reading what the render functions actually
+emit rather than by trusting the list: `.scale`, `.scale none`, `.scale excl`,
+`.scale-legend`, `.arow`, `.arow miss`, `.vchip pass|fail|near|unk|weak`, `.band`, `.pin`,
+`.gap`, `.chip`. **All of them already exist in this sheet and all of them still do.** The
+spec's list also names `.audit-row`, `.vd`, `.trial` and `.tally`, which this app does not
+emit at all — they are thermal's names for rows the app currently draws as `.arow` and
+`.row-item`. They are now defined too, so Stages 3 and 6 have a drawing to render into, but
+nothing on screen uses them yet.
+
+**Item 4 — one rename, and five deliberate non-ports.** Collisions were checked by name,
+not assumed:
+
+- **Renamed:** thermal's `.lead` (the heat-wash insight card) → **`.leadcard`**. `.lead`
+  already means a paragraph of intro copy on the manual-entry screen, and importing
+  thermal's would have painted that paragraph as a heat card. Exactly the b4149dc failure
+  mode, caught before it shipped.
+- **Not ported: `.btn`, `.nav`, `.tabs`.** Thermal paints all three in `--h-sig`. §7.2
+  reserves the signal colour for the gap, so chrome does not get to spend it — a red primary
+  button would be the single biggest thing on the screen wearing the one colour the near-miss
+  owns. The app's ink button and ink tab mark stay. This is a deviation from the gallery and
+  it is the gallery that is wrong here, because a gallery has no navigation to compete with
+  its own annotation.
+- **Not ported: `.score`, `.conf`.** Both collide with layout the render functions depend
+  on (`.score` is a column here; `.conf` is the confidence line inside it). Stage 5 or 6 can
+  port them knowingly.
+- **Not ported: thermal's `.scale .band` and `.scale .pin`.** Same selectors, different
+  positioning model — the gallery drives them off `--from`/`--to`/`--at`, this app writes
+  inline `left`/`right` from `axisPct()`. Swapping them blind would have silently broken
+  every scale on every screen. **The scale is Stage 3's job**, so its existing two rules are
+  untouched and thermal's new sub-parts (`.axis`, `.out`, `.edge`, `.ext`, `.dim`, `.noread`,
+  `.scale-wrap`, `.scale-head`) are added alongside, unused, ready for it.
+
+**`mockups/build.py` gained `--into`,** which is the only file outside `index.html`'s
+`<style>` that this stage changed. It rewrites a page in place between the two markers
+instead of copying src → out, so `python mockups/build.py --into index.html` is idempotent
+and the app stays a single file with no build step of its own. This is the same arrangement
+`scripts/build_corpus.py` already uses for the corpus, down to the BEGIN/END marker pair.
+The gallery path (`thermal.src.html` → `thermal.html`) is unchanged and still works.
+
+**One more comment edited outside `<style>`, deliberately.** The five-line HTML comment above
+the stylesheet still said the system "runs on a system sans + system mono stack" and that the
+Plex subset "gets embedded as base64 when it lands". Both became false the moment Inter
+landed. A comment is not behaviour, but leaving a lie in the file is the thing this log is
+for, so it now says what is actually there.
+
+### Verify
+
+- **All five screens render, no missing-style collapse.** Measured, not eyeballed: all five
+  `.screen` elements report a 404px box with populated `.screen-inner` (3, 8, 9, 6 and 9
+  children). Screenshots taken at 430×940: **Home** (wordmark, score, three tinted marker
+  scales with ink ticks), **Metrics** (marker switch, the seven-draw chart with the dashed
+  `12 floor` limit in signal red), **Trials** (the score/confidence pair, chips, audit rows
+  with verdict chips), plus **Add records** and **Here's what we read**, the two document
+  screens behind the Metrics tab.
+- **The three tabs navigate.** Home → Metrics → Trials driven by clicking the real tab bar;
+  `go(3)` and `go(4)` reach the two document screens.
+- **`tests.html`: `all 61 passed`.** Served over `python -m http.server 8731`, which is what
+  the harness needs — it drives the shipped engine through an iframe, so this is the engine
+  in `index.html`, not a copy.
+- **Network requests: zero beyond the page itself.** The tab records one GET for
+  `index.html` and three `data:` entries, which are the embedded faces — no HTTP font
+  request, no CDN, no API. (Chrome also logs two `chrome-extension://` requests; those are
+  the automation extension, not the page.) `document.fonts` reports Inter 400/600/700
+  loaded, 500 present and not yet needed.
+- **No console errors or exceptions.**
+- **File size: 392KB** (401,971 bytes), up from 162KB. 88KB of woff2 becomes ~118KB of
+  base64 per the four weights. `<style>` now spans lines 13–1122.
+
+**Two things this stage changed that Stage 4 and Stage 6 should expect.** The type scale is
+larger than v1's, so (a) the nine surviving `.eyebrow` headings now set at 19px and wrap to
+two lines on the trial screen — Stage 4 deletes nine of the eleven, which removes most of
+them; and (b) the trial screen's `h1` is now 28px, and a 90-character registry title clamps
+to three lines and takes about a tenth of the screen. Both are honest consequences of
+thermal's scale rather than bugs, and both are cheaper to judge once Stage 4 has taken the
+subtraction pass through. Flagging rather than quietly re-tuning a token this stage just
+landed.
 
 ---
 
