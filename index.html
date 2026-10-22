@@ -253,15 +253,10 @@ h2{font-size:var(--t-h2);font-weight:650;letter-spacing:-.01em;line-height:1.25}
   padding:16px;
 }
 
-/* .eyebrow — the eleven all-caps labels are retired. The class survives so
-   nothing explodes, but it renders as a plain sentence-case heading, NOT
-   tracked-out caps (docs/DESIGN.md §7.3). */
-.eyebrow{
-  font-size:var(--t-h2);font-weight:650;letter-spacing:-.01em;
-  text-transform:none;color:var(--ink);margin-bottom:8px;
-}
+/* .eyebrow is gone. Ten labels carried it; eight were deleted outright in
+   UPDATELOGV3 Stage 4 and the two the engine writes into became <h2> section
+   headings, so the class has no users left and the rule went with them. */
 .section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:9px}
-.section-head .eyebrow{margin-bottom:0}
 .sub-line{font-size:var(--t-small);color:var(--ink-2);margin-top:1px}
 .link{font-weight:600;font-size:var(--t-small);color:var(--ink);text-decoration:underline;
       text-decoration-color:var(--rule);text-underline-offset:3px}
@@ -410,17 +405,13 @@ h2{font-size:var(--t-h2);font-weight:650;letter-spacing:-.01em;line-height:1.25}
    it, so it is set small, in mono, with its confidence line attached.
    The 216px ring + gradient wash is retired (docs/DESIGN.md §7.1). */
 .score{display:flex;flex-direction:column;gap:14px}
-.score .ring-wrap{
-  display:flex;align-items:baseline;gap:10px;
-}
-.score .ring-wrap svg{display:none}          /* the ring itself is gone */
-.score .ring-center{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
-.score .ring-center .n{
+.score .figure{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.score .figure .n{
   font-family:var(--mono);font-weight:600;font-size:var(--t-quant-xl);
   letter-spacing:-.03em;line-height:1;color:var(--ink);
 }
-.score .ring-center .d{font-size:var(--t-small);color:var(--ink-2);font-weight:600}
-.score .ring-center .conf{
+.score .figure .d{font-size:var(--t-small);color:var(--ink-2);font-weight:600}
+.score .figure .conf{
   font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-3);
   width:100%;
 }
@@ -628,22 +619,9 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 .verdict .tx{flex:1 1 auto;font-size:var(--t-small);color:var(--ink-2);line-height:1.55}
 .verdict .tx b{font-weight:650;color:var(--ink)}
 
-/* the four vitals tiles. NOTE: the values in these are hard-coded in the
-   static markup and are NOT read from garmin.json — flagged in
-   docs/DESIGN.md §7.9 as something to delete, not polish. */
-.vitals{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.vital{border:1px solid var(--rule);border-radius:var(--r-card);background:var(--card);padding:12px}
-.vital .k{display:flex;align-items:center;gap:7px;font-size:var(--t-tick);font-weight:650;color:var(--ink-2)}
-.vital .ic{display:grid;place-items:center;width:22px;height:22px;border-radius:var(--r-chip)}
-.vital .g{display:flex;align-items:flex-end;gap:3px;height:34px;margin:9px 0 6px}
-.vital .g i{flex:1 1 0;display:block}
-.vital .v{font-family:var(--mono);font-weight:600;font-size:1.25rem;letter-spacing:-.02em;color:var(--ink)}
-.vital .u{font-family:var(--mono);font-weight:400;font-size:var(--t-tick);color:var(--ink-3);margin-left:3px}
-
-/* the gauge needle is retired — a dial is not a measurement against a
-   tolerance, and it duplicated what the scales already say. */
+/* the gauge is now its two computed lines and nothing else — the dial and
+   its needle are deleted (UPDATELOGV3 Stage 4) */
 .gauge-wrap{display:flex;flex-direction:column;gap:7px}
-.gauge-wrap svg{display:none}
 .gauge-status{font-size:var(--t-h2);font-weight:650;letter-spacing:-.01em;color:var(--ink)}
 
 /* every marker against its range — a stack of tolerance scales */
@@ -689,13 +667,12 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 .num-cell{display:flex;flex-direction:column;gap:4px;min-width:0}
 .num-cell+.num-cell{border-left:1px solid var(--rule);padding-left:12px}
 .num-cell .k{font-size:var(--t-tick);font-weight:650;color:var(--ink-2)}
-.num-cell .ring-wrap svg{display:none}
-.num-cell .ring-center{display:flex;align-items:baseline;gap:4px}
-.num-cell .ring-center .n,.num-cell .v{
+.num-cell .figure{display:flex;align-items:baseline;gap:4px}
+.num-cell .figure .n,.num-cell .v{
   font-family:var(--mono);font-weight:600;font-size:1.875rem;
   letter-spacing:-.03em;line-height:1.05;color:var(--ink);
 }
-.num-cell .ring-center .d,.num-cell .v small{
+.num-cell .figure .d,.num-cell .v small{
   font-family:var(--mono);font-weight:400;font-size:var(--t-small);color:var(--ink-3);
   margin-left:5px;
 }
@@ -972,8 +949,8 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 @keyframes tag-land{from{opacity:0;transform:translate(-50%,4px)}to{opacity:1;transform:translate(-50%,0)}}
 
 /* the retired animations: ring draw, bar grow, needle swing, range-pin
-   spring, and the per-section reveal. All removed, not disabled. */
-.ring-prog{display:none}
+   spring, and the per-section reveal. All removed, not disabled — and as of
+   UPDATELOGV3 Stage 4 the rings themselves are gone from the markup too. */
 
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
@@ -1173,7 +1150,7 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
                 <div class="wordmark"><i></i>OpenHealth</div>
                 <div class="right">
                   <button class="bell" aria-label="Your lab results" onclick="go(1)">
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#12301C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
                   </button>
                 </div>
               </div>
@@ -1181,23 +1158,19 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 
             <div class="reveal">
               <div class="score">
-                <div class="ring-wrap">
-                  <svg width="216" height="216" viewBox="0 0 216 216" aria-hidden="true">
-                    <circle cx="108" cy="108" r="85" fill="none" stroke="rgba(255,255,255,.42)" stroke-width="17"/>
-                    <circle class="ring-prog" cx="108" cy="108" r="85" fill="none" stroke="#fff" stroke-width="17"
-                            stroke-linecap="round" transform="rotate(-90 108 108)" style="--off:534"/>
-                  </svg>
-                  <div class="ring-center">
-                    <span class="n" id="hs"></span>
-                    <span class="d">Health Score</span>
-                    <span class="conf" id="hsConf"></span>
-                  </div>
+                <!-- filled by renderMacros() from the same MARKERS the Metrics tab charts -->
+                <div class="macros" id="macros"></div>
+
+                <!-- The score is a SUMMARY of the scales above it, so it is set small and
+                     sits BELOW them (docs/DESIGN.md 7.1). The 216px ring and its
+                     hard-coded style="--off:534" are deleted, not hidden. -->
+                <div class="figure">
+                  <span class="n" id="hs"></span>
+                  <span class="d">Health Score</span>
+                  <span class="conf" id="hsConf"></span>
                 </div>
                 <!-- filled by renderHealth(): the move is recomputed, not typed -->
                 <div class="delta" id="hsTrend"></div>
-
-                <!-- filled by renderMacros() from the same MARKERS the Metrics tab charts -->
-                <div class="macros" id="macros"></div>
 
                 <!-- First run, per spec screen 10: no marker has a value, so there is
                      nothing to bar-chart and exactly one thing to do. renderHealth()
@@ -1208,7 +1181,7 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
                 </button>
 
                 <button class="see" onclick="go(1)">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#12301C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                   See details
                 </button>
               </div>
@@ -1230,7 +1203,6 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
               <div class="captured">
                 <div class="cap-head">
                   <div>
-                    <div class="eyebrow">Records captured</div>
                     <div class="sub-line" id="capCount"></div>
                   </div>
                   <button class="link" onclick="go(3)">See more</button>
@@ -1241,7 +1213,6 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
               <div>
                 <div class="section-head">
                   <div>
-                    <div class="eyebrow">Trials ranked for you</div>
                     <!-- the count is the corpus size, written by renderHomeTrials() -->
                     <div class="sub-line" id="homeTrialCount"></div>
                   </div>
@@ -1291,63 +1262,28 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
               </div>
             </div>
 
-            <div class="vitals reveal">
-              <div class="vital">
-                <div class="k"><span class="ic" style="background:rgba(225,29,116,.12)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--iron)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.5-1.6 2.5-3.3 2.5-5.3A5.2 5.2 0 0 0 12 6a5.2 5.2 0 0 0-9.5 2.7C2.5 13 12 20 12 20s3.8-2.8 7-6Z"/></svg></span>Resting HR</div>
-                <div class="g">
-                  <svg width="100%" height="34" viewBox="0 0 120 34" preserveAspectRatio="none"><path d="M0 22h14l4-9 5 17 5-12 4 4h16l4-9 5 17 5-12 4 4h16l4-9 5 17 5-12 4 4h20" fill="none" stroke="var(--iron)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/></svg>
-                </div>
-                <div class="v">62<span class="u">bpm</span></div>
-              </div>
-              <div class="vital">
-                <div class="k"><span class="ic" style="background:rgba(18,179,166,.12)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o2)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg></span>Oxygen</div>
-                <div class="g">
-                  <i style="height:62%;background:rgba(18,179,166,.3)"></i><i style="height:74%;background:rgba(18,179,166,.3)"></i><i style="height:68%;background:rgba(18,179,166,.3)"></i><i style="height:86%;background:rgba(18,179,166,.3)"></i><i style="height:78%;background:rgba(18,179,166,.3)"></i><i style="height:92%;background:var(--o2)"></i>
-                </div>
-                <div class="v">97<span class="u">%</span></div>
-              </div>
-              <div class="vital">
-                <div class="k"><span class="ic" style="background:rgba(124,77,255,.12)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--hgb)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 12 8.5 8.5"/></svg></span>Weight</div>
-                <div class="g">
-                  <svg width="100%" height="34" viewBox="0 0 120 34" preserveAspectRatio="none"><path d="M0 12 20 15 40 11 60 18 80 15 100 21 120 19" fill="none" stroke="var(--hgb)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 12 20 15 40 11 60 18 80 15 100 21 120 19V34H0Z" fill="rgba(124,77,255,.1)"/></svg>
-                </div>
-                <div class="v">154<span class="u">lb</span></div>
-              </div>
-              <div class="vital">
-                <div class="k"><span class="ic" style="background:rgba(47,128,237,.12)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ldl)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3Z"/></svg></span>Hydration</div>
-                <div class="g" style="align-items:center;gap:5px">
-                  <svg width="16" height="20" viewBox="0 0 24 24" fill="var(--ldl)" opacity=".85"><path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3Z"/></svg>
-                  <svg width="16" height="20" viewBox="0 0 24 24" fill="var(--ldl)" opacity=".85"><path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3Z"/></svg>
-                  <svg width="16" height="20" viewBox="0 0 24 24" fill="var(--ldl)" opacity=".85"><path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3Z"/></svg>
-                  <svg width="16" height="20" viewBox="0 0 24 24" fill="var(--ldl)" opacity=".85"><path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3Z"/></svg>
-                  <svg width="16" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--line-2)" stroke-width="2"><path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3Z"/></svg>
-                </div>
-                <div class="v">6<span class="u">glasses</span></div>
-              </div>
-            </div>
-
+            <!-- The four vitals tiles stood here: Resting HR 62, Oxygen 97,
+                 Weight 154, Hydration 6, with hand-drawn SVG sparklines. Every
+                 value was typed into this markup and read from nothing; the
+                 Garmin rail that was meant to fill them is cut and garmin.json
+                 does not exist. Deleted rather than polished, per CLAUDE.md and
+                 docs/DESIGN.md 7.9. -->
             <div class="card reveal" style="padding:18px 16px 14px">
               <div class="gauge-wrap">
-                <svg width="230" height="128" viewBox="0 0 230 128" role="img" aria-labelledby="gaugeStatus gaugeNote">
-                  <path d="M20 118 A95 95 0 0 1 210 118" fill="none" stroke="#EDEFEA" stroke-width="15" stroke-linecap="round"/>
-                  <path d="M20 118 A95 95 0 0 1 63 42" fill="none" stroke="var(--iron)" stroke-width="15" stroke-linecap="round" opacity=".85"/>
-                  <path d="M70 35 A95 95 0 0 1 160 35" fill="none" stroke="var(--brand)" stroke-width="15" stroke-linecap="round"/>
-                  <path d="M167 42 A95 95 0 0 1 210 118" fill="none" stroke="var(--warn)" stroke-width="15" stroke-linecap="round" opacity=".85"/>
-                  <g class="needle" id="needle"><line x1="115" y1="118" x2="115" y2="46" stroke="#131A16" stroke-width="3.5" stroke-linecap="round"/></g>
-                  <circle cx="115" cy="118" r="7" fill="#131A16"/><circle cx="115" cy="118" r="3" fill="#fff"/>
-                </svg>
+<!-- the dial stood here. A needle is not a measurement against a
+                     tolerance, it duplicated what the scales already say, and its
+                     angle was the one number on this card nothing computed.
+                     #gaugeStatus and #gaugeNote below are real counts and stay. -->
                 <div class="gauge-status" id="gaugeStatus"></div>
                 <div class="gauge-note" id="gaugeNote"></div>
               </div>
             </div>
 
             <div class="reveal">
-              <div class="eyebrow">Every marker, against its range</div>
               <div class="card markers" id="markerCard" style="padding:2px 16px 14px"></div>
             </div>
 
             <div class="reveal">
-              <div class="eyebrow">What to do about it</div>
               <div class="card recs">
                 <div class="rec-group" id="recIron" hidden>
                   <button type="button" class="rec rec-toggle" aria-expanded="false" aria-controls="ironFoods" onclick="toggleFoods(this)">
@@ -1410,17 +1346,9 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
               <div class="hero-pair">
                 <div class="num-cell">
                   <div class="k">Match score</div>
-                  <div class="ring-wrap">
-                    <svg width="150" height="150" viewBox="0 0 186 186" aria-hidden="true">
-                      <circle cx="93" cy="93" r="72" fill="none" stroke="rgba(255,255,255,.42)" stroke-width="15"/>
-                      <circle class="ring-prog" id="ring" cx="93" cy="93" r="72" fill="none" stroke="#fff" stroke-width="15"
-                              stroke-linecap="round" transform="rotate(-90 93 93)"
-                              style="stroke-dasharray:452;stroke-dashoffset:452;--off:0"/>
-                    </svg>
-                    <div class="ring-center">
-                      <span class="n" id="scoreNum">0</span>
-                      <span class="d">/ 100</span>
-                    </div>
+                  <div class="figure">
+                    <span class="n" id="scoreNum">0</span>
+                    <span class="d">/ 100</span>
                   </div>
                 </div>
 
@@ -1446,7 +1374,7 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 
             <!-- THE AUDIT TABLE. The reason the app exists. -->
             <div class="reveal">
-              <div class="eyebrow" id="auditHead">Criteria we could read</div>
+              <h2 id="auditHead">Criteria we could read</h2>
               <div class="card audit" id="auditTable"></div>
               <p class="audit-note" id="auditNote" hidden></p>
             </div>
@@ -1462,12 +1390,11 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
             </p>
 
             <div class="reveal">
-              <div class="eyebrow">Trial details</div>
               <div class="card summary" id="tSummary"></div>
             </div>
 
             <div class="reveal">
-              <div class="eyebrow" id="tRelatedHead">Other trials, ranked</div>
+              <h2 id="tRelatedHead">Other trials, ranked</h2>
               <div class="card related" id="tRelated"></div>
             </div>
 
@@ -1509,7 +1436,6 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
             </p>
 
             <div class="reveal">
-              <div class="eyebrow">Or type a value in</div>
               <div class="card manual">
                 <p class="lead">The same path a correction takes, and the one that works
                   with no camera and no connection. Whatever unit you pick is converted
@@ -1532,7 +1458,6 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
             <div class="reveal">
               <div class="section-head">
                 <div>
-                  <div class="eyebrow">What you have added</div>
                   <div class="sub-line" id="docCount"></div>
                 </div>
               </div>
@@ -1574,7 +1499,6 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
             <div class="reveal" id="xGood" hidden>
               <div class="section-head">
                 <div>
-                  <div class="eyebrow">Values we read</div>
                   <div class="sub-line" id="xGoodSub"></div>
                 </div>
               </div>
@@ -1785,10 +1709,7 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
     var num = document.getElementById('hs');
     var empty = hs.score === null;        /* no marker has a value: not a zero */
 
-    document.querySelector('#s0 .ring-prog')
-            .style.setProperty('--off', (534 * (1 - (empty ? 0 : hs.score) / 100)).toFixed(1));
-
-    /* the ring reads a word on first run. A 0 here would be the single most
+    /* the score reads a word on first run. A 0 here would be the single most
        dishonest thing this screen could render — it is the shape of a bad
        result, and the truth is that nothing has been measured. */
     num.classList.toggle('none', empty);
@@ -1869,7 +1790,14 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
      non-lab facts are the ones a trial can also ask about. a1c is deliberately
      absent — this patient has never had one drawn, and the engine has to cope. */
   var PROFILE = {
-    facts: { age:34, bmi:22.4 },
+    /* EMPTY ON PURPOSE. age:34 and bmi:22.4 stood here until 2026-10-22: they
+       are the retired synthetic patient's numbers (CLAUDE.md names "Jordan
+       Reyes, age 34, BMI 22.4" as deleted), they were never the operator's,
+       and they were still deciding real verdicts on every trial that asks
+       about age or BMI. A criterion with no fact on file now evaluates
+       UNKNOWN, which is the honest answer and the same rule a1c already
+       proves. Both are addable through the manual-entry screen. */
+    facts: {},
     labs: {}
   };
   /* one lab record per marker, folded out of MARKERS so the chart and the
@@ -3753,8 +3681,6 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
     hero.classList.toggle('weak', res.blocked || res.score === null || res.score < 50);
     hero.classList.toggle('noscore', res.score === null);
 
-    document.getElementById('ring').style
-      .setProperty('--off', (452 * (1 - (res.score || 0) / 100)).toFixed(1));
     document.getElementById('scoreNum').textContent = reduce ? (res.score || 0) : 0;
 
     document.getElementById('confN').textContent   = c.decidable;
@@ -4100,10 +4026,11 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
     }).join('');
   }
 
-  /* The dial is a direction, not a score: pink left is "below range", amber
-     right is "above range", green centre is "inside it". The needle angle is
-     the net lean of the markers that have a value, and the ones that do not are
-     counted out loud in the caption rather than folded into the denominator. */
+  /* A direction and a count, in words. The dial this used to drive is deleted
+     (UPDATELOGV3 Stage 4) — its angle was the one figure on the card that
+     nothing computed. Both lines below are counted from labStates(), and the
+     markers with no value are counted OUT LOUD rather than folded into the
+     denominator, which is the same rule the confidence figure obeys. */
   function renderGauge(){
     var low = 0, high = 0, inr = 0, unk = 0;
     labStates().forEach(function(s){
@@ -4113,8 +4040,6 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
       else unk++;
     });
     var scored = low + high + inr;
-    var tilt = scored ? (high - low) / scored : 0;
-    document.getElementById('needle').style.setProperty('--ang', (tilt * 78).toFixed(1) + 'deg');
     document.getElementById('gaugeStatus').textContent =
       !scored        ? 'Nothing on file' :
       low && high    ? 'Mixed' :

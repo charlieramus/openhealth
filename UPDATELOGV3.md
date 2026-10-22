@@ -560,7 +560,113 @@ error. tests.html still passes. Report the new line count and file size — both
 
 ## Stage 4 Report
 
-_Pending._
+Everything in the spec is deleted, plus one thing the spec did not know about. `index.html`
+4722 → 4646 lines, 401,496 → 399,431 bytes. **Both fell**, which is the point of the stage;
+the byte drop looks small only because the four Inter weights now account for three quarters
+of the file.
+
+**1 · The Health Score ring is gone, and the score moved below the stack.** The 216px SVG
+and its hard-coded `style="--off:534"` are deleted from the markup, and so is the
+`renderHealth()` line that wrote into `.ring-prog`. The score survives exactly as
+`docs/DESIGN.md` §7.1 asks — a small figure with its confidence line, **below** the three
+tolerance scales rather than above them, because it is a summary of them and must not
+outrank them. `#hs`, `#hsConf` and `#hsTrend` keep their ids; the wrapper is now `.figure`,
+since a class called `.ring-center` with no ring in it is the kind of residue this log
+exists to remove.
+
+**2 · The trial-detail ring is gone** the same way, and with it the `#ring` write in
+`renderTrial()`. The two numbers still sit side by side in two shapes with two labels, which
+was always the honest part of that card.
+
+**3 · The vitals are deleted, not relabelled.** All four tiles — `Resting HR 62`,
+`Oxygen 97`, `Weight 154`, `Hydration 6` — with their hand-drawn SVG sparklines, and the
+`.vitals`/`.vital` CSS block with them. A comment stands where they were, naming what was
+there and why it went, so the deletion is legible to anyone reading the file later rather
+than looking like something that was never built.
+
+**4 · The needle is gone, and so is the dial it sat on.** The spec names the `<g id="needle">`
+and the one `--ang` write. I deleted the whole `<svg>`: the dial was already
+`display:none` under `.gauge-wrap svg`, so leaving a hidden dial behind to delete its needle
+would have left dead markup claiming a component that renders nothing. `#gaugeStatus` and
+`#gaugeNote` and everything that computes them are untouched and still correct — the card now
+reads **`Leaning low`** over **`3 of 4 markers in range · 1 outside · 1 marker never drawn`**,
+all four figures counted from `labStates()`. The `tilt` variable, which existed only to feed
+the needle's angle, went with it, and the comment above `renderGauge()` no longer describes a
+dial that is not there.
+
+**5 · Eight eyebrow labels deleted, two converted.** `auditHead` and `tRelatedHead` are now
+`<h2>` elements with their ids intact, so `renderTrial()`'s two `textContent` writes still
+land. **A correction on the count: there are ten in the file, not eleven.** The spec and the
+CSS comment both said eleven; `grep` finds ten, and I did not go looking for a phantom
+eleventh to make the number match. With all ten gone the `.eyebrow` class has no users at
+all, so its two CSS rules went too.
+
+**6 · Sentence case holds.** No all-caps label survives; the two converted headings are
+sentence case, and nothing in the deleted set was replaced with a caps variant.
+
+**7 · The last of the synthetic patient — the thing the spec did not know about.**
+`PROFILE.facts` was `{ age:34, bmi:22.4 }` at `index.html:1872`. Those are **Jordan Reyes's
+numbers**, which `CLAUDE.md` lists as retired; V1 Stage 1 deleted the character but these two
+facts survived and were still deciding real verdicts on every trial that asks about age or
+BMI. Raised with the project owner rather than decided here, and the answer was **delete
+them**. `facts` is now `{}`, with a comment saying why, and a criterion with no fact on file
+evaluates UNKNOWN — the same rule a1c already proves, now applied to two more inputs. Both
+are addable through the manual-entry screen, which is the honest path: the app's own input
+rail, not a literal in the source.
+
+**8 · Two retired-green strokes, while in the neighbourhood.** `stroke="#12301C"` appeared
+twice on visible SVG icons and is dark green from the theme retired on 2026-10-07. Now
+`currentColor`. **This also corrects a claim in the Stage 2 report**, which said no retired
+hex survived anywhere in the file: that grep covered the v1 Tolerance palette, not the older
+green one, and these two were outside `<style>`.
+
+### Verify
+
+The spec's own grep, every surviving hit and why:
+
+| Term | Hits | Why it survived |
+|---|---|---|
+| `154` | 1 — line 1271 | Inside the comment that records what the vitals block held. No tile, no value |
+| `62<` | 0 | — |
+| `Hydration` | 1 — line 1271 | Same comment |
+| `ring-wrap` | 0 | — |
+| `ring-prog` / `ring-center` | 0 | — |
+| `eyebrow` | 1 — line 256 | The CSS comment recording that the class and its rules were removed |
+| `needle` | 3 — lines 628, 956, 1278 | All three are comments: the gauge CSS note, the retired-animation note, and the marker left where the dial stood |
+
+Confirmed in the running app, not by reading:
+
+- `.ring-wrap`, `.ring-prog`, `.ring-center`, `.vitals`, `.vital`, `#needle`, `.needle`,
+  `.eyebrow` and `.gauge-wrap svg` all return **0 elements**. `#auditHead` and
+  `#tRelatedHead` are both `H2`.
+- **`renderGauge()` still reports its real line:** `3 of 4 markers in range · 1 outside ·
+  1 marker never drawn`.
+- **`renderTrial()` runs clean on all 23 trials** — every trial opened in sequence through
+  `openTrial()`, no exception thrown, no console error.
+- **Home reads as §7.1 specifies**: three tolerance scales first, then `99` with
+  `4 of 5 markers` and the trend line beneath them.
+- **`tests.html`: `all 61 passed`**, including the case that asserts a1c is absent from the
+  shipped profile — which still holds with `facts` emptied.
+
+**The cost of item 7, stated plainly, because it is larger than it looks.** Emptying `facts`
+changed engine output across the corpus:
+
+```
+                before      after
+dimension lines      2           0
+.out washes          5           2
+unread hatches       6          26
+```
+
+**There is now no near miss anywhere in the corpus on the shipped profile**, which means the
+dimension line — Stage 3's whole subject, and the most distinctive thing this app draws — has
+nothing to draw on the app as it stands. That is an honest result, not a regression: both
+near misses were computed from a retired fixture's BMI, so the app was showing its best
+screen on invented data. But it has a direct consequence for **Stage 5, whose lead card is
+specified as "the smallest margin across the whole corpus"**, and for the video. The fix is
+real data, not a code change: entering a real age and BMI through the manual-entry screen
+restores genuine age and BMI verdicts, and any near miss among them is then a true one.
+Flagged for the project owner at the end of this stage rather than worked around.
 
 ---
 
