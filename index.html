@@ -961,8 +961,15 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
   from{left:0;opacity:0}
   to{opacity:1}
 }
-.screen.in .arow .gap{animation:gap-draw .3s ease .18s both}
-@keyframes gap-draw{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
+/* the extension lines drop, then the dimension sweeps open from the tick
+   toward the threshold it fell short of. Replaces the v1 bracket draw, which
+   animated a .gap element that auditScale() no longer emits. */
+.screen.in .arow .ext{animation:ext-drop .16s ease-out .06s both;transform-origin:top}
+.screen.in .arow .dim{animation:dim-sweep .26s cubic-bezier(.22,1,.36,1) .19s both;transform-origin:left}
+.screen.in .arow .dim b{animation:tag-land .17s ease-out .42s both}
+@keyframes ext-drop{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes dim-sweep{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes tag-land{from{opacity:0;transform:translate(-50%,4px)}to{opacity:1;transform:translate(-50%,0)}}
 
 /* the retired animations: ring draw, bar grow, needle swing, range-pin
    spring, and the per-section reveal. All removed, not disabled. */
@@ -1093,6 +1100,22 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
   letter-spacing:-.02em;display:block}
 .trial .tally .of{font-size:var(--t-micro);color:var(--ink-3)}
 .trial .flags{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
+
+/* ---- the dimensioned scale: the audit row's drawing (Stage 3). Thermal's
+        geometry, scoped to .dimd so the compact marker scales on Home and in
+        the Metrics list keep theirs until Stage 6 looks at them. ---- */
+.scale.dimd{height:62px;margin:15px 0 3px;background:none}
+.scale.dimd.near{height:104px}
+.scale.dimd .band{top:22px;bottom:auto;height:15px}
+.scale.dimd .pin{top:18px;bottom:auto;height:22px}
+.scale.dimd .pin::after{content:none}
+/* the tick goes signal ONLY on a near miss, where the dimension it anchors
+   is the thing being read. A flat fail keeps an ink tick. */
+.scale.dimd.near .pin{background:var(--h-sig)!important}
+/* no measurement: a hatch, never a dash and never a zero */
+.scale.unread .band{background:repeating-linear-gradient(135deg,#fff 0 4px,var(--zinc-300) 4px 8px);
+  border:1.5px dashed var(--ink-3)}
+.scale.unread .band::before,.scale.unread .band::after{content:none}
 
 /* ---- chip states the gallery adds to the chip this app already has ---- */
 .chip.near{background:var(--h-sig);border-color:var(--h-sig);color:#fff}
@@ -3548,18 +3571,22 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
      has no distance to draw, so it gets nothing rather than a decorative
      bar that implies a measurement nobody made.
      ------------------------------------------------------------------ */
+  /* Does this criterion earn the full dimension line? Only a near miss does.
+     Heat tracks ACTIONABILITY, not badness: a met criterion gets no
+     annotation at all, a wide miss gets the wash and no dimension, and the
+     one row you could actually do something about gets the measurement drawn
+     in full. If a flat FAIL ever grows a red dimension line, this is the
+     predicate that broke. */
+  function hasDimension(rule, v){
+    return (rule.kind === 'numeric' || rule.kind === 'range') &&
+           v.value !== null && v.value !== undefined &&
+           v.status === NEAR_MISS;
+  }
+
   function auditScale(rule, v){
     if(rule.kind !== 'numeric' && rule.kind !== 'range') return '';
-    if(v.value === null || v.value === undefined) return '';
-    /* An exclusion rule inverts the band's meaning: the shaded region is the
-       DISQUALIFYING zone, and being outside it is the good outcome. Drawing
-       it the same as an inclusion band would tell a reader that sitting
-       outside the shading is a miss, which on an exclusion is the opposite
-       of the truth. */
-    var excl = rule.sense === 'exclusion';
-    /* the gap is a MISS, so it follows the verdict, not predicateHolds() —
-       on an exclusion, not holding the predicate is how you pass */
-    var missed = v.status === FAIL || v.status === NEAR_MISS;
+    var excl  = rule.sense === 'exclusion';
+    var known = v.value !== null && v.value !== undefined;
 
     var lo = null, hi = null;
     if(rule.kind === 'range'){ lo = rule.min; hi = rule.max; }
@@ -3569,33 +3596,82 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 
     /* the window: every number that matters, padded so nothing sits on the
        edge of the axis where it cannot be read */
-    var pts = [v.value];
+    var pts = [];
+    if(known)      pts.push(v.value);
     if(lo !== null) pts.push(lo);
     if(hi !== null) pts.push(hi);
+    if(!pts.length) return '';
     var aLo = Math.min.apply(null, pts), aHi = Math.max.apply(null, pts);
     var span = aHi - aLo;
     if(!(span > 0)) span = Math.abs(aHi) || 1;
     aLo -= span * 0.35; aHi += span * 0.35;
     function pct(x){ return Math.max(0, Math.min(100, 100 * (x - aLo) / (aHi - aLo))); }
+    function at(x){ return x.toFixed(1) + '%'; }
 
-    var you   = pct(v.value);
     var bandL = lo === null ? 0   : pct(lo);
     var bandR = hi === null ? 100 : pct(hi);
 
-    var gapEl = '';
-    if(missed){
-      /* the distance that decided it: tick to the threshold it fell on the
-         wrong side of */
-      var edge = (lo !== null && v.value < lo) ? pct(lo) : pct(hi);
-      var g0 = Math.min(you, edge), g1 = Math.max(you, edge);
-      gapEl = '<span class="gap" style="left:' + g0.toFixed(1) +
-              '%;width:' + Math.max(0.6, g1 - g0).toFixed(1) + '%"></span>';
+    /* the axis, and the band: the required range on an inclusion, the
+       DISQUALIFYING range on an exclusion (.excl hatches it, so "my tick is
+       outside the shading" cannot be misread as a miss) */
+    var out = '<span class="axis"></span>' +
+              '<span class="band" style="left:' + at(bandL) +
+                ';right:' + at(100 - bandR) + '"></span>';
+
+    /* the thresholds, labelled, because they are the numbers that decide the
+       verdict. The unit goes on the outer label only — twice is noise. */
+    if(lo !== null){
+      out += '<span class="edge" style="--at:' + at(bandL) + '">' +
+             esc(qty(round2(lo), hi === null ? rule.unit : '')) + '</span>';
     }
-    return '<div class="scale' + (excl ? ' excl' : '') + '">' +
-             '<span class="band" style="left:' + bandL.toFixed(1) +
-               '%;right:' + (100 - bandR).toFixed(1) + '%"></span>' +
-             gapEl +
-             '<span class="pin" style="left:' + you.toFixed(1) + '%"></span>' +
+    if(hi !== null && hi !== lo){
+      out += '<span class="edge" style="--at:' + at(bandR) + '">' +
+             esc(qty(round2(hi), rule.unit)) + '</span>';
+    }
+
+    /* nothing was measured. The band is still drawn and still labelled; only
+       the tick is absent, and the absence is named rather than drawn as a
+       zero on the axis. */
+    if(!known){
+      return '<div class="scale dimd unread' + (excl ? ' excl' : '') + '">' + out +
+               '<span class="noread" style="--at:50%">not read</span>' +
+             '</div>';
+    }
+
+    var you = pct(v.value);
+    /* the threshold the value is being measured against: the one it fell on
+       the wrong side of, or — inside an exclusion — the nearer way out */
+    var edge = null;
+    if(lo !== null && v.value < lo)       edge = lo;
+    else if(hi !== null && v.value > hi)  edge = hi;
+    else if(lo !== null && hi !== null)   edge = (v.value - lo <= hi - v.value) ? lo : hi;
+    else                                  edge = (lo !== null) ? lo : hi;
+    var edgePct = pct(edge);
+
+    var near   = v.status === NEAR_MISS;
+    var inside = (lo === null || v.value >= lo) && (hi === null || v.value <= hi);
+
+    if(near){
+      /* the dimension. The whole boldness budget, spent here — and the tag
+         carries marginPhrase()'s own words, so the number on the drawing and
+         the number in the sentence can never disagree. */
+      var d0 = Math.min(you, edgePct), d1 = Math.max(you, edgePct);
+      out += '<span class="ext" style="--at:' + at(you) + '"></span>' +
+             '<span class="ext" style="--at:' + at(edgePct) + '"></span>' +
+             '<span class="dim" style="--from:' + at(d0) + ';--to:' + at(d1) + '">' +
+               '<b>' + esc(marginPhrase(rule, v)) + '</b>' +
+             '</span>';
+    } else if(v.status === FAIL && !inside){
+      /* a wide miss: the distance is washed so it is visible, and NOT
+         dimensioned, because there is nothing here to act on */
+      var w0 = Math.min(you, edgePct), w1 = Math.max(you, edgePct);
+      out += '<span class="out" style="--from:' + at(w0) + ';--to:' + at(w1) + '"></span>';
+    }
+
+    out += '<span class="pin" style="left:' + at(you) + '"></span>';
+
+    return '<div class="scale dimd' + (excl ? ' excl' : '') + (near ? ' near' : '') + '">' +
+             out +
            '</div>';
   }
 
@@ -3791,7 +3867,11 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
         auditScale(v.rule, v.verdict) +
         '<div class="amid">' +
           '<span class="yours">' + valuePhrase(v.rule, v.verdict) + '</span>' +
-          '<span class="ev">' + esc(marginPhrase(v.rule, v.verdict)) + '</span>' +
+          /* the dimension tag on the scale above IS this sentence when one is
+             drawn, so printing it here as well would say it twice */
+          (hasDimension(v.rule, v.verdict)
+            ? ''
+            : '<span class="ev">' + esc(marginPhrase(v.rule, v.verdict)) + '</span>') +
         '</div>' +
         quote(v.rule) +
       '</div>';

@@ -431,7 +431,101 @@ tests.html still passes.
 
 ## Stage 3 Report
 
-_Pending._
+`auditScale()` now draws thermal's dimensioned scale, and it lands on every audit row in the
+app at once, as the spec said it would. One function rewritten, one row-renderer line
+changed, three CSS blocks added.
+
+**The drawing, in the order the function emits it.** `.axis` hairline across the full width,
+then the band, then the threshold labels, then — only if the verdict earns it — the
+annotation, then the tick last so it stays the highest-contrast mark on the scale.
+
+**Item 5 is the stage, and it is verified across the whole corpus rather than on one row.**
+Heat tracks actionability:
+
+```
+all 23 trials, driven through the real screen renderer via openTrial():
+  18 trials draw at least one scale
+   2 dimension lines in the entire corpus   <- near misses, and nothing else
+   5 .out washes                            <- flat fails, no dimension on any of them
+   6 unread hatches                         <- no value on file
+```
+
+Two dimension lines, on exactly the two rows the engine calls `NEAR_MISS`. No flat FAIL
+anywhere in the corpus grew one. The predicate that guarantees it is a named function,
+`hasDimension()`, rather than a condition inlined twice — so when Stage 6 touches the row,
+the rule is in one place.
+
+**Item 4 — the tag carries `marginPhrase()`'s own words, not a second computation.**
+`auditScale()` calls `marginPhrase(rule, v)` and puts the string in the tag that breaks the
+line. Verified against a path that shares no code with it: on `NCT04485871` the tag reads
+**`2.6 kg/m2 short of it`** and the near-miss callout above the table, which is built by
+`gapOf()`, reads *"you are at 22.4 kg/m2, short by 2.6 kg/m2."* Same number, two renderers,
+one source.
+
+**One row-renderer change, and the reason for it.** The `.ev` cell printed `marginPhrase()`
+too, so a near-miss row would have stated its own margin twice, once in the tag and once in
+the cell twenty pixels below. The cell is now suppressed when a dimension is drawn, and only
+then — a flat fail keeps it (`2.1 g/dL outside it` on `NCT05226169`), and so does every rule
+with no scale at all. That is the only line outside `auditScale()` that this stage touched.
+
+**Item 2 — the thresholds carry the numbers, with the unit on the outer label only.** A
+two-sided band labels `25` and `40 kg/m2`; a one-sided rule labels its single threshold with
+the unit (`11 g/dL`, `5.6 %`). The label carries the sheet colour, so the extension line
+passing behind it breaks for the text, which is the drafting convention thermal is quoting.
+
+**Item 6 — the exclusion inversion is preserved and is visibly doing its job.** The shaded
+region on an exclusion is still the disqualifying zone, still hatched, and the gap still
+follows the verdict rather than `predicateHolds()`. One correction inside that: the old
+function picked the threshold by `value < lo`, which on an exclusion the patient is *inside*
+picked the wrong edge. It now takes the crossed threshold when the value is outside the band
+and the **nearer** one when it is inside, which is the distance `marginPhrase()` is already
+describing in words for that case ("inside the excluded range"). Visible on `NCT04485871`
+row 2: `Hemoglobin < 12 g/dL` as an exclusion, hatched band, tick outside it, **Pass**.
+
+**Item 7 — the unknown state draws, where it used to draw nothing.** The old function
+returned `''` for a rule with no value on file. It now emits the band as a hatch with a
+dashed edge, both thresholds still labelled, no tick, and `not read` set where the tick
+would be. Verified on the load-bearing case: `NCT06894004`, `HbA1c ≤ 5.6 %`, value cell `No
+HbA1c on file`, scale class `scale dimd unread`, band background a
+`repeating-linear-gradient`, `pin` absent. **A1c is still the UNKNOWN test case and it is now
+drawn rather than omitted** — a hatch, never a dash, never a zero.
+
+**Scoping, so nothing else moved.** Thermal's geometry (62px, 104px on a near miss, band at
+`top:22px`) is scoped to `.scale.dimd`, which only `auditScale()` emits. The compact marker
+scales on Home and in the Metrics list keep their v1 drawing until Stage 6 looks at them, so
+this stage changed exactly one screen. The v1 `.gap` bracket is no longer emitted anywhere;
+its animation rule, which would have become dead, was repointed to the extension lines and
+the dimension sweep (`ext-drop` → `dim-sweep` → `tag-land`, the one orchestrated moment).
+
+### Verify
+
+- **Near miss:** `NCT04485871`, rule `BMI 25–40 kg/m2`, value `22.4 kg/m2`, chip `Near miss`,
+  scale class `scale dimd near`, dimension tag **`2.6 kg/m2 short of it`** — matching the
+  independently-rendered callout's `short by 2.6 kg/m2`.
+- **Flat fail:** `NCT05226169`, rule `Hemoglobin < 11 g/dL`, value `13.1 g/dL`, chip `Fail`.
+  `.out` wash present, **`.dim` absent**, tick still ink. Corpus-wide: 5 washes, 0 dimensions
+  on fails.
+- **Unread:** `NCT06894004`, `HbA1c ≤ 5.6 %` — hatch, `not read`, no tick, threshold still
+  labelled.
+- **No number in a rendered scale comes from the markup.** The static markup between
+  `</style>` and `<script>` contains **zero** `.scale`, `.band`, `.pin`, `.edge`, `.dim`,
+  `.out` or `.axis` elements — `#auditTable` is an empty `<div>` — and the only literal
+  matches for the numbers on screen are SVG `stroke-width="2.6"` attributes on icons.
+- **`tests.html`: `all 61 passed`**, re-run after the rewrite.
+- JS re-parsed clean (`new Function` over the whole script block) before the browser ever
+  loaded it.
+
+**Found while verifying, out of scope, and it needs a decision — flagging rather than
+fixing.** The near miss above is computed from `PROFILE.facts = { age:34, bmi:22.4 }` at
+`index.html:1872`. **Those are the retired synthetic patient's numbers** — `CLAUDE.md` names
+"Jordan Reyes, age 34, BMI 22.4" as deleted, and V1 Stage 1 deleted the character, but these
+two facts survived the strip-out and are currently producing real verdicts on real trials.
+Either they are the operator's own age and BMI, in which case the coincidence is unfortunate
+and the comment above them should say so, or they are Jordan's, in which case a retired
+fixture is driving the audit and they have to go. That is a data question only the operator
+can answer, and deleting two facts changes engine output on every trial that asks about age
+or BMI, so it is not a change to make inside a drawing stage. **Stage 4 is the subtraction
+stage and is the right place for it.**
 
 ---
 
