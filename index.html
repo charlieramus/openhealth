@@ -1686,8 +1686,24 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
     var hi = t.refHigh === null ? Infinity : t.refHigh;  /* implicit ceiling */
     if(v >= lo && v <= hi) return 1;
 
-    var span = isFinite(hi) ? hi - lo : lo;
-    return clamp01(1 - (v < lo ? lo - v : v - hi) / span);
+    /* How far out is measured against THE BOUND IT BROKE, not against the
+       width of the reference band — changed 2026-10-23, V3 Stage 7 follow-up.
+
+       It used to divide by the whole span, and that made the score insensitive
+       in exactly the case it most needed to report: a wide band swallows the
+       miss. Ferritin's band is 12–150, so a value of 8 — a third below its
+       floor — lost 4/138 and still scored 0.971, and Home read 99 while the
+       scale directly beneath it said "Below the range" and Metrics said
+       "Leaning low · 1 outside". Three views of one profile, disagreeing.
+
+       Against the bound, the same value loses 4/12 and scores 0.667, which is
+       what "a third under the floor" should cost. The shortfall is now
+       proportional to the threshold a clinician actually reads the value
+       against, and a wide reference range no longer buys a marker immunity. */
+    var bound = v < lo ? lo : hi;
+    var off   = v < lo ? lo - v : v - hi;
+    if(!isFinite(bound) || bound <= 0) return 0;   /* degenerate: no scale to judge by */
+    return clamp01(1 - off / bound);
   }
 
   /* -> { score, n, total }: the number, and how much of the picture it covers.
