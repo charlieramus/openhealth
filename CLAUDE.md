@@ -27,7 +27,10 @@ rules, evaluates them against your values, and shows a **per-criterion audit** �
 / unknown / near-miss, with the actual numbers. The audit is the product.
 
 **Three tabs:**
-1. **Home** — Health Score ring, biomarker bars, today's captures, top trial match
+1. **Home** — Health Score (a numeral, with its confidence line and trend), biomarker
+   tolerance scales, today's captures, top trial match. **There is no ring and there are no
+   bars** — V3 Stage 4 deleted the ring, and the bars became tolerance scales because a
+   fraction of the reference ceiling is not a verdict and distance from the band is
 2. **Metrics** — biomarker detail, reference ranges, trends
 3. **Trials** — ranked matches, each opening the per-criterion audit
 

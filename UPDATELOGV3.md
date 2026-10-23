@@ -949,7 +949,152 @@ width and at desktop width.
 
 ## Stage 7 Report
 
-_Pending._
+The port is closed. No capability was added, one was added that the stage asked for
+(persistence), and six defects were found on the way through — four in the app, three in the
+docs. All are fixed below except one, which is engine behaviour, is therefore outside this
+log's freeze, and is written up at the end as a decision for the founder rather than silently
+changed the week of submission.
+
+**1 · Accessibility: the biomarker tablist did not report its own state.** `#switch` is
+`role="tablist"` with four `role="tab"` buttons, and the selected tab was carried by the `on`
+class alone — so the markup announced four tabs and no indication of which one was open.
+All four now ship `aria-selected` and `pick()` writes it alongside the class, which is the
+same shape Stage 6 used when it made `toggleRow()` flip `aria-expanded` instead of leaning on
+the caret. Verified live: selecting LDL reports `aria-selected="true"` on LDL and `"false"` on
+the other three. Keyboard nav itself was already clean — every element carrying an `onclick`
+on all five screens is natively focusable (9 / 7 / 31 / 14 / 1 focusable controls, zero
+unfocusable click targets), and `:focus-visible` draws a 2px signal outline at 3px offset.
+The canonical roving-tabindex/arrow-key tablist pattern was **not** retrofitted: all four tabs
+are reachable with Tab today, that is accessible, and rebuilding a working control three days
+out is the kind of change this stage exists to refuse.
+
+**2 · Persistence, scoped so the screen keeps telling the truth.** `pick()` now writes the
+marker index to `localStorage` under `oh.marker`, and the three call sites that hard-called
+`pick(0)` — boot, entering Metrics, and the Metrics re-entry at the foot of the file — read
+`savedMarker()` instead. **The stored value is the index 0–3 and nothing else:** no lab value,
+no document and no OCR output goes to storage, because this screen says out loud, twice, that
+what you give it is "held in this page only" and that "the document itself never leaves the
+device". A preference is not a measurement, so those two sentences are still literally true;
+the comment on `DOCS` was amended to say so explicitly rather than leave the next reader to
+infer it. Every access is wrapped — Safari private mode throws on the *read*, not on the
+write, and an artifact frame can have storage blocked outright. Three paths verified live:
+store LDL → reload → LDL restored, `aria-selected` correct, no console error; `localStorage`
+rigged to throw → falls back to Iron and `pick()` still works, no console error; a corrupt
+value (`"banana"`) → falls back to Iron.
+
+**3 · Defect found: `--ink-3` failed WCAG AA at any size.** It pointed at `--zinc-400`
+(`#A1A1AA`), which measures **2.56:1** on the sheet and **2.33:1** on the paper — under 3:1,
+so it failed even the large-text floor, and it carries tick labels and captions set at
+`--t-micro`, 11.5px. Added `--zinc-500:#6B6B75` and repointed `--ink-3` at it: **5.27:1 and
+4.79:1**, AA at normal size on both grounds, and still clearly the quiet third tier against
+ink-2's 7.73:1. This is the darkest step that clears 4.5:1 on *both* grounds — Tailwind's own
+zinc-500 (`#71717A`) clears the sheet at 4.83:1 but misses the paper at 4.40:1.
+
+**4 · Defect found: a second, dead copy of the one orchestrated motion.** Stage 2 ported
+thermal's `.measure` names so Stages 3 and 6 had a drawing to render into; Stage 6 rendered
+the audit into `.audit-row` instead and emits no `.measure` element anywhere. That left
+`@keyframes drop/sweep/land` and three `.measure` rules as an orphaned duplicate of the
+motion `.audit-row` already owns — dead, but a second definition of "the one orchestrated
+moment" sitting in the stylesheet under a comment claiming "nothing else moves". Deleted. The
+claim now holds of the stylesheet and not just of the screen.
+
+**5 · Defect found: a dead `hero` toggle advertising a retired gradient.**
+`phone.classList.toggle('hero', i === 0)` ran on every navigation under the comment
+*"gradient only behind Home"*. No rule has styled `.hero` since the gradient wash was retired
+— `.hero-top` and `.hero-pair` are different classes — so it was a dead write whose comment
+described a thing this app does not draw. Toggle and the stale `hero` class in the markup both
+removed. Every surviving `linear-gradient` in the file was checked: all of them are the
+1px/2px hairline-rule trick, none is a wash.
+
+**6 · Defect found: three docs disagreed with the app.**
+
+- **`docs/PITCH.md` told the presenter to recite a retired constant, and it was wrong.** It
+  read *"the live app shows Iron Revisited, 79/100, NCT06942208 … Say **79**"* — which is the
+  precise thing `CLAUDE.md` forbids, and all three facts were stale: checked against the
+  running engine on 2026-10-23, the top-ranked trial is **`NCT06270498`** (sucrosomial iron in
+  chronic heart failure), Iron Revisited is second, and the score beside it is neither 79 nor
+  stable between paints because `countScore()` counts up to it. Replaced with the instruction
+  to read the screen, plus the one thing that *is* safe to say — the shape, "two criteria met,
+  thirty we could not read".
+- **`docs/README.md` said "Fourteen docs".** There are sixteen files in `docs/`, and the count
+  was fourteen because **`FIGMA-MAKE-PROMPT.md` was never indexed**. Indexed it under "How it
+  works", flagged as a historical visual direction rather than the shipped one, and the line
+  now reads "Fifteen docs, five groups, plus this index", which is checkable.
+- **`CLAUDE.md`'s three-tab description still promised a ring and bars.** Home has neither:
+  V3 Stage 4 deleted the ring, and the bars became tolerance scales. Grepped to be sure —
+  zero `ring` classes, ids or CSS rules survive in `index.html`. Rewritten to describe the
+  Health Score numeral, its confidence line and trend, and the tolerance scales.
+
+`CLAUDE.md`'s table of what is real was checked and is **accurate as written**: Trials,
+matching engine, lab values and the FHIR shapes all hold, and the Vitals row's cut is real —
+`find` returns no `garmin.json` anywhere in the repo.
+
+### Verify
+
+- **Network requests on a cold open: 1 total, 0 external** — at both 390px and 1440px. The
+  single request is the document itself. Tesseract's four CDN URLs are reachable only from
+  the lazy loader on the first document read, so a cold open genuinely makes no outbound
+  call, as `docs/STACK.md` claims.
+- **Contrast, measured off the live page rather than read out of the source** (so the numbers
+  reflect what the cascade actually resolves): `--ink` **17.72:1** sheet / **16.12:1** paper;
+  `--ink-2` **7.73:1 / 7.03:1**; `--ink-3` **5.27:1 / 4.79:1** after fix 3, from 2.56 / 2.33;
+  `--h-sig` **5.24:1 / 4.77:1**. All four AA at normal size on both grounds.
+- **Greyscale pass: passes, by construction.** Captured all five screens at phone width under
+  `filter:grayscale(1)`. Every verdict survives as a word or a position, never a hue — "Below
+  the range", "In range", "No near miss", "Met / Not met / Near miss / Not read", the hatched
+  not-read band, the tick against the reference band. Nothing became ambiguous.
+- **Motion: one keyframe, and reduced-motion is honoured.** Across all five screens the only
+  animation resolving on any element is `tick-to-place` (6 elements) — the measurement
+  landing. `ext-drop` / `dim-sweep` / `tag-land` belong to the same orchestration and draw only
+  where the audit emits a dimension. Under `prefers-reduced-motion: reduce`: **0 animated
+  elements**. No section entrances (`.reveal` is a confirmed no-op), no animated ring, and the
+  six `:hover` rules change background or underline colour only — no transform, no lift.
+- **Retired constants, full output.** In `index.html`, the shipping app: `87/100` **0**,
+  `79/100` **0**, `CGX Trial` **0**, `Jordan Reyes` **0**, `Doctors Available` **0**,
+  `r4.smarthealthit.org` **0**. Repo-wide, every remaining hit is now either a *rule about* the
+  constant (`CLAUDE.md`, `DESIGN.md` §1, `BRIEF.md`, `README.md`, `BUILDSPEC.md`, the
+  updatelogs' own specs and reports) or `indexOG.html`, the deliberately-kept pre-rewrite
+  reference copy from `c91c778`, which holds the last `aria-label="Jordan Reyes"`. The three
+  live violations are the ones fixed in item 6.
+- **`tests.html`: all 61 passed**, run headless against the suite's own harness, before and
+  after every change in this stage. Zero console errors on `index.html` at both widths.
+- **Phone width: no horizontal scroll.** Document overflow measured at 0px on all five screens
+  at 390px, and at 0px at 1440px. Also checked per-element: nothing has a bounding box
+  crossing the viewport's right edge.
+- **Screenshots: all five screens at 390×844 and 1440×900, plus a greyscale set at phone
+  width — 15 captures at 2×**, written to this session's scratchpad. They are working
+  artefacts, not committed.
+
+**Cross-device, stated honestly:** item 4 asks for a real iPhone and a real Android. Neither
+was available to this session. What was actually run is headless Chromium at both viewports,
+which catches layout overflow and nothing about iOS Safari's address-bar resize, momentum
+scroll or font rendering. **That check is still outstanding and should be done on the phone
+the video is recorded on, before recording.**
+
+### Not fixed, and why — one decision for the founder
+
+**The Health Score reads 99 while the screen directly below it says a marker is below range.**
+Home shows **99**, "4 of 5 markers", and Ferritin "Below the range"; Metrics, scoring the same
+profile, says *"Leaning low — 3 of 4 markers in range · 1 outside"*. Both are computed, and
+they do not read as the same app.
+
+The cause is `markerCredit()`: credit falls off as a fraction of the **whole reference span**,
+so ferritin at 8 against a 12–150 band loses `(12−8)/138` — 2.9% — and still earns 0.971.
+A marker can sit under its floor and cost the score almost nothing, because the band it is
+judged against is wide.
+
+**I did not change it.** The marker scoring is V1, this log states the evaluator is "untouched
+end to end", Stage 7 opens "no new work", and re-weighting a score three days before
+submission would invalidate the only number a judge is likely to ask about — and it would do
+it after `tests.html` was last green. It is also not a fabrication: nothing here is typed into
+the markup, the confidence line is honest, and the scales above the number state the
+contradiction plainly.
+
+But it is the one thing on screen that a judge could call out, and the fix is small and
+local — scale the shortfall against a clinically meaningful distance rather than the full
+span. **Decide before the video.** The honest options are to re-weight and re-run the suite,
+or to leave it and be ready to explain the formula out loud, which `docs/ROADMAP.md` says the
+rubric's top Code box rewards anyway.
 
 ---
 

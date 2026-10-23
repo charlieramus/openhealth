@@ -26,9 +26,22 @@
 **Target runtime 3:25.** That leaves ~35 seconds of slack inside a 4:00 cap for a slow
 demo or an interruption.
 
-**Before you present:** the live app shows **Iron Revisited, 79/100, NCT06942208**. It does
-**not** show "CGX Trial #4, 87/100" — that value in [`BRIEF.md`](BRIEF.md) predates the real
-matching engine. Say **79**.
+**Before you present:** do not rehearse a number. The match score and the Health Score are
+engine output and move with the profile, so **read whatever is on the screen** rather than a
+figure memorised from a doc — this is the `CLAUDE.md` rule about quoting a score as a
+constant, and a presenter reciting a stale number while the screen shows another is the
+exact failure it exists to prevent.
+
+Two things that **were** written here as constants and were both wrong when checked on
+2026-10-23: the top-ranked trial is not Iron Revisited, and the score next to it was not 79.
+As of that check the engine ranked **`NCT06270498`** (sucrosomial iron in chronic heart
+failure) first, with Iron Revisited (**`NCT06942208`**) second — and that order is itself
+engine output, so **confirm it on the day**. It does **not** show "CGX Trial #4, 87/100"
+either; that value in [`BRIEF.md`](BRIEF.md) predates the real matching engine.
+
+What is safe to say out loud is the *shape*: "two criteria met, thirty we could not read" —
+the counts are on screen beside the score, and the honest denominator is the point of the
+audit.
 
 ---
 

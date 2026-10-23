@@ -55,6 +55,12 @@
   --zinc-200:#E4E4E7;
   --zinc-300:#D4D4D8;
   --zinc-400:#A1A1AA;
+  /* zinc-500 added in V3 Stage 7. --ink-3 pointed at zinc-400, which measures
+     2.56:1 on the sheet and 2.33:1 on the paper -- under 3:1, so it failed WCAG
+     AA at any size, and it carries tick labels and captions set at --t-micro
+     (11.5px). This is the darkest step that clears 4.5:1 on BOTH grounds
+     (5.27:1 / 4.79:1) while still reading as the quiet third tier. */
+  --zinc-500:#6B6B75;
   --zinc-600:#52525B;
   --zinc-900:#18181B;
 
@@ -79,7 +85,7 @@
   --sheet:#FFFFFF;           /* the sheet the app is drawn on */
   --ink:var(--zinc-900);     /* text AND every value tick */
   --ink-2:var(--zinc-600);
-  --ink-3:var(--zinc-400);   /* tick labels, captions */
+  --ink-3:var(--zinc-500);   /* tick labels, captions -- AA on sheet and paper */
   --rule:var(--zinc-200);    /* scale axes, threshold edges, card borders */
   --construction:var(--zinc-300);
 
@@ -1098,17 +1104,14 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 .chip.near{background:var(--h-sig);border-color:var(--h-sig);color:#fff}
 .chip.unread{background:var(--sheet);color:var(--ink);box-shadow:inset 0 0 0 1px var(--construction)}
 
-/* ---- the measurement being taken: extension lines drop, the dimension
-        sweeps open, the tag lands. Nothing else moves (§7.6) ---- */
-@keyframes drop{from{transform:scaleY(0)}to{transform:scaleY(1)}}
-@keyframes sweep{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-@keyframes land{from{opacity:0;transform:translate(-50%,4px)}to{opacity:1;transform:translate(-50%,0)}}
-.measure .ext{animation:drop 150ms ease-out backwards;transform-origin:top;
-  animation-delay:calc(var(--i,0) * 70ms)}
-.measure .dim{animation:sweep 240ms cubic-bezier(.22,1,.36,1) backwards;
-  transform-origin:left;animation-delay:calc(var(--i,0) * 70ms + 130ms)}
-.measure .dim b{animation:land 160ms ease-out backwards;
-  animation-delay:calc(var(--i,0) * 70ms + 330ms)}
+/* ---- the measurement being taken: DELETED in V3 Stage 7. This was
+        thermal's name for the one orchestrated moment, added in Stage 2 so
+        Stages 3 and 6 had a drawing to render into. Stage 6 rendered the
+        audit into .audit-row instead and emits no .measure element, so
+        `drop`/`sweep`/`land` and these three rules were a second, dead copy
+        of the motion that line 912 already owns. "Exactly one orchestrated
+        motion" has to be true of the stylesheet too, not just of the screen,
+        so the duplicate is removed rather than left to rot. ---- */
 
 /* ============================ print: the prep sheet ============================ */
 @media print{
@@ -1127,7 +1130,7 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
     OpenHealth <small>· interactive prototype · real trials, invented baseline</small>
   </div>
 
-  <div class="phone hero" id="phone">
+  <div class="phone" id="phone">
 
     <div class="statusbar">
       <span>9:41</span>
@@ -1246,10 +1249,10 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
             </div>
 
             <div class="switch reveal" id="switch" role="tablist" aria-label="Choose a biomarker">
-              <button class="on" role="tab" onclick="pick(0)"><span class="dot" style="background:var(--iron)"></span>Iron</button>
-              <button role="tab" onclick="pick(1)"><span class="dot" style="background:var(--hgb)"></span>Hemoglobin</button>
-              <button role="tab" onclick="pick(2)"><span class="dot" style="background:var(--o2)"></span>SpO₂</button>
-              <button role="tab" onclick="pick(3)"><span class="dot" style="background:var(--ldl)"></span>LDL</button>
+              <button class="on" role="tab" aria-selected="true" onclick="pick(0)"><span class="dot" style="background:var(--iron)"></span>Iron</button>
+              <button role="tab" aria-selected="false" onclick="pick(1)"><span class="dot" style="background:var(--hgb)"></span>Hemoglobin</button>
+              <button role="tab" aria-selected="false" onclick="pick(2)"><span class="dot" style="background:var(--o2)"></span>SpO₂</button>
+              <button role="tab" aria-selected="false" onclick="pick(3)"><span class="dot" style="background:var(--ldl)"></span>LDL</button>
             </div>
 
             <div class="card chart-card reveal">
@@ -1887,12 +1890,47 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
   }
   function round1(n){ return Math.round(n * 10) / 10; }
 
+  /* ---------------- last-viewed marker, remembered ----------------
+     The ONE thing this app persists, added in V3 Stage 7. It is a UI
+     preference -- which of the four scales you were last reading -- and not a
+     measurement: the stored value is the index 0-3 and nothing else. No lab
+     value, no document and no OCR output is ever written to storage, which is
+     what the two on-screen promises ("held in this page only", "never leaves
+     the device") are about, and they stay literally true.
+
+     Every access is wrapped: Safari private mode throws on the first read of
+     localStorage rather than returning null, and an artifact frame can have
+     storage blocked outright. Both fall back to Iron, which is what the app
+     did unconditionally before this stage, so a no-storage browser loses the
+     memory and nothing else. */
+  var MARK_KEY = 'oh.marker';
+
+  function savedMarker(){
+    try{
+      var raw = window.localStorage.getItem(MARK_KEY);
+      if(raw === null) return 0;
+      var n = parseInt(raw, 10);
+      return (n >= 0 && n <= 3) ? n : 0;   // anything else: treat as unset
+    }catch(e){ return 0; }
+  }
+
+  function saveMarker(i){
+    try{ window.localStorage.setItem(MARK_KEY, String(i)); }catch(e){}
+  }
+
   window.pick = function(i){
     if(i === active) return;
     active = i;
     var btns = document.getElementById('switch').children;
-    for(var b = 0; b < btns.length; b++) btns[b].classList.toggle('on', b === i);
+    for(var b = 0; b < btns.length; b++){
+      var on = (b === i);
+      btns[b].classList.toggle('on', on);
+      /* the tablist carried its selected state in a class only, so a screen
+         reader announced four tabs and no indication of which one was open */
+      btns[b].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
     renderChart(i);
+    saveMarker(i);
   };
 
   /* ---------------- iron-rich foods drawer ---------------- */
@@ -1925,7 +1963,10 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
     if(i === current) return;
     current = i;
     track.style.transform = 'translateX(' + (-i * (100 / screens.length)) + '%)';
-    phone.classList.toggle('hero', i === 0);           // gradient only behind Home
+    /* the `hero` toggle that used to live here is gone (V3 Stage 7). It wrote a
+       class that no rule has styled since the gradient wash behind Home was
+       retired in Stage 2 -- see the note at the .sheet rule -- so it was a dead
+       write whose comment still advertised a gradient this app does not draw. */
     seen[i] = true;
     tabs.forEach(function(t,idx){ t.classList.toggle('active', idx === TAB_OF[i]); });
     tabs[1].classList.toggle('has-badge', !seen[1]);   // "new results" dot on Metrics
@@ -1937,7 +1978,7 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
         s.classList.remove('in');
         void s.offsetWidth;                            // force reflow so animations replay
         s.classList.add('in');
-        if(idx === 1) { active = -1; pick(0); closeFoods(); }  // redraw the chart, collapse the drawer
+        if(idx === 1) { active = -1; pick(savedMarker()); closeFoods(); }  // redraw the chart at the remembered marker, collapse the drawer
         if(idx === 0) renderHealth();
         if(idx === 2) countScore();
         if(idx === 3) renderAddRecords();
@@ -4273,7 +4314,12 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 
      DOCS is what this page is holding. It is in memory and nowhere else — no
      localStorage, no IndexedDB, no upload. Closing the tab is the delete
-     button, and that is said out loud on screen rather than implied. */
+     button, and that is said out loud on screen rather than implied.
+
+     Still true after V3 Stage 7 added persistence: the only thing that reaches
+     localStorage is `oh.marker`, the index of the scale you were last reading.
+     No document, no OCR output and no lab value is ever written, so the two
+     on-screen promises about this rail are not weakened by it. */
   var DOCS = [];
   var REVIEW = null;
 
@@ -4761,7 +4807,7 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
     renderGauge();
     renderRecs();
     renderDocs();
-    if(current === 1){ active = -1; pick(0); }
+    if(current === 1){ active = -1; pick(savedMarker()); }
     if(current === 2){ renderTrial(currentTrial); countScore(); }
   }
 
@@ -4778,7 +4824,7 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
   renderRecs();
   renderManual();
   renderDocs();
-  pick(0);
+  pick(savedMarker());
   go(0);
 })();
 </script>

@@ -70,8 +70,8 @@ Rebuild the attached screenshot, with these changes:
   add a single row beneath it: **"Prepare for your appointment →"**
 - **Top trial match card** — circular condition icon, trial name in heavy black type,
   condition + NCT ID beneath, a bookmark toggle top-right, then three chips in a row: the
-  **match score** ("79/100 Match"), the **distance** ("22.3 Mi. Away"), and a "Tap To View →"
-  button
+  **match score** (the engine's number out of 100, never a literal — see the note at the top
+  of this file), the **distance**, and a "Tap To View →" button
 - **Bottom tab bar** — three tabs: Home, Metrics, Trials. Pill-shaped, floating, with small
   notification dots
 
@@ -129,9 +129,11 @@ rather than a list of wins. A small header line: "Ranked against your profile ·
 Tapping a trial. This is the screen the whole app exists for.
 
 - Header: trial name, sponsor, phase, recruiting status, NCT ID linking out
-- **Two numbers, side by side and clearly distinct** — the **match score** ("79/100") and the
-  **confidence** ("8 of 11 criteria checkable"). They must not look like one number. They
-  measure different things and the design has to make that obvious
+- **Two numbers, side by side and clearly distinct** — the **match score** (out of 100) and
+  the **confidence** (criteria checked out of criteria found). They must not look like one
+  number. They measure different things and the design has to make that obvious. Both are
+  engine output: do not put a sample figure in a mock, because a number that survives a mock
+  is how a retired constant gets back into the app
 - **The audit table — the hero element.** One row per criterion:
   - the rule in plain language ("Ferritin ≤ 50 µg/L")
   - **the user's actual value** ("8 ng/mL")

@@ -1,6 +1,6 @@
 # OpenHealth — Documentation
 
-Fourteen docs, five groups. Start wherever your question is.
+Fifteen docs, five groups, plus this index. Start wherever your question is.
 
 > **If you read one thing, read [`SIMPLIFY.md`](SIMPLIFY.md).** Two decision docs stack:
 >
@@ -36,6 +36,7 @@ Fourteen docs, five groups. Start wherever your question is.
 | [**DESIGN.md**](DESIGN.md) | Color, type, layout, motion, voice | You're touching anything visual |
 | [**COPY.md**](COPY.md) | Every word in the UI: per-slot word budgets, the eight copy rules, and the notes from Apple they came from | You're writing or editing any string a user reads. **Read before adding a sentence to a screen** |
 | [**STACK.md**](STACK.md) | Why the prototype is one static HTML file and not Next.js, what a port would cost, and what would change the answer | You're asking "shouldn't this be a framework?" or planning Figma handoff |
+| [**FIGMA-MAKE-PROMPT.md**](FIGMA-MAKE-PROMPT.md) | The screen-by-screen prompt used to generate design comps in Figma Make | You're regenerating mockups. **It describes a visual direction, not the shipped one** — see `DESIGN.md` |
 
 ## Is it a business
 
