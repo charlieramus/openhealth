@@ -2247,16 +2247,62 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
       '</style></head><body>' + out.join('') + '</body></html>';
   }
 
-  /* A published artifact runs in a sandboxed frame, and a sandbox without
-     allow-downloads drops an <a download> click silently. Silent is the one
-     thing this button must not be: if the file cannot be handed over, say so
-     and open the sheet in a tab instead, which prints and saves by hand. */
+  /* Handing the file over, in the two places this page actually runs.
+
+     OPENED AS A FILE (the repo copy, a judge running index.html, the test
+     harness): an <a download> on a blob works, and is used.
+
+     INSIDE THE PUBLISHED ARTIFACT: the frame is never allowed to download
+     directly. The blob click is not refused, it is simply dropped — it throws
+     nothing, so a try/catch around it catches nothing and the button looks
+     like it saved a file that does not exist. That is the one behaviour this
+     button must not have. The viewer-mediated `downloads` capability is used
+     instead: it shows a confirmation naming the file, and it rejects with a
+     code when it does not save, so every outcome here is either a real file
+     or a sentence saying why there isn't one. */
   window.downloadPrep = function(){
     if(!PREP) renderPrep();
     if(!PREP) return;
+
     var html = prepFileHTML(PREP);
     var name = 'openhealth-prep-' + PREP.trial.nctId + '.html';
     var note = document.getElementById('prepFallback');
+    var btn  = document.getElementById('prepBtn');
+
+    function say(t){ note.textContent = t || ''; note.hidden = !t; }
+    function printInstead(lead){
+      say(lead + ' Use Print on this screen and save it as a PDF — the sheet ' +
+          'above is what prints.');
+    }
+    say('');
+
+    /* the artifact runtime answers late and only when a viewer is there, so
+       this is asked at the click rather than at load: that is also when the
+       viewer is expecting to be asked about a file. */
+    if(window.claude && typeof window.claude.use === 'function'){
+      btn.disabled = true;
+      var done = function(){ btn.disabled = false; };
+      window.claude.use('downloads').then(function(dl){
+        if(!dl){ printInstead('This view cannot hand over files.'); return null; }
+        return dl.save({ filename:name, data:html }).then(function(){ say(''); });
+      }).catch(function(err){
+        var code = err && err.code;
+        if(code === 'declined'){
+          say('Download cancelled. Nothing was saved — press Download again if ' +
+              'you want the file.');
+        } else if(code === 'rate_limited'){
+          say('A download prompt is already open. Finish that one, then try again.');
+        } else if(code === 'too_large'){
+          printInstead('The sheet was too large to save.');
+        } else {
+          printInstead('This view cannot hand over files.');
+        }
+      }).then(done, done);
+      return;
+    }
+
+    /* no artifact runtime: this page is being opened as a file, where the
+       browser lets it save one directly. */
     try{
       var url = URL.createObjectURL(new Blob([html], { type:'text/html' }));
       var a = document.createElement('a');
@@ -2264,22 +2310,9 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      note.hidden = true;
       setTimeout(function(){ URL.revokeObjectURL(url); }, 20000);
     }catch(e){
-      try{
-        var w = window.open('', '_blank');
-        if(!w) throw e;
-        w.document.write(html);
-        w.document.close();
-        note.textContent = 'Your browser blocked the download, so the sheet opened in a ' +
-                           'new tab instead — use Print, then Save as PDF.';
-        note.hidden = false;
-      }catch(e2){
-        note.textContent = 'This browser will not let the page hand over a file. Use ' +
-                           'Print on this screen and save it as a PDF.';
-        note.hidden = false;
-      }
+      printInstead('This browser blocked the download.');
     }
   };
 

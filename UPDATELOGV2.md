@@ -322,14 +322,27 @@ from five screens to six (`width:500%`→`600%`, `.screen` `20%`→`16.6667%`, `
 spec's, verbatim: *"Bring this to your appointment. OpenHealth doesn't contact your doctor —
 it gets you ready to."*
 
-**4 · The download can fail loudly, and never silently.** A published artifact runs in a
-sandboxed frame, and a sandbox without `allow-downloads` drops an `<a download>` click with
-no error at all. A button that looks like it saved a file and did not is worse than no
-button, so `downloadPrep()` wraps the blob path, falls back to opening the sheet in a tab
-with a line telling you to Print → Save as PDF, and falls back again to a line pointing at
-Print on the screen you are already on. Only the first path was exercisable locally; **the
-sandbox behaviour on the published artifact is unverified and is listed as outstanding
-below.**
+**4 · The download had to be built twice, and the first version was broken.** The page runs
+in two places and they do not download the same way.
+
+Opened as a file — the repo copy, a judge running `index.html`, the test harness — an
+`<a download>` on a blob works, and is what runs.
+
+Inside the **published artifact** it does not. The frame is never allowed to download
+directly, and the click is not refused, it is **dropped**: it throws nothing, so the
+try/catch I first wrapped it in caught nothing and the button would have looked like it
+saved a file that did not exist. That is precisely the silent failure this button must not
+have, and I shipped it in the first publish — the platform rejected it with a warning that
+said so. The fix is the viewer-mediated `downloads` capability: the artifact is published
+with `capabilities: {downloads: true}`, and `downloadPrep()` resolves
+`claude.use('downloads')` at the click (not at load — the runtime answers late, and the
+click is when a viewer expects to be asked) and calls `save({filename, data})`. It shows the
+viewer a confirmation naming the file and **rejects with a code** when it does not save, so
+`declined`, `rate_limited`, `too_large` and the unavailable family each get their own
+sentence. Every outcome is now either a real file or a line saying why there isn't one.
+
+The page keeps both paths and picks by feature detection, so the repo copy still saves a
+file with no artifact runtime present.
 
 **5 · There is no send-to-doctor control, in any form.** Greps over `index.html`, each **0**:
 `sendBtn`, `Send my records`, `send()`, `Auto-send`, `Care team`, `Doctors Available`,
@@ -382,11 +395,13 @@ The spec asks for the file's contents against the on-screen audit for the same t
 - **Still zero network.** 1 request, 0 external, at 390px and 1440px. **No horizontal scroll
   on any of the six screens** at either width.
 
-**Outstanding, and not claimed:** the download has only been exercised in headless Chromium
-against the local file. **It has not been tested in the published artifact's sandbox**, which
-is the one environment where it is most likely to be blocked, nor on a real phone. Check it
-on the live URL before the video, and if the blob path is blocked the fallback line should
-appear rather than nothing happening.
+**Outstanding, and not claimed:** the **blob path** is verified in headless Chromium against
+the local file (above). The **capability path is not** — it needs a real viewer in the
+published artifact, which this session cannot be. The page is published declaring
+`downloads` and the platform accepted the declaration without the warning it raised against
+the previous version, so the wiring is right; what is unverified is the end-to-end save with
+a human accepting the prompt. **Press Download once on the live URL before the video.** If
+it is still refused, the fallback now says so in words instead of doing nothing.
 
 ---
 
