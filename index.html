@@ -694,24 +694,23 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 .callout.near{border-left:3px solid var(--gap);background:var(--h-wash);border-color:var(--h-out);color:var(--ink)}
 .callout.near b{color:var(--gap)}
 
-/* ---- THE AUDIT TABLE. The reason the app exists. ---- */
-.audit{display:flex;flex-direction:column;padding:0}
-.arow{padding:15px 16px;border-top:1px solid var(--rule)}
-.arow:first-child{border-top:0}
-.atop{display:flex;align-items:flex-start;justify-content:space-between;gap:11px}
-.arow .rule{
-  flex:1 1 auto;min-width:0;
-  font-size:var(--t-body);font-weight:600;line-height:1.45;letter-spacing:-.01em;
-}
-.amid{
-  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
-  margin-top:7px;
-}
-.arow .yours{font-family:var(--mono);font-weight:600;font-size:var(--t-small);color:var(--ink)}
-.arow .ev{font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-2);text-align:right}
-.arow .scale{margin-top:11px}
-/* the audit row's own tolerance scale, written by auditScale() */
-.arow .scale .band{color:var(--ink-2)}
+/* ---- THE AUDIT TABLE. The reason the app exists. ----
+   Thermal's row: the criterion, the value, the verdict mark, and an expand
+   that opens the trial's own sentence verbatim. The quote bar is the only
+   indent in the system, and the near miss is the ONLY row that carries a
+   fill — everything else is separated by a hairline and nothing more.
+   The row's frame — grid, fill, caret — is one block further down, beside
+   .source. This block is only what sits inside the cells, so the two do not
+   both declare the same property and leave the comment describing whichever
+   one lost. */
+.audit{display:flex;flex-direction:column;padding:0 16px}
+.audit-row .crit{font-weight:600;line-height:1.45}
+.audit-row .val{color:var(--ink);white-space:nowrap}
+.audit-row .sub{padding-bottom:2px}
+.audit-row .ev{font-size:var(--t-micro);color:var(--ink-2);font-variant-numeric:tabular-nums;
+  text-align:right;white-space:nowrap}
+.audit-row .scale{margin:3px 0 15px}
+.audit-row .scale .band{color:var(--ink-2)}
 /* an EXCLUSION band is the disqualifying zone, not the required one. Hatched,
    so "my tick is outside the shading" cannot be misread as a miss. */
 .scale.excl .band{
@@ -723,19 +722,7 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 .scale.excl .band::before,.scale.excl .band::after{
   background:var(--c,var(--ink-2));opacity:.55;
 }
-.ascale-lab{
-  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
-  margin-top:4px;
-  font-family:var(--mono);font-size:var(--t-tick);color:var(--ink-3);
-}
-.ascale-lab .you{color:var(--ink);font-weight:600}
-.ascale-lab .miss{color:var(--gap);font-weight:600}
-/* the margin number is the gap bracket's label, so it carries the same
-   colour — and it is the ONLY text in the app allowed to */
-.arow.miss .ev{color:var(--gap);font-weight:600}
 
-/* verdict chips: mark + word carry it. Shape differs per state so the four
-   are distinguishable with no colour at all. */
 .vchip{
   flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;
   padding:4px 8px;border-radius:var(--r-chip);
@@ -753,10 +740,10 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 /* the trial's own sentence, always reachable */
 /* the trial's own sentence, always reachable. quote() emits
    <blockquote class="src"><span class="sense">Inclusion</span>…  */
-.arow .why,.arow .raw,.quote,blockquote.src{
+.quote,blockquote.src{
   display:block;margin-top:9px;padding-left:10px;
   border-left:2px solid var(--rule);
-  font-family:var(--sans);font-size:var(--t-tick);color:var(--ink-3);line-height:1.55;
+  font-size:var(--t-micro);color:var(--ink-3);line-height:1.55;
 }
 .sense{
   display:inline-block;margin-right:7px;padding:1px 5px;
@@ -926,14 +913,14 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
    The audit resolving: ticks travel from the axis origin to position, and
    the gap brackets draw. Nothing else in the app animates on its own.
    docs/DESIGN.md §7.6 */
-.screen.in .arow .pin,.screen.in .marker .pin{
+.screen.in .audit-row .pin,.screen.in .marker .pin{
   animation:tick-to-place .26s cubic-bezier(.2,.8,.3,1) both;
 }
-.screen.in .arow:nth-child(2) .pin{animation-delay:.04s}
-.screen.in .arow:nth-child(3) .pin{animation-delay:.08s}
-.screen.in .arow:nth-child(4) .pin{animation-delay:.12s}
-.screen.in .arow:nth-child(5) .pin{animation-delay:.16s}
-.screen.in .arow:nth-child(n+6) .pin{animation-delay:.2s}
+.screen.in .audit-row:nth-child(2) .pin{animation-delay:.04s}
+.screen.in .audit-row:nth-child(3) .pin{animation-delay:.08s}
+.screen.in .audit-row:nth-child(4) .pin{animation-delay:.12s}
+.screen.in .audit-row:nth-child(5) .pin{animation-delay:.16s}
+.screen.in .audit-row:nth-child(n+6) .pin{animation-delay:.2s}
 @keyframes tick-to-place{
   from{left:0;opacity:0}
   to{opacity:1}
@@ -941,9 +928,9 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 /* the extension lines drop, then the dimension sweeps open from the tick
    toward the threshold it fell short of. Replaces the v1 bracket draw, which
    animated a .gap element that auditScale() no longer emits. */
-.screen.in .arow .ext{animation:ext-drop .16s ease-out .06s both;transform-origin:top}
-.screen.in .arow .dim{animation:dim-sweep .26s cubic-bezier(.22,1,.36,1) .19s both;transform-origin:left}
-.screen.in .arow .dim b{animation:tag-land .17s ease-out .42s both}
+.screen.in .audit-row .ext{animation:ext-drop .16s ease-out .06s both;transform-origin:top}
+.screen.in .audit-row .dim{animation:dim-sweep .26s cubic-bezier(.22,1,.36,1) .19s both;transform-origin:left}
+.screen.in .audit-row .dim b{animation:tag-land .17s ease-out .42s both}
 @keyframes ext-drop{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 @keyframes dim-sweep{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes tag-land{from{opacity:0;transform:translate(-50%,4px)}to{opacity:1;transform:translate(-50%,0)}}
@@ -1051,8 +1038,10 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 
 /* ---- audit row and trial row (Stage 6) ---- */
 .audit-row{border-bottom:1px solid var(--rule);position:relative}
+/* the one fill in the table. It is 16px wide because that is .audit's own
+   padding — --pad (22px) overhangs the card's rounded edge. */
 .audit-row.is-near{background:var(--h-wash);box-shadow:inset 3px 0 0 var(--h-sig);
-  margin:0 calc(var(--pad) * -1);padding:0 var(--pad)}
+  margin:0 -16px;padding:0 16px}
 .audit-row > button{all:unset;display:grid;grid-template-columns:1fr auto;gap:5px 16px;
   width:100%;padding:15px 26px 15px 0;cursor:pointer;min-height:44px;
   align-items:center;box-sizing:border-box}
@@ -1062,12 +1051,10 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 .audit-row.is-near .val{color:var(--h-sig)}
 .audit-row .sub{grid-column:1/-1;display:flex;gap:16px;align-items:center;
   justify-content:space-between}
-.audit-row .margin{font-size:var(--t-micro);font-weight:600;font-variant-numeric:tabular-nums;
-  color:#fff;background:var(--h-sig);padding:3px 8px;border-radius:var(--r-tag)}
 .audit-row .caret{position:absolute;right:2px;top:24px;width:8px;height:8px;
   border-right:1.5px solid var(--ink-3);border-bottom:1.5px solid var(--ink-3);
   transform:rotate(45deg);transition:transform 170ms ease;pointer-events:none}
-.audit-row.is-near .caret{right:calc(2px + var(--pad))}
+.audit-row.is-near .caret{right:18px}
 .audit-row.open .caret{transform:rotate(-135deg);border-color:var(--ink)}
 /* no measurement is drawn as a hatch, never as a dash or a zero */
 .nodata{display:inline-block;width:38px;height:14px;vertical-align:-2px;
@@ -3431,11 +3418,13 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
      Undo that escaping for DISPLAY ONLY — the rule is never touched — or the
      table prints "Anemic (hemoglobin \<120g/L)" and a judge reads the backslash
      as a typo of ours. The leading bullet marker goes the same way: it is
-     punctuation belonging to the source document, not to the criterion. */
+     punctuation belonging to the source document, not to the criterion — and
+     it is stripped REPEATEDLY, because NCT07743983 publishes "* ● " and a
+     single strip left the ● sitting in the quote. */
   function forDisplay(src){
     return String(src)
       .replace(/\\([<>*_\[\]()#+\-.!])/g, '$1')
-      .replace(/^\s*(?:[*\-•○●]|\d+[.)])\s+/, '')
+      .replace(/^(?:\s*(?:[*\-•○●]|\d+[.)])\s+)+/, '')
       .replace(/\s*\n\s*/g, '  ')
       .trim();
   }
@@ -3471,19 +3460,25 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
   var I_UNK  = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.3 9.2a2.8 2.8 0 1 1 3.7 2.6v1.4"/><path d="M12 17h.01"/></svg>';
   var CHEV   = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
 
+  /* Patient-side wording, per docs/COPY.md §3.1: a verdict is 1-2 words and
+     it is the patient's word, not the engine's constant. "Not read" says what
+     happened; UNKNOWN says how the engine feels about it. Each chip pairs a
+     shape, a word and a position, so none of the four needs colour. */
   var CHIP = {};
-  CHIP[PASS]      = { cls:'pass', word:'Pass',      icon:I_PASS };
-  CHIP[FAIL]      = { cls:'fail', word:'Fail',      icon:I_FAIL };
+  CHIP[PASS]      = { cls:'pass', word:'Met',       icon:I_PASS };
+  CHIP[FAIL]      = { cls:'fail', word:'Not met',   icon:I_FAIL };
   CHIP[NEAR_MISS] = { cls:'near', word:'Near miss', icon:I_NEAR };
-  CHIP[UNKNOWN]   = { cls:'unk',  word:'Unknown',   icon:I_UNK  };
+  CHIP[UNKNOWN]   = { cls:'unk',  word:'Not read',  icon:I_UNK  };
 
-  /* Decided verdicts lead and unknowns follow; near misses lead the decided
-     ones because they are the only rows a patient can act on. Source order is
-     preserved inside each group (Array#sort is stable), so a row can still be
-     found in the registry text it came from. */
+  /* NOT-READ ROWS LEAD. They are the ones a person can still do something
+     about — a value you have not had drawn is a value you can go and get —
+     which is the same logic that puts the dimension line on near misses and
+     nowhere else. Near misses lead the decided rows for the same reason.
+     Source order is preserved inside each group (Array#sort is stable), so a
+     row can still be found in the registry text it came from. */
   var VERDICT_ORDER = {};
-  VERDICT_ORDER[NEAR_MISS] = 0; VERDICT_ORDER[FAIL] = 1;
-  VERDICT_ORDER[PASS]      = 2; VERDICT_ORDER[UNKNOWN] = 3;
+  VERDICT_ORDER[UNKNOWN]   = 0; VERDICT_ORDER[NEAR_MISS] = 1;
+  VERDICT_ORDER[FAIL]      = 2; VERDICT_ORDER[PASS]      = 3;
 
   function senseTag(rule){
     return '<span class="sense">' + (rule.sense === 'exclusion' ? 'Exclusion' : 'Inclusion') + '</span>';
@@ -3679,14 +3674,38 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
      much of the trial that score was computed from. */
   var PIN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.6"/></svg>';
 
+  /* A TALLY, NOT A PERCENTAGE. "7 of 9 met" reports what the engine actually
+     checked; "78 / 100" invites a reader to hear it as a chance of getting in,
+     which is not a thing this app knows. The criteria it could not read stay
+     on the row rather than being folded into the denominator — that is the
+     same two-numbers rule the trial screen obeys. */
   function listChip(res){
-    var c = res.confidence, cover = c.decidable + ' of ' + c.total + ' checkable';
+    var c = res.confidence;
+    var met = res.verdicts.filter(function(v){ return v.verdict.status === PASS; }).length;
+    var unread = c.total - c.decidable;
+    var tail = unread ? '<small>' + unread + ' not read</small>' : '';
     if(res.blocked)
-      return '<span class="vscore none"><b>Not eligible</b><small>' + cover + '</small></span>';
-    if(res.score === null)
-      return '<span class="vscore none"><b>No score</b><small>' + cover + '</small></span>';
-    return '<span class="vscore' + (res.score < 50 ? ' weak' : '') + '"><b>' +
-           res.score + ' / 100</b><small>' + cover + '</small></span>';
+      return '<span class="vscore none"><b>Not eligible</b>' + tail + '</span>';
+    if(!c.decidable)
+      return '<span class="vscore none"><b>Nothing checkable</b>' + tail + '</span>';
+    return '<span class="vscore"><b>' + met + ' of ' + c.decidable + ' met</b>' + tail + '</span>';
+  }
+
+  /* the near-miss chip on a trial row carries the margin itself. "Near miss"
+     is the verdict word and it already appears on the row the chip opens;
+     here the only new information is how far. docs/COPY.md caps it at four
+     words. */
+  function nearChip(res){
+    var best = null;
+    (res.nearMisses || []).forEach(function(v){
+      if(v.rule.kind !== 'numeric' && v.rule.kind !== 'range') return;
+      if(v.verdict.value === null || v.verdict.value === undefined) return;
+      var s = round2(shortfall(v.rule, v.verdict.value));
+      if(best === null || s < best.s) best = { s:s, unit:v.rule.unit };
+    });
+    if(best === null) return '';
+    return '<span class="chip near">' + best.s + (best.unit ? ' ' + esc(best.unit) : '') +
+           ' short</span>';
   }
 
   function renderTrial(id){
@@ -3803,24 +3822,31 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 
     document.getElementById('auditTable').innerHTML = checked.map(function(v){
       var ch = CHIP[v.verdict.status];
-      /* a row is "missed" when the rule could be checked and did not hold —
-         that is what ties the carmine gap bracket to its number below it */
-      var missed = v.verdict.status === FAIL || v.verdict.status === NEAR_MISS;
-      return '<div class="arow' + (missed ? ' miss' : '') + '">' +
-        '<div class="atop">' +
-          '<span class="rule">' + esc(rulePhrase(v.rule)) + '</span>' +
-          '<span class="vchip ' + ch.cls + '">' + ch.icon + ch.word + '</span>' +
-        '</div>' +
+      /* the near miss is the ONLY row that carries a fill. A flat miss is a
+         hairline like everything else, because a fill reads as "act on this"
+         and there is nothing here to act on. */
+      var near = v.verdict.status === NEAR_MISS;
+      var margin = hasDimension(v.rule, v.verdict) ? '' : marginPhrase(v.rule, v.verdict);
+      return '<div class="audit-row' + (near ? ' is-near' : '') + '">' +
+        '<button type="button" aria-expanded="false" onclick="toggleRow(this)">' +
+          '<span class="crit">' + esc(rulePhrase(v.rule)) + '</span>' +
+          '<span class="val">' + valuePhrase(v.rule, v.verdict) + '</span>' +
+          '<span class="sub">' +
+            '<span class="vchip ' + ch.cls + '">' + ch.icon + ch.word + '</span>' +
+            /* the dimension tag on the scale IS this sentence when one is
+               drawn, so printing it here as well would say it twice */
+            (margin ? '<span class="ev">' + esc(margin) + '</span>' : '') +
+          '</span>' +
+          '<span class="caret"></span>' +
+        '</button>' +
         auditScale(v.rule, v.verdict) +
-        '<div class="amid">' +
-          '<span class="yours">' + valuePhrase(v.rule, v.verdict) + '</span>' +
-          /* the dimension tag on the scale above IS this sentence when one is
-             drawn, so printing it here as well would say it twice */
-          (hasDimension(v.rule, v.verdict)
-            ? ''
-            : '<span class="ev">' + esc(marginPhrase(v.rule, v.verdict)) + '</span>') +
+        /* the trial's own sentence, verbatim, behind the expand. The quote bar
+           is the only indent in the system. */
+        '<div class="source">' +
+          '<p>' + esc(forDisplay(v.rule.source)) + '</p>' +
+          '<span class="cite">' + esc(t.nctId) + ', ' +
+            (v.rule.sense === 'exclusion' ? 'exclusion' : 'inclusion') + ', verbatim</span>' +
         '</div>' +
-        quote(v.rule) +
       '</div>';
     }).join('') || '<p class="empty">Every criterion this trial publishes is below, as written.</p>';
 
@@ -3887,10 +3913,18 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
         '<span class="who"><span class="nm">' + esc(o.briefTitle) + '</span>' +
         '<span class="field">' + esc(o.nctId) + ' · ' +
           esc((o.conditions || [])[0] || '') + '</span></span>' +
-        listChip(r.result) +
+        listChip(r.result) + nearChip(r.result) +
       '</button>';
     }).join('');
   }
+
+  /* the expand. The row keeps its drawing; only the trial's own sentence is
+     behind it, because a verbatim criterion is reference, not the readout. */
+  window.toggleRow = function(btn){
+    var row = btn.parentNode;
+    var open = row.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
 
   window.openTrial = function(id){
     if(current === 2 && id === currentTrial) return;
@@ -4042,7 +4076,7 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
            The distance is the corpus's own build-time great-circle to the fixed
            origin — "from Philadelphia" is said out loud rather than implying the
            app knows where you are, and a record with no geoPoint says so. */
-        '<span class="meta">' + listChip(res) +
+        '<span class="meta">' + listChip(res) + nearChip(res) +
           '<span class="hint">' + PIN +
             (t.siteDistanceMi === null || t.siteDistanceMi === undefined
               ? 'Distance unknown'

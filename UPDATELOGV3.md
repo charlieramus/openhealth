@@ -821,7 +821,104 @@ still distinguishable. tests.html still passes.
 
 ## Stage 6 Report
 
-_Pending._
+Built, and freeze-legal: nothing here adds a capability. The audit table is drawn the way
+thermal draws a measurement, the rows are ordered by what a person can still act on, and the
+two numbers on a trial row stopped being a percentage. Two defects were found on the way
+through and both are fixed below.
+
+**1 · The row is one button now.** `.audit-row` holds a `<button>` carrying the criterion,
+the value, the verdict mark and a caret; `auditScale()` draws underneath it unchanged; and
+the trial's own sentence sits behind the expand in `.source`, with a citation line reading
+`NCT…, inclusion|exclusion, verbatim`. `toggleRow()` flips `aria-expanded` and the `.open`
+class, so the control reports its own state rather than relying on the caret's rotation.
+
+**2 · Not-read rows lead.** `VERDICT_ORDER` is now `UNKNOWN 0, NEAR_MISS 1, FAIL 2, PASS 3`.
+A value you have not had drawn is a value you can go and get, which is the same reasoning
+that puts the dimension line on near misses and nowhere else. `Array#sort` is stable, so
+source order survives inside each group and a row can still be found in the registry text it
+came from.
+
+**3 · One fill in the table, and it is the near miss.** A flat miss is a hairline like
+everything else — a fill reads as "act on this", and on a FAIL there is nothing to act on.
+
+**4 · The patient's word, not the engine's constant.** `Met` / `Not met` / `Near miss` /
+`Not read`. Each chip pairs a shape, a word and a position, so none of the four needs colour.
+
+**5 · The tally replaced the percentage.** `listChip()` reports `met of decidable`, and the
+criteria the parser could not read stay on the row as `n not read` instead of being folded
+into the denominator. `nearChip()` carries the margin itself on the list row, because "near
+miss" is already the verdict word on the row the chip opens — the only new information there
+is how far.
+
+**6 · Defect found: two CSS blocks were styling the same rows.** The block written for this
+stage and an existing block further down both declared `.audit-row > button`, `.crit`,
+`.val`, `.is-near` and `.is-near .caret`. The later block won every conflict, which meant the
+new comment — *"it is 16px of card padding wide, not --pad"* — was describing the rule that
+lost. It also mattered: `#auditTable` is `.card.audit` and `.audit` sets `padding:0 16px`,
+but the surviving rule bled the fill by `var(--pad)`, 22px, so the near-miss fill overhung
+the card's rounded edge by 6px a side. Resolved to one block, 16px kept, and the measured
+result is below. The now-unreachable `.audit-row .margin` rule went with it — the row emits
+`class="ev"` for that phrase, and a solid fill there would have broken rule 3 anyway.
+
+**7 · Defect found: a bullet leaking into a quote.** `forDisplay()` stripped one leading list
+marker. NCT07743983 publishes `* ● Previous diagnosis of type 1 diabetes…`, so the `●`
+survived into the quoted criterion — in the one place in the app that claims to be verbatim.
+The strip now repeats. **The parser's own `BULLET` (line 2687) was deliberately left alone:**
+`findAnalyte` scans the whole string, so the leading marker changes no verdict there, and
+re-validating rule extraction the week of submission is not worth a cosmetic gain.
+
+### Verify
+
+Driven with Playwright against the file as it ships. All 23 trials, not a sample.
+
+- **Row order: 23 of 23 trials correct, zero violations.** Every not-read row precedes every
+  decided row in all 23 audits. Printed per trial; e.g. NCT06942208 reads
+  `Not read ×7 | Met | Met`, NCT05226169 reads `Not read ×6 | Not met | Met`.
+- **Verbatim: 132 of 132 quotes.** Every quoted criterion is a contiguous substring of that
+  trial's `eligibilityCriteria` once the registry's own markdown escaping is undone. 103 of
+  the 132 are byte-identical to the raw record with no transform at all; the remainder differ
+  only by the three things `forDisplay()` documents — unescaping, the list marker, and
+  newlines collapsing to a double space. The 43 quotes in NCT06942208's unparsed bucket are
+  verbatim on the same test. Expanded row 1 of NCT04485871 reads
+  `Having a body mass index (BMI= 25-40 kg/m2)`, cited `NCT04485871, inclusion, verbatim`,
+  and that string appears in the record byte for byte.
+- **A quote that cites the right sentence, not just a real one.** For all 75 rows whose
+  criterion names a topic that can be tested for (diabetes, cancer, pregnancy, smoking,
+  anemia), the quoted block contains that topic. The single exception is NCT07775404's
+  `Diabetes` row, which quotes `T1DM` — the registry's abbreviation, not a mis-citation.
+  Worth knowing: where a sponsor nests criteria under a stem, the quote leads with the stem
+  (NCT07729332's `No cancer history` opens `Known contraindications to phentermine:`), so the
+  clause the row is about can sit a line or two into the quote. Verbatim, and correct, but
+  it is the thing a judge is most likely to ask about.
+- **Tally equals the engine's decidable count**, checked against `#confN` / `#confD`:
+  NCT04485871 `1 met of 1` (of 31), NCT05226169 `1 met of 2` (of 25), NCT06942208 `2 met of 2`
+  (of 52), NCT07502508 `0 of 0` → the `Nothing checkable` branch (of 13). The not-read figure
+  on each row equals unknown rows plus unparsed criteria exactly — 6 + 24 = 30, 6 + 17 = 23,
+  7 + 43 = 50, 7 + 6 = 13.
+- **Greyscale: all four verdicts distinguishable with no colour.** Distinct words, distinct
+  icons, and distinct border treatments — `Not read` dashed, `Met` solid outline, `Not met`
+  solid ink fill with inverted text, `Near miss` solid outline on the one washed row.
+  **Method note for Stage 7:** do not apply `filter:grayscale(1)` to `<html>` to check this.
+  A filter makes the root a containing block and displaces the fixed phone shell, which cost
+  an hour chasing a 17px left shift that does not exist. Screenshot untouched and convert the
+  pixels.
+- **The fill no longer overhangs.** Measured on the near-miss row: row rect sits 1px inside
+  the card rect on both sides, which is the card's own border. It was 6px outside it.
+- **Exactly one filled row** in the audit table when a near miss exists, counted from
+  computed styles rather than by eye.
+- **`tests.html`: all 61 passed.** **It cannot be run from `file://`** — it fetches
+  `index.html` and prints *"Cannot reach index.html"* instead. Serve the directory
+  (`python -m http.server 8731`) and open `http://127.0.0.1:8731/tests.html`. The page says
+  so itself; this is recorded because the obvious way to open it is the way that fails.
+- **Zero console errors or warnings** across all five screens, **zero non-`file:` network
+  requests**, and **no horizontal scroll at 390px**.
+
+**The near-miss state still has to be made, as Stage 5 said.** With the shipped profile there
+is no near miss anywhere in the corpus, so `.is-near`, `nearChip()` and the fourth verdict
+cannot be seen. Everything above was verified after entering **BMI 24.1** through the app's
+own manual-entry rail, which produces `0.9 kg/m2 short of it` on NCT04485871 — matching
+Stage 5's figure exactly, from a clean reload. **For the video, that entry has to happen on
+camera or the app's best row never appears.** Still a data decision, still not a code change.
 
 ---
 
