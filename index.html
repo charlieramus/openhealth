@@ -234,9 +234,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
 /* ============================ screen track ============================ */
 .viewport{position:relative;z-index:1;flex:1 1 auto;min-height:0;overflow:hidden}
-.viewport>.track{display:flex;width:500%;height:100%;
+.viewport>.track{display:flex;width:600%;height:100%;
   transition:transform .42s cubic-bezier(.4,.9,.25,1)}
-.screen{width:20%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.screen{width:16.6667%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 .screen-inner{
   display:flex;flex-direction:column;gap:22px;
   padding:14px var(--pad) calc(26px + env(safe-area-inset-bottom,0px));
@@ -1113,6 +1113,39 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
         motion" has to be true of the stylesheet too, not just of the screen,
         so the duplicate is removed rather than left to rot. ---- */
 
+/* ======================== the appointment prep sheet ========================
+   Screen 6. The preview is drawn to look like the file it produces, because
+   the file is the point: this is the only thing the app hands you to take
+   somewhere else, and the app never sends it anywhere itself. */
+.prep-lede{color:var(--ink-2);font-size:var(--t-small);line-height:1.5}
+.prep-doc{
+  background:var(--sheet);border:1px solid var(--rule);border-radius:var(--r-card);
+  padding:18px 16px;display:flex;flex-direction:column;gap:16px;
+}
+.prep-doc h3{font-size:var(--t-h2);letter-spacing:-.02em}
+.prep-doc .meta{color:var(--ink-3);font-size:var(--t-micro);margin-top:2px}
+.prep-sec{display:flex;flex-direction:column;gap:7px}
+.prep-sec > .lab{
+  font-size:var(--t-micro);letter-spacing:.04em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:600;
+}
+.prep-line{
+  display:flex;gap:10px;align-items:baseline;justify-content:space-between;
+  font-size:var(--t-small);line-height:1.45;
+  padding-bottom:6px;border-bottom:1px solid var(--rule);
+}
+.prep-line:last-child{border-bottom:0;padding-bottom:0}
+.prep-line .k{color:var(--ink)}
+.prep-line .v{color:var(--ink-2);text-align:right;white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.prep-line.wrap{display:block}
+.prep-line.wrap .v{text-align:left;white-space:normal;display:block;margin-top:2px}
+.prep-empty{color:var(--ink-3);font-size:var(--t-small);font-style:italic}
+.prep-note{
+  color:var(--ink-2);font-size:var(--t-micro);line-height:1.5;
+  border-top:1px solid var(--rule);padding-top:12px;
+}
+
 /* ============================ print: the prep sheet ============================ */
 @media print{
   body{background:#fff;display:block;place-items:initial}
@@ -1409,6 +1442,10 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
               <div class="card related" id="tRelated"></div>
             </div>
 
+            <!-- the only thing this app hands you to take somewhere else. There
+                 is no send-to-clinician control here or anywhere in the app. -->
+            <button class="btn" onclick="go(5)">Download prep sheet</button>
+
           </div>
         </section>
 
@@ -1549,6 +1586,34 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
 
           </div>
         </section>
+
+        <!-- ===================== SCREEN 6 · PREP SHEET =====================
+             Reached from the bottom of the trial audit. Everything in #prepDoc
+             is written by renderPrep() from the live profile and the live
+             verdicts for the trial you were just reading -- nothing on this
+             screen is typed into the markup, and the file the button writes is
+             built from the same object the preview is. -->
+        <section class="screen" id="s5" aria-label="Appointment prep sheet">
+          <div class="screen-inner">
+
+            <div class="topbar">
+              <button class="back" onclick="go(2)" aria-label="Back to the trial audit">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <div class="mid"><h1>Prep sheet</h1></div>
+            </div>
+
+            <p class="prep-lede">Bring this to your appointment. OpenHealth doesn&rsquo;t
+            contact your doctor &mdash; it gets you ready to.</p>
+
+            <div class="prep-doc" id="prepDoc"></div>
+
+            <button class="btn" id="prepBtn" onclick="downloadPrep()">Download</button>
+            <p class="prep-lede" id="prepFallback" hidden></p>
+
+          </div>
+        </section>
+
 
       </div>
     </div>
@@ -1963,16 +2028,273 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
     group.querySelector('.rec-toggle').setAttribute('aria-expanded','false');
   }
 
+  /* ======================= the appointment prep sheet =======================
+     The only file this app produces, and the only thing it hands you to take
+     somewhere else. It does not contact anybody: there is no outbound channel
+     in this page and no control anywhere that offers one.
+
+     buildPrep() is the single source for BOTH the preview on screen 6 and the
+     downloaded file, so the two cannot drift. Every field is read from the live
+     profile and from matchScore() run against the trial you were just reading;
+     nothing here is a constant, and if the engine's verdicts change the sheet
+     changes with them. */
+
+  /* The structured shortfall. evaluateRule() already ends a NEAR_MISS evidence
+     string with the same number in words, so this is carried on the object for
+     anything that wants the figure on its own and is NOT printed beside that
+     sentence -- doing both put "short by 0.4 g/dL" on the line twice. */
+  function prepGap(v){
+    if(v.verdict.margin === null || v.verdict.margin === undefined) return '';
+    var g = Math.abs(v.verdict.margin);
+    return 'short by ' + round2(g) + (v.rule.unit ? ' ' + v.rule.unit : '');
+  }
+
+  function titleish(str){
+    if(!str) return '';
+    /* the registry writes these as RECRUITING, PHASE4, NOT_APPLICABLE. The
+       digit split matters: without it PHASE4 reads as "Phase4" on a sheet a
+       clinician is meant to skim. */
+    return String(str).toLowerCase().replace(/_/g, ' ')
+      .replace(/([a-z])([0-9])/g, '$1 $2')
+      .replace(/\b[a-z]/g, function(c){ return c.toUpperCase(); });
+  }
+
+  function prepDateLine(d){
+    return MON_FULL[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+  }
+
+  function buildPrep(nctId){
+    var rec = CORPUS.filter(function(r){ return r.nctId === nctId; })[0];
+    if(!rec) return null;
+    var res = matchScore(PROFILE, rec);
+
+    var by = function(st){
+      return res.verdicts.filter(function(v){ return v.verdict.status === st; });
+    };
+
+    /* the markers that actually have a value, with the draw it came from */
+    var labs = TRACKED.map(function(t){
+      var v = valueAt(t);
+      if(v === undefined || v === null) return null;
+      var drawn = (t.draws && t.draws.length) ? t.draws[t.draws.length - 1]
+                                              : DRAWS[DRAWS.length - 1];
+      return { name:t.name, value:v, unit:t.unit, drawn:drawn, range:rangeWords(t) };
+    }).filter(Boolean);
+
+    /* markers the engine knows about but has never been given a value for */
+    var never = TRACKED.filter(function(t){
+      var v = valueAt(t);
+      return v === undefined || v === null;
+    }).map(function(t){ return t.name; });
+
+    return {
+      generated: new Date(),
+      trial: { nctId:rec.nctId, title:rec.briefTitle, sponsor:rec.sponsor,
+               status:rec.status, phase:rec.phase, site:rec.nearestSite },
+      score: res.score,
+      confidence: res.confidence,
+      labs: labs,
+      never: never,
+      failed: by('FAIL').map(function(v){
+        return { text:rulePhrase(v.rule), evidence:v.verdict.evidence };
+      }),
+      near: by('NEAR_MISS').map(function(v){
+        return { text:rulePhrase(v.rule), gap:prepGap(v), evidence:v.verdict.evidence };
+      }),
+      unknown: by('UNKNOWN').map(function(v){
+        return { text: v.rule.kind === 'unparsed'
+                         ? forDisplay(v.rule.source || v.rule.text || '')
+                         : rulePhrase(v.rule),
+                 why: v.verdict.evidence };
+      })
+    };
+  }
+
+  var PREP = null;
+
+  function renderPrep(){
+    PREP = buildPrep(currentTrial);
+    var el = document.getElementById('prepDoc');
+    if(!PREP){ el.innerHTML = '<p class="prep-empty">No trial selected.</p>'; return; }
+
+    function sec(label, rows){
+      return '<div class="prep-sec"><span class="lab">' + esc(label) + '</span>' +
+             rows.join('') + '</div>';
+    }
+    function line(k, v, wrap){
+      return '<div class="prep-line' + (wrap ? ' wrap' : '') + '">' +
+             '<span class="k">' + esc(k) + '</span>' +
+             '<span class="v">' + esc(v) + '</span></div>';
+    }
+    function empty(t){ return '<p class="prep-empty">' + esc(t) + '</p>'; }
+
+    var p = PREP, h = [];
+
+    h.push('<div><h3>Appointment prep sheet</h3><div class="meta">Prepared ' +
+      esc(prepDateLine(p.generated)) + ' · OpenHealth · not a medical record</div></div>');
+
+    h.push(sec('The trial', [
+      line('Title', p.trial.title, true),
+      line('Registry ID', p.trial.nctId),
+      line('Sponsor', p.trial.sponsor, true),
+      line('Status', titleish(p.trial.status) +
+        (p.trial.phase && p.trial.phase !== 'NA' ? ' · ' + titleish(p.trial.phase) : '')),
+      line('Nearest site', p.trial.site, true),
+      line('Match score', p.score === null ? 'not scored' : p.score + ' / 100'),
+      line('Criteria checked', p.confidence.decidable + ' of ' + p.confidence.total)
+    ]));
+
+    h.push(sec('My values', p.labs.length ? p.labs.map(function(l){
+      return line(l.name, l.value + ' ' + l.unit + ' · drawn ' + l.drawn +
+                          ' · ' + l.range, true);
+    }) : [empty('No values on file.')]));
+
+    if(p.never.length){
+      h.push(sec('Never drawn', [empty(p.never.join(', ') +
+        ' — no result on file, so the engine could not judge any rule that asks for it.')]));
+    }
+
+    h.push(sec('Criteria I do not meet', p.failed.length ? p.failed.map(function(f){
+      return line(f.text, f.evidence, true);
+    }) : [empty('None of the criteria that could be checked came back as a miss.')]));
+
+    h.push(sec('Near misses — worth asking about', p.near.length ? p.near.map(function(n){
+      return line(n.text, n.evidence, true);          // evidence already carries the gap
+    }) : [empty('No near misses. Every criterion that could be read is either met or missed outright.')]));
+
+    h.push(sec('Could not be checked automatically', p.unknown.length
+      ? p.unknown.map(function(u){ return line(u.text, u.why, true); })
+      : [empty('Every criterion was readable.')]));
+
+    h.push('<p class="prep-note">This sheet was produced in the browser from documents ' +
+      'held in this page. It was not sent anywhere. It is a reading of published ' +
+      'eligibility text, not a determination of eligibility — only a screening visit ' +
+      'can decide that.</p>');
+
+    el.innerHTML = h.join('');
+  }
+
+  /* the file itself: one self-contained HTML document with no external reference
+     of any kind, so it opens and prints out of a downloads folder with no network. */
+  function prepFileHTML(p){
+    var out = [];
+    function esq(x){ return esc(String(x === null || x === undefined ? '' : x)); }
+    function row(k, v){ return '<tr><th>' + esq(k) + '</th><td>' + esq(v) + '</td></tr>'; }
+    function block(title, rows, emptyText){
+      out.push('<h2>' + esq(title) + '</h2>');
+      if(!rows.length){ out.push('<p class="none">' + esq(emptyText) + '</p>'); return; }
+      out.push('<table>' + rows.join('') + '</table>');
+    }
+
+    out.push('<h1>Appointment prep sheet</h1>');
+    out.push('<p class="meta">Prepared ' + esq(prepDateLine(p.generated)) +
+             ' &middot; OpenHealth &middot; not a medical record</p>');
+
+    block('The trial', [
+      row('Title', p.trial.title),
+      row('Registry ID', p.trial.nctId),
+      row('Sponsor', p.trial.sponsor),
+      row('Status', titleish(p.trial.status) +
+        (p.trial.phase && p.trial.phase !== 'NA' ? ' · ' + titleish(p.trial.phase) : '')),
+      row('Nearest site', p.trial.site),
+      row('Match score', p.score === null ? 'not scored' : p.score + ' / 100'),
+      row('Criteria checked', p.confidence.decidable + ' of ' + p.confidence.total)
+    ], '');
+
+    block('My values', p.labs.map(function(l){
+      return row(l.name, l.value + ' ' + l.unit + '  —  drawn ' + l.drawn +
+                         '  —  ' + l.range);
+    }), 'No values on file.');
+
+    if(p.never.length){
+      out.push('<h2>Never drawn</h2><p class="none">' + esq(p.never.join(', ')) +
+        ' &mdash; no result on file, so the engine could not judge any rule that asks for it.</p>');
+    }
+
+    block('Criteria I do not meet', p.failed.map(function(f){
+      return row(f.text, f.evidence);
+    }), 'None of the criteria that could be checked came back as a miss.');
+
+    block('Near misses — worth asking about', p.near.map(function(n){
+      return row(n.text, n.evidence);                 // evidence already carries the gap
+    }), 'No near misses. Every criterion that could be read is either met or missed outright.');
+
+    block('Could not be checked automatically', p.unknown.map(function(u){
+      return row(u.text, u.why);
+    }), 'Every criterion was readable.');
+
+    out.push('<p class="foot">This sheet was produced in the browser from documents held ' +
+      'in the page that made it. It was not sent anywhere. It is a reading of published ' +
+      'eligibility text, not a determination of eligibility &mdash; only a screening visit ' +
+      'can decide that.</p>');
+
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>Appointment prep sheet — ' + esq(p.trial.nctId) + '</title><style>' +
+      'body{font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;' +
+      'color:#18181B;background:#fff;max-width:46em;margin:40px auto;padding:0 20px}' +
+      'h1{font-size:1.5rem;letter-spacing:-.02em;margin:0 0 4px}' +
+      'h2{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:#6B6B75;' +
+      'margin:28px 0 8px;font-weight:600}' +
+      '.meta{color:#6B6B75;font-size:.82rem;margin:0 0 8px}' +
+      'table{border-collapse:collapse;width:100%}' +
+      'th,td{text-align:left;vertical-align:top;padding:7px 0;border-bottom:1px solid #E4E4E7;font-weight:400}' +
+      'th{width:38%;padding-right:14px;color:#18181B}td{color:#52525B}' +
+      '.none{color:#6B6B75;font-style:italic;margin:0}' +
+      '.foot{margin-top:30px;padding-top:14px;border-top:1px solid #E4E4E7;' +
+      'color:#52525B;font-size:.82rem}' +
+      '@media print{body{margin:0;max-width:none}}' +
+      '</style></head><body>' + out.join('') + '</body></html>';
+  }
+
+  /* A published artifact runs in a sandboxed frame, and a sandbox without
+     allow-downloads drops an <a download> click silently. Silent is the one
+     thing this button must not be: if the file cannot be handed over, say so
+     and open the sheet in a tab instead, which prints and saves by hand. */
+  window.downloadPrep = function(){
+    if(!PREP) renderPrep();
+    if(!PREP) return;
+    var html = prepFileHTML(PREP);
+    var name = 'openhealth-prep-' + PREP.trial.nctId + '.html';
+    var note = document.getElementById('prepFallback');
+    try{
+      var url = URL.createObjectURL(new Blob([html], { type:'text/html' }));
+      var a = document.createElement('a');
+      a.href = url; a.download = name; a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      note.hidden = true;
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 20000);
+    }catch(e){
+      try{
+        var w = window.open('', '_blank');
+        if(!w) throw e;
+        w.document.write(html);
+        w.document.close();
+        note.textContent = 'Your browser blocked the download, so the sheet opened in a ' +
+                           'new tab instead — use Print, then Save as PDF.';
+        note.hidden = false;
+      }catch(e2){
+        note.textContent = 'This browser will not let the page hand over a file. Use ' +
+                           'Print on this screen and save it as a PDF.';
+        note.hidden = false;
+      }
+    }
+  };
+
   /* ---------------- screen navigation ---------------- */
   var track  = document.getElementById('track');
   var phone  = document.getElementById('phone');
-  var screens = ['s0','s1','s2','s3','s4'].map(function(id){ return document.getElementById(id); });
+  var screens = ['s0','s1','s2','s3','s4','s5'].map(function(id){ return document.getElementById(id); });
   var tabs    = [document.getElementById('t0'), document.getElementById('t1'), document.getElementById('t2')];
   /* the two document screens are reached from the Today card rather than from a
      tab of their own, and they belong to the lab rail — so the Metrics tab stays
      lit while you are in them, instead of no tab being lit at all */
-  var TAB_OF = [0, 1, 2, 1, 1];
-  var seen = [false,false,false,false,false];
+  /* the prep sheet is reached from the foot of the trial audit and belongs to
+     that rail, so the Trials tab stays lit while you are reading it */
+  var TAB_OF = [0, 1, 2, 1, 1, 2];
+  var seen = [false,false,false,false,false,false];
   var current = -1;
 
   window.go = function(i){
@@ -1999,6 +2321,7 @@ button.cap-item .sh{border-style:dashed;color:var(--ink-2)}
         if(idx === 2) countScore();
         if(idx === 3) renderAddRecords();
         if(idx === 4) renderReview();
+        if(idx === 5) renderPrep();                    // built fresh from the live verdicts
       }
     });
   };

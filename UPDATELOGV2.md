@@ -293,7 +293,100 @@ is hardcoded rather than generated, say so plainly instead of shipping it.
 
 ## Stage 4 Report
 
-_Pending._
+Built on 2026-10-23, out of order and long after the rest of this log, because `CLAUDE.md`
+and `docs/SIMPLIFY.md` §9 both already described the prep sheet as the thing that replaced
+the doctor flow — and it did not exist. The only trace of it in the app was a `@media print`
+block headed "print: the prep sheet", styling a sheet nothing produced. That is a claim
+without a feature behind it, which is the exact failure the project standard names.
+
+**It is real.** The button writes a file. Nothing on screen 6 and nothing in the file is
+typed into the markup.
+
+**1 · One builder, two outputs.** `buildPrep(nctId)` runs `matchScore(PROFILE, rec)` against
+the live corpus record and returns a plain object: the trial's registry fields, the score and
+confidence, every marker that has a value with the draw it came from, the markers never
+drawn, and the verdicts split into failed / near miss / could-not-check. `renderPrep()` draws
+the preview from that object and `prepFileHTML()` writes the file from the same one, so the
+page and the file cannot drift. Change a value and both change: verified below.
+
+**2 · The file.** A self-contained HTML document — inline CSS, no script, **no external
+reference of any kind**, checked by regex for `src=`/`href=` pointing at `http`. It opens out
+of a downloads folder with no network and prints to PDF from there, which is what a clinician
+would actually do with it. Named `openhealth-prep-<NCT>.html`. 7,062 bytes for the current
+top trial.
+
+**3 · Screen 6, not a modal.** `s5`, reached from the foot of the trial audit. The track went
+from five screens to six (`width:500%`→`600%`, `.screen` `20%`→`16.6667%`, `screens` and
+`TAB_OF` extended). `TAB_OF[5] = 2`, so the **Trials** tab stays lit while you read the sheet
+— the same reasoning V2 Stage 1 used to keep Metrics lit on the document screens. Copy is the
+spec's, verbatim: *"Bring this to your appointment. OpenHealth doesn't contact your doctor —
+it gets you ready to."*
+
+**4 · The download can fail loudly, and never silently.** A published artifact runs in a
+sandboxed frame, and a sandbox without `allow-downloads` drops an `<a download>` click with
+no error at all. A button that looks like it saved a file and did not is worse than no
+button, so `downloadPrep()` wraps the blob path, falls back to opening the sheet in a tab
+with a line telling you to Print → Save as PDF, and falls back again to a line pointing at
+Print on the screen you are already on. Only the first path was exercisable locally; **the
+sandbox behaviour on the published artifact is unverified and is listed as outstanding
+below.**
+
+**5 · There is no send-to-doctor control, in any form.** Greps over `index.html`, each **0**:
+`sendBtn`, `Send my records`, `send()`, `Auto-send`, `Care team`, `Doctors Available`,
+`plane`. The only output is the downloaded file.
+
+**Deviation from the spec, stated plainly.** Item 4 also asks that *"the 'Prepare for your
+appointment →' row on Home now leads here."* **That row does not exist and was not added.**
+It comes from `docs/FIGMA-MAKE-PROMPT.md` screen 1, which V3 retired when it rebuilt Home
+around the tolerance scales; retrofitting a row from a superseded design into the rebuilt
+Home is a V3 visual decision, not a V2 one, and it would be made three days before
+submission. The sheet therefore has exactly one entry point — the foot of the audit — which
+is consistent with V3's framing that the audit is the product and this is what the audit
+hands you. **If the Home row is wanted, it is a deliberate call to make, not an oversight.**
+
+**Two defects found in my own first cut**, both caught by reading the generated output rather
+than trusting it: `rangeWords()` already begins "Normal "/"Target ", so the lab lines read
+*"normal Normal 12–150 ng/mL"*; and `evaluateRule()` already ends a NEAR_MISS evidence string
+with the shortfall, so appending the structured gap printed *"short by 0.4 g/dL"* twice on
+one line. Both fixed. `titleish()` also rendered the registry's `PHASE4` as "Phase4" and now
+splits the digit.
+
+### Verify
+
+The spec asks for the file's contents against the on-screen audit for the same trial.
+
+- **Trial, score and confidence match the settled screen.** Screen `#scoreNum` **100** (read
+  after `countScore()` finishes — reading it mid-count is what makes it look like 92/94/97);
+  sheet **"100 / 100"**; confidence **"2 of 32"** on both; `NCT06270498` on both;
+  status **"Recruiting · Phase 4"**.
+- **Values match, with their draw dates.** Iron (Ferritin) 8 ng/mL, Hemoglobin 13.1 g/dL,
+  Oxygen saturation 97 %, LDL cholesterol 95 mg/dL — each carrying `drawn 2026-09-24` and its
+  reference range. **HbA1c appears under "Never drawn"** with the reason, which is the
+  standing UNKNOWN test case behaving correctly on paper too.
+- **The 30 unreadable criteria are all present**, each with why it could not be checked —
+  `Not checked automatically — shown as written` for unparsed text, `No age on file` /
+  `No anemia information on file` for rules naming something the profile does not hold.
+- **FAIL and NEAR_MISS were empty on every ranked trial, so both branches were exercised
+  through the real app rather than left untested.** A trial that fails a required inclusion
+  is *blocked* and dropped from the ranking, so nothing in the ranked list produces either —
+  all 22 related trials came back clean. Typing **Hemoglobin 7 g/dL** into the manual-entry
+  rail dropped the top trial's score **100 → 60** and produced
+  *"Hemoglobin 10–16 g/dL — 7 g/dL misses hemoglobin 10–16 g/dL"*. Typing **9.6 g/dL**
+  produced the near miss with its exact gap, *"9.6 g/dL misses hemoglobin 10–16 g/dL — short
+  by 0.4 g/dL"*, identical in the preview and in the downloaded file.
+- **The downloaded file was opened and read.** Standalone, readable, printable; contains the
+  NCT number, the values with units and ranges, the HbA1c gap, and the footer stating it was
+  produced in the browser and sent nowhere.
+- **`tests.html`: all 61 passed.** Zero console errors anywhere in the flow, including the
+  manual-entry re-rank.
+- **Still zero network.** 1 request, 0 external, at 390px and 1440px. **No horizontal scroll
+  on any of the six screens** at either width.
+
+**Outstanding, and not claimed:** the download has only been exercised in headless Chromium
+against the local file. **It has not been tested in the published artifact's sandbox**, which
+is the one environment where it is most likely to be blocked, nor on a real phone. Check it
+on the live URL before the video, and if the blob path is blocked the fallback line should
+appear rather than nothing happening.
 
 ---
 
